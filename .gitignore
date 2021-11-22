@@ -1,0 +1,8 @@
+path.json
+/.idea/
+/.settings/
+/.vscode/
+/mrubis_controller/py3/
+bin/
+/mRUBiS/ML_based_Control/log.txt
+/mrubis_controller/output/
