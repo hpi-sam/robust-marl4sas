@@ -9,12 +9,14 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.mdelab.morisia.comparch.AddReplica;
@@ -38,6 +40,7 @@ import de.mdelab.morisia.selfhealing.Evaluation_ML;
 import de.mdelab.morisia.selfhealing.LearningModel;
 import de.mdelab.morisia.selfhealing.LearningQuality;
 import de.mdelab.morisia.selfhealing.Utilityfunction;
+import de.mdelab.morisia.selfhealing.rules.ComponentDependencies;
 import mRUBiS.Observations.Observations;
 import mRUBiS_Tasks.Input;
 import mRUBiS_Tasks.Task_1;
@@ -168,6 +171,63 @@ public class RuleSelector {
 				out.println(state);
 				logger.println(state);
 				break;
+			}
+		}
+	}
+	
+	
+	public static void sendFailProbabilityToPython(ComponentDependencies componentDepencies) {
+		ensureSocketIsOpen();
+		
+		String fromPython = "";
+		System.out.println("Waiting for Python to send json...");
+		while(true) { 
+			try {
+				fromPython = in.readLine();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			if (fromPython.equals("fail_probability_finished")) {
+				System.out.println("Finished writing fail probabilities.");
+				break;
+			}
+			else {
+				try {
+					HashMap<String, ArrayList<String>> failProbabilityMessage = new HashMap<String, ArrayList<String>>();
+					failProbabilityMessage = new ObjectMapper().readValue(fromPython, HashMap.class);
+					
+					String typeOfComponentToFix = failProbabilityMessage.get("type_of_component_to_fix").get(0);
+					ArrayList<String> failingComponentTypes = failProbabilityMessage.get("failing_component_types");
+					
+					Double failProbability = componentDepencies.getFixFailProbability(typeOfComponentToFix, failingComponentTypes);
+					
+					HashMap<String, Double> failProbabilityOutput = new HashMap<String, Double>();					
+					failProbabilityOutput.put("get_fail_probability", failProbability);
+					
+					String json = "";
+					try {
+						json = new ObjectMapper().writeValueAsString(failProbabilityOutput);
+					} catch (JsonProcessingException e) {
+						e.printStackTrace();
+					}
+					
+					out.println(json);
+					logger.println(json);
+				} catch (IOException e) {
+					System.out.println("Did not receive valid json from Python:");
+					System.out.println(fromPython);
+					if (fromPython.equals("exit")) {
+						logger.println("closed");
+						out.close();
+						logger.close();
+						try {
+							server.close();
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+						break;
+					}
+				}
 			}
 		}
 	}

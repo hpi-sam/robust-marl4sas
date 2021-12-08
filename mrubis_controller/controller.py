@@ -166,11 +166,29 @@ class MRubisController():
                     pd.DataFrame(component_params, index=[0])
                 )[0]
                 if fixes_can_fail:
+                    # Future: Multiple failures per component?
                     failing_component_types = [values[1] for component_info in self.components_fixed_in_this_run.values() for values in component_info]
                     type_of_component_to_fix = fixed_components[0][1]
-                    fail_probability = self.component_dependency_model.fix_fail_probability(type_of_component_to_fix, failing_component_types)
+                    fail_probability_message = {'type_of_component_to_fix': [type_of_component_to_fix], 'failing_component_types': failing_component_types}
+                    logger.info(json.dumps(fail_probability_message))
+                    self.socket.send(
+                        (json.dumps(fail_probability_message) + '\n').encode('utf-8'))
+                    data = self.socket.recv(64000)
+                    try:
+                        mrubis_state = json.loads(data.decode("utf-8"))
+                    except JSONDecodeError:
+                        logger.error("Could not decode JSON input, received this:")
+                        logger.error(data)
+                        mrubis_state = "not available"
+
+                    fail_probability = mrubis_state.get('get_fail_probability')
+                    fail_probability_python = self.component_dependency_model.fix_fail_probability(type_of_component_to_fix, failing_component_types)
+                    logger.info(f"{fail_probability} vs. {fail_probability_python}")
+                    assert fail_probability_python == fail_probability
                     predicted_utility = predicted_utility * (1-fail_probability)
                 self.mrubis_state[shop][component]['predicted_optimal_utility'] = predicted_utility
+        
+        self.socket.send('fail_probability_finished\n'.encode('utf-8'))
 
     def __get_ranked_fix_instructions(self, state_df_before: pd.DataFrame, ranking_strategy):
         '''Get a list of tuples containing the fixes to apply ranked by a strategy'''

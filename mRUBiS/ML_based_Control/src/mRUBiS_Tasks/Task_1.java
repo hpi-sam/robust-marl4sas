@@ -61,6 +61,7 @@ import de.mdelab.morisia.comparch.simulator.impl.Trace_Deterministic;
 import de.mdelab.morisia.comparch.simulator.impl.testTrace;
 import de.mdelab.morisia.selfhealing.incremental.EventListener;
 import de.mdelab.morisia.selfhealing.incremental.EventQueue;
+import de.mdelab.morisia.selfhealing.rules.ComponentDependencies;
 import de.mdelab.morisia.selfhealing.rules.CostPredictor;
 import de.mdelab.morisia.selfhealing.rules.IssueComparator;
 import de.mdelab.morisia.selfhealing.rules.PerformanceEfficiencyManager;
@@ -230,6 +231,10 @@ public class Task_1 {
 		InjectionStrategy strategy = new Trace_Deterministic
 				(simulator.getSupportedIssueTypes(), architecture);
 		simulator.setInjectionStrategy(strategy);
+		
+		// set up transition matrix for component dependencies
+		
+		ComponentDependencies componentDepencies = new ComponentDependencies();
 
 
 		/*
@@ -384,6 +389,9 @@ public class Task_1 {
 
 
 				if (CURRENT_APPROACH == Approaches.Learning) {
+					
+					System.out.println("Sending fail probability to Python...");
+					RuleSelector.sendFailProbabilityToPython(componentDepencies);
 
 					// Get custom fix ordering from the controller
 					System.out.println("Waiting for Python to send order in which to apply fixes...");
