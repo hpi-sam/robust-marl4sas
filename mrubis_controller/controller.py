@@ -182,9 +182,6 @@ class MRubisController():
                         mrubis_state = "not available"
 
                     fail_probability = mrubis_state.get('get_fail_probability')
-                    fail_probability_python = self.component_dependency_model.fix_fail_probability(type_of_component_to_fix, failing_component_types)
-                    logger.info(f"{fail_probability} vs. {fail_probability_python}")
-                    assert fail_probability_python == fail_probability
                     predicted_utility = predicted_utility * (1-fail_probability)
                 self.mrubis_state[shop][component]['predicted_optimal_utility'] = predicted_utility
         
