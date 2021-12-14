@@ -176,7 +176,7 @@ public class RuleSelector {
 	}
 	
 	
-	public static void sendFailProbabilityToPython(ComponentDependencies componentDepencies) {
+	public static void sendFailProbabilityToPython() {
 		ensureSocketIsOpen();
 		
 		String fromPython = "";
@@ -199,7 +199,7 @@ public class RuleSelector {
 					String typeOfComponentToFix = failProbabilityMessage.get("type_of_component_to_fix").get(0);
 					ArrayList<String> failingComponentTypes = failProbabilityMessage.get("failing_component_types");
 					
-					Double failProbability = componentDepencies.getFixFailProbability(typeOfComponentToFix, failingComponentTypes);
+					Double failProbability = ComponentDependencies.getFixFailProbability(typeOfComponentToFix, failingComponentTypes);
 					
 					HashMap<String, Double> failProbabilityOutput = new HashMap<String, Double>();					
 					failProbabilityOutput.put("get_fail_probability", failProbability);

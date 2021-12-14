@@ -391,7 +391,7 @@ public class Task_1 {
 				if (CURRENT_APPROACH == Approaches.Learning) {
 					
 					System.out.println("Sending fail probability to Python...");
-					RuleSelector.sendFailProbabilityToPython(componentDepencies);
+					RuleSelector.sendFailProbabilityToPython();
 
 					// Get custom fix ordering from the controller
 					System.out.println("Waiting for Python to send order in which to apply fixes...");
