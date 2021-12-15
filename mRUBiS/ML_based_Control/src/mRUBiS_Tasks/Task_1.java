@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -54,7 +55,9 @@ import de.mdelab.morisia.comparch.Rule;
 import de.mdelab.morisia.comparch.Tenant;
 import de.mdelab.morisia.comparch.simulator.Capability;
 import de.mdelab.morisia.comparch.simulator.ComparchSimulator;
+import de.mdelab.morisia.comparch.simulator.Injection;
 import de.mdelab.morisia.comparch.simulator.InjectionStrategy;
+import de.mdelab.morisia.comparch.simulator.IssueType;
 import de.mdelab.morisia.comparch.simulator.impl.Trace_1;
 import de.mdelab.morisia.comparch.simulator.impl.Trace_2;
 import de.mdelab.morisia.comparch.simulator.impl.Trace_Deterministic;
@@ -66,6 +69,7 @@ import de.mdelab.morisia.selfhealing.rules.CostPredictor;
 import de.mdelab.morisia.selfhealing.rules.IssueComparator;
 import de.mdelab.morisia.selfhealing.rules.PerformanceEfficiencyManager;
 import de.mdelab.morisia.selfhealing.rules.RuleSelector;
+import de.mdelab.morisia.selfhealing.rules.TransitionMatrixHandler;
 import de.mdelab.morisia.selfhealing.rules.UtilityIncreasePredictor;
 import de.mdelab.sdm.interpreter.core.SDMException;
 import de.mdelab.expressions.interpreter.core.variables.Variable;
@@ -249,17 +253,22 @@ public class Task_1 {
 		}
 		else {System.out.println("\n\nInitial validaton. There are no issues in the model.\n \n \nCurrent Overal Utility is: "+ OveralU);}
 
+		// get transation matrix
+		Hashtable<String, Hashtable<String, Double>> transitionMatrix = TransitionMatrixHandler.getTransitionMatrix();
 
 		while (!simulator.isSimulationCompleted()) { // = number of RUNS
 			run++;
 
 			// call the simulator to inject issues.
 			simulator.injectIssues();
-
+			
+			
 
 			// if run <= RUNS then the simulator injects issues. As soon as
 			// run > RUNS, the simulator is triggered only once to analyze
 			// the model and the last adaptation.
+			
+			
 			if (run <= RUNS) {
 				System.out.print("\n Run : " + run);
 				System.out.print("\n . \n .");
@@ -269,7 +278,7 @@ public class Task_1 {
 				 * Analyze
 				 */
 				analyze(interpreter, annotations, A_CF1, A_CF2, A_CF3, A_CF5);
-				System.out.printf("\n>> Analyze Compelete\n\n");
+				System.out.printf("\n>> Analyze Complete\n\n");
 				ArchitectureUtilCal.computeOverallUtility(architecture);
 
 
@@ -280,6 +289,32 @@ public class Task_1 {
 				// Sorting the failures to address first
 				List<Issue> allIssues = new LinkedList<>();
 				allIssues.addAll(annotations.getIssues());
+				
+				// do propagation
+				List<List<Issue>> allIssuesPerShop = new LinkedList<>(new LinkedList<>());
+				
+				for (Issue issue : allIssues) {
+					
+					List<Issue> Trace = new LinkedList<>();
+					String componentName = issue.getAffectedComponent().getType().getName();
+					// while there is a next component
+					String currentComponent = componentName;
+					Trace.add(issue);
+					while(true) {
+						Hashtable<String,Double> dependentComponents = transitionMatrix.get(currentComponent);
+						Double trace_choice = Math.random();
+						for (String component : dependentComponents.keySet()) {
+							if (dependentComponents.get(component) >= trace_choice) {
+								
+								IssueType issueType = IssueType.valueOf(issue.getClass().getInterfaces()[0].getSimpleName());
+								
+//								new Injection<Component>(issueType, this
+//										.getComponent(0, 1)));
+							}
+						}
+					}
+					
+				}
 
 
 
@@ -557,7 +592,6 @@ public class Task_1 {
 	}
 
 
-
 	private static void shuffle(List<Issue> allIssues) {
 
 		Collections.shuffle(allIssues);
@@ -682,8 +716,7 @@ public class Task_1 {
 		/*
 		 * EXECUTE
 		 */
-		for (int i = 0; i < allIssues.size(); i++) {
-			Issue issue = allIssues.get(i);
+		for (Issue issue : allIssues) {
 			if (issue instanceof CF1) {
 				CF1 cf1 = (CF1) issue;
 				Collection<Variable<EClassifier>> parameters = new ArrayList<Variable<EClassifier>>();
@@ -718,7 +751,6 @@ public class Task_1 {
 				interpreter.executeActivity(E_CF5, parameters);
 			}
 		}
-
 	}
 
 	private static Variable<EClassifier> createParameter(String name, EObject value) {
