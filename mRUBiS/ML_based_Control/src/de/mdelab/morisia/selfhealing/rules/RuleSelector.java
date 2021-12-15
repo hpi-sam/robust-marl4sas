@@ -98,16 +98,16 @@ public class RuleSelector {
 		Utilityfunction UTILITY_FUNCTION = Utilityfunction.Optimal_Combined;
 		
 		LearningQuality quality=null;
-	LearningModel model=null;
-
-		
-		
-	if (Task_1.CURRENT_APPROACH==Approaches.Learning){
-		System.out.print("\n >> Loading Input to select Actions");
-		learningApproach(issue , UTILITY_FUNCTION );
-		
-	}
-	else if (Task_1.CURRENT_APPROACH == Approaches.Udriven) {
+		LearningModel model=null;
+	
+			
+			
+		if (Task_1.CURRENT_APPROACH==Approaches.Learning){
+			System.out.print("\n >> Loading Input to select Actions");
+			learningApproach(issue , UTILITY_FUNCTION );
+			
+		}
+		else if (Task_1.CURRENT_APPROACH == Approaches.Udriven) {
 			ourApproach(issue , UTILITY_FUNCTION , quality, model);
 		}else if (Task_1.CURRENT_APPROACH == Approaches.RANDOM) {
 

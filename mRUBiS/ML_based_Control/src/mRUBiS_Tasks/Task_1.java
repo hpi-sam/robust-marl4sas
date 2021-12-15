@@ -233,9 +233,6 @@ public class Task_1 {
 		simulator.setInjectionStrategy(strategy);
 		
 		// set up transition matrix for component dependencies
-		
-		ComponentDependencies componentDepencies = new ComponentDependencies();
-
 
 		/*
 		 * Start the simulation
@@ -312,7 +309,6 @@ public class Task_1 {
 					//System.out.print("\n Run : " + run);
 					for (Issue issue : allIssues) {
 						Rule r = issue.getHandledBy().get(0);
-						// ** Compute the Connectivity
 						// first, init with number outgoing connectors
 						int numberOfConnectors = issue.getAffectedComponent().getRequiredInterfaces().size();
 						int numberOfProvided = 0;
