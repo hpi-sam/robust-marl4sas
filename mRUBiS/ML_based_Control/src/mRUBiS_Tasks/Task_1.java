@@ -66,6 +66,7 @@ import de.mdelab.morisia.selfhealing.incremental.EventListener;
 import de.mdelab.morisia.selfhealing.incremental.EventQueue;
 import de.mdelab.morisia.selfhealing.rules.ComponentDependencies;
 import de.mdelab.morisia.selfhealing.rules.CostPredictor;
+import de.mdelab.morisia.selfhealing.rules.FailurePropagationTraceCreator;
 import de.mdelab.morisia.selfhealing.rules.IssueComparator;
 import de.mdelab.morisia.selfhealing.rules.PerformanceEfficiencyManager;
 import de.mdelab.morisia.selfhealing.rules.RuleSelector;
@@ -295,10 +296,10 @@ public class Task_1 {
 				
 				for (Issue issue : allIssues) {
 					
-					List<Issue> Trace = new LinkedList<>();
+					//List<Issue> Trace = new LinkedList<>();
 					String componentName = issue.getAffectedComponent().getType().getName();
 					// while there is a next component
-					String currentComponent = componentName;
+					/*String currentComponent = componentName;
 					Trace.add(issue);
 					while(true) {
 						Hashtable<String,Double> dependentComponents = transitionMatrix.get(currentComponent);
@@ -312,7 +313,9 @@ public class Task_1 {
 //										.getComponent(0, 1)));
 							}
 						}
-					}
+					}*/
+					
+					List<String> trace = FailurePropagationTraceCreator.createTrace(componentName);
 					
 				}
 
