@@ -11,7 +11,10 @@ class RankLearner:
 
     def sort_actions(self, inputs):
         """ Sorts the actions of each agents """
-        raise NotImplementedError
+        if self.stage == 0:
+            return inputs
+        else:
+            raise NotImplementedError
 
     def learn(self):
         """ learn to rank """
