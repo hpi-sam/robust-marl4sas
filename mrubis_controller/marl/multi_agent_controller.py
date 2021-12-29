@@ -1,3 +1,4 @@
+from mrubis_controller.marl.agent import Agent
 from rank_learner import RankLearner
 
 
@@ -6,7 +7,8 @@ class MultiAgentController:
         # list of named shops per agent identified by the index
         self.shop_distribution = shop_distribution
         self.rank_learner = RankLearner(0, None)
-        self.agents = None
+
+        self.agents = self._build_agents()
 
     def select_actions(self, observations):
         """ based on observations select actions
@@ -14,7 +16,11 @@ class MultiAgentController:
             the rank learner has to be called to sort those actions
             returns a sorted list of actions
         """
-        raise NotImplementedError
+        actions = []
+        for agent in self.agents:
+            actions.append(agent.choose_action(self._build_observations(agent)))
+
+        return self.rank_learner.sort_actions(actions)
 
     def save_models(self):
         """ save models of agents and rank learner """
@@ -30,7 +36,10 @@ class MultiAgentController:
 
     def _build_agents(self):
         """ based on shop distribution the agents will be initialized """
-        raise NotImplementedError
+        agents = []
+        for shops in self.shop_distribution:
+            self.agents.append(Agent(shops))
+        return agents
 
     def _build_observations(self, agent_id):
         """ extracts the relevant observations of the env per agent """
