@@ -1,0 +1,44 @@
+{
+  0: {
+    'shop': 'mRUBiS #1',
+    'issue': 'CF3',
+    'component': 'Inventory Service',
+    'fix': 'HwRedeployComponent'
+  },
+  1: {
+    'shop': 'mRUBiS #10',
+    'issue': 'CF3',
+    'component': 'Availability Item Filter',
+    'fix': 'HwRedeployComponent'
+  },
+  2: {
+    'shop': 'mRUBiS #4',
+    'issue': 'CF3',
+    'component': 'Bid and Buy Service',
+    'fix': 'HwRedeployComponent'
+  },
+  3: {
+    'shop': 'mRUBiS #6',
+    'issue': 'CF3',
+    'component': 'Category Item Filter',
+    'fix': 'HwRedeployComponent'
+  },
+  4: {
+    'shop': 'mRUBiS #8',
+    'issue': 'CF3',
+    'component': 'User Management Service',
+    'fix': 'HwRedeployComponent'
+  },
+  5: {
+    'shop': 'mRUBiS #5',
+    'issue': 'CF3',
+    'component': 'Comment Item Filter',
+    'fix': 'HwRedeployComponent'
+  },
+  6: {
+    'shop': 'mRUBiS #7',
+    'issue': 'CF3',
+    'component': 'Authentication Service',
+    'fix': 'HwRedeployComponent'
+  }
+}
