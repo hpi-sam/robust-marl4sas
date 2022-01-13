@@ -1,7 +1,10 @@
-{
+{ # only attributes that are updated will be send
+  # reward will be the utility -> fix successful: utitlity increases <> fix not successful: utitlity drops
+  # inject new issues if shop has no other issues, but other shops can still have issues
   'mRUBiS #2': {},
   'mRUBiS #1': {
     'Inventory Service': {
+      'failure_name': 'None',
       'component_utility': '5188.836379265326',
       'required_interface': '2',
       'request': '383.0',
@@ -40,118 +43,6 @@
       'adt': '1.1040200606380364',
       'shop_utility': '259736.18715325295',
       'uid': '_cfpNQHLhEeyxbtIhUWQoEA',
-      'connectivity': '2.0',
-      'provided_interface': '1'
-    }
-  },
-  'mRUBiS #6': {
-    'Category Item Filter': {
-      'component_utility': '7057.381105573765',
-      'required_interface': '1',
-      'request': '370.0',
-      'rule_names': '',
-      'replica': '13.0',
-      'failure_name': '',
-      'perf_max': '16.836799437411557',
-      'importance': '14.0',
-      'reliability': '0.5',
-      'criticality': '15.0',
-      'sat_point': '0.03360347304555056',
-      'system_utility': '2159928.911293412',
-      'rule_costs': '',
-      'adt': '1.4074658139088305',
-      'shop_utility': '173083.97723340685',
-      'uid': '_cgJjkHLhEeyxbtIhUWQoEA',
-      'connectivity': '2.0',
-      'provided_interface': '1'
-    }
-  },
-  'mRUBiS #5': {
-    'Comment Item Filter': {
-      'component_utility': '3883.8335661370274',
-      'required_interface': '1',
-      'request': '310.0',
-      'rule_names': '',
-      'replica': '18.0',
-      'failure_name': '',
-      'perf_max': '10.824104372235073',
-      'importance': '18.0',
-      'reliability': '0.5',
-      'criticality': '10.0',
-      'sat_point': '0.05722096110038612',
-      'system_utility': '2159928.911293412',
-      'rule_costs': '',
-      'adt': '1.2844007867598393',
-      'shop_utility': '222598.74051521657',
-      'uid': '_cgdFkHLhEeyxbtIhUWQoEA',
-      'connectivity': '2.0',
-      'provided_interface': '1'
-    }
-  },
-  'mRUBiS #4': {
-    'Bid and Buy Service': {
-      'component_utility': '12882.770623814737',
-      'required_interface': '5',
-      'request': '317.0',
-      'rule_names': '',
-      'replica': '13.0',
-      'failure_name': '',
-      'perf_max': '17.056132824172366',
-      'importance': '12.0',
-      'reliability': '0.5',
-      'criticality': '21.0',
-      'sat_point': '0.038633091346468224',
-      'system_utility': '2159928.911293412',
-      'rule_costs': '',
-      'adt': '1.166579125957095',
-      'shop_utility': '157985.6573133213',
-      'uid': '_cfzlUHLhEeyxbtIhUWQoEA',
-      'connectivity': '7.0',
-      'provided_interface': '2'
-    }
-  },
-  'mRUBiS #3': {},
-  'mRUBiS #9': {},
-  'mRUBiS #8': {
-    'User Management Service': {
-      'component_utility': '5923.108995563967',
-      'required_interface': '4',
-      'request': '86.0',
-      'rule_names': '',
-      'replica': '5.0',
-      'failure_name': '',
-      'perf_max': '6.593308899381567',
-      'importance': '18.0',
-      'reliability': '0.5',
-      'criticality': '20.0',
-      'sat_point': '0.05224642093803193',
-      'system_utility': '2159928.911293412',
-      'rule_costs': '',
-      'adt': '1.086901387944248',
-      'shop_utility': '237101.43297654038',
-      'uid': '_cgN1AHLhEeyxbtIhUWQoEA',
-      'connectivity': '8.0',
-      'provided_interface': '4'
-    }
-  },
-  'mRUBiS #7': {
-    'Authentication Service': {
-      'component_utility': '12672.499476968604',
-      'required_interface': '1',
-      'request': '472.0',
-      'rule_names': '',
-      'replica': '28.0',
-      'failure_name': '',
-      'perf_max': '7.836460203783721',
-      'importance': '17.0',
-      'reliability': '0.85',
-      'criticality': '14.0',
-      'sat_point': '0.05904293888534416',
-      'system_utility': '2159928.911293412',
-      'rule_costs': '',
-      'adt': '1.002771683497159',
-      'shop_utility': '214843.2845420993',
-      'uid': '_cglBYHLhEeyxbtIhUWQoEA',
       'connectivity': '2.0',
       'provided_interface': '1'
     }

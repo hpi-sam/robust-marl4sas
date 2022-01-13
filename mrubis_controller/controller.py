@@ -81,6 +81,7 @@ class MRubisController():
         logger.info(f'Number of mRUBIS shops: {self.number_of_shops}')
         for _ in range(self.number_of_shops):
             shop_state = self._get_from_mrubis('get_initial_state')
+            logger.info(f'Initial State: {shop_state}')
             shop_name = next(iter(shop_state))
             self.mrubis_state[shop_name] = shop_state[shop_name]
 
@@ -144,7 +145,7 @@ class MRubisController():
         picked_rule_message = {shop_name: {issue_name: {component_name: rule}}}
         logger.info(
             f"{shop_name}: Handling {issue_name} on {component_name} with {rule}")
-        logger.debug('Sending selected rule to mRUBIS...')
+        logger.info(f"Sending selected rule to mRUBIS: {picked_rule_message}")
         self.socket.send(
             (json.dumps(picked_rule_message) + '\n').encode("utf-8"))
         logger.debug("Waiting for mRUBIS to answer with 'rule_received'...")
@@ -246,6 +247,7 @@ class MRubisController():
             data = self.socket.recv(64000)
         '''
         self.socket.send((json.dumps(order_dict) + '\n').encode("utf-8"))
+        logger.info(f"send order_dict: {order_dict}")
         logger.debug(
             "Waiting for mRUBIS to answer with 'fix_order_received'...")
         data = self.socket.recv(64000)
@@ -361,6 +363,8 @@ class MRubisController():
 
                 # Get the current issue to handle
                 current_issue = self._get_from_mrubis('get_issue')
+                logger.info(
+                    f'get current issue: {current_issue}')
                 #current_issues.append(current_issue)
                 self._update_current_state(current_issue)
 
@@ -402,6 +406,8 @@ class MRubisController():
                         for shop_name, i_c_tuples in self.components_fixed_in_this_run.items()}
                 )
             )
+            logger.info(f"State after action: {state_after_action}")
+
             self._update_current_state(state_after_action)
             self._remove_replaced_authentication_service()
             self._reset_predicted_utility()
