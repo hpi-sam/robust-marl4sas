@@ -87,11 +87,11 @@ class MrubisEnv(gym.Env):
 
     def close(self):
         """ Override close in your subclass to perform any necessary cleanup. """
-        raise NotImplementedError
+        return 'do nothing for this mock'
 
     def seed(self):
         """ Sets the seed for this env's random number generator(s). """
-        raise NotImplementedError
+        return 'do nothing for this mock'
 
     def last(self):
         """ returns last state, reward, terminated, info """
