@@ -1,7 +1,7 @@
 {
   "mRUBiS #1": {
     "Availability Item Filter": {
-      "failure_name": "None",
+      "failure_name": "CF3",
       "component_utility": "9668.946967905582",
       "required_interface": "1",
       "request": "89.0",
@@ -19,7 +19,7 @@
       "provided_interface": "1"
     },
     "Bid and Buy Service": {
-      "failure_name": "CF3",
+      "failure_name": "None",
       "component_utility": "12881.268889630928",
       "required_interface": "5",
       "request": "360.0",
@@ -345,7 +345,7 @@
       "provided_interface": "1"
     },
     "Bid and Buy Service": {
-      "failure_name": "None",
+      "failure_name": "CF2",
       "component_utility": "25773.933184749243",
       "required_interface": "5",
       "request": "413.0",
@@ -363,7 +363,7 @@
       "provided_interface": "2"
     },
     "Seller Reputation Item Filter": {
-      "failure_name": "CF2",
+      "failure_name": "None",
       "component_utility": "17481.58510377227",
       "required_interface": "1",
       "request": "185.0",
@@ -941,7 +941,7 @@
       "provided_interface": "1"
     },
     "Last Second Sales Item Filter": {
-      "failure_name": "CF3",
+      "failure_name": "None",
       "component_utility": "8743.242721079268",
       "required_interface": "1",
       "request": "121.0",
@@ -959,7 +959,7 @@
       "provided_interface": "1"
     },
     "Future Sales Item Filter": {
-      "failure_name": "None",
+      "failure_name": "CF3",
       "component_utility": "11842.25881015308",
       "required_interface": "1",
       "request": "152.0",
@@ -978,4 +978,3 @@
     }
   }
 }
-
