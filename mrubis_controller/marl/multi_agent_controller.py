@@ -7,8 +7,7 @@ class MultiAgentController:
         # list of named shops per agent identified by the index
         self.shop_distribution = shop_distribution
         self.rank_learner = RankLearner(0, None)
-
-        self.agents = self._build_agents()
+        self.agents = None
 
     def select_actions(self, observations):
         """ based on observations select actions
@@ -17,8 +16,8 @@ class MultiAgentController:
             returns a sorted list of actions
         """
         actions = []
-        for agent in self.agents:
-            actions.append(agent.choose_action(self._build_observations(agent)))
+        for index, agent in enumerate(self.agents):
+            actions.append(agent.choose_action(self._build_observations(index, observations)))
 
         return self.rank_learner.sort_actions(actions)
 
@@ -32,21 +31,39 @@ class MultiAgentController:
 
     def learn(self, states, actions, rewards, states_, dones):
         """ start learning for Agents and RankLearner """
-        raise NotImplementedError
+        for index, agent in enumerate(self.agents):
+            # calc threshold
+            # if threshold > defined_:
+            agent.learn(self._build_observations(index, states),
+                        self._build_actions(index, actions),
+                        self._build_rewards(index, rewards),
+                        self._build_observations(index, states_),
+                        dones)
 
-    def _build_agents(self):
+    def init(self, action_space):
+        self.agents = self._build_agents(action_space)
+
+    def _build_agents(self, action_space):
         """ based on shop distribution the agents will be initialized """
         agents = []
         for shops in self.shop_distribution:
-            self.agents.append(Agent(shops))
+            agents.append(Agent(shops, action_space))
         return agents
 
-    def _build_observations(self, agent_id):
+    def _build_observations(self, agent_index, observation):
         """ extracts the relevant observations of the env per agent """
-        raise NotImplementedError
+        return {shop: observation[shop] for shop in self.agents[agent_index].shops}
 
-    def _build_rewards(self, agent_id):
+    def _build_rewards(self, agent_index, rewards):
         """ extracts the relevant rewards per agent
             probably not needed as mRubis is returning reward per shop already
         """
-        raise NotImplementedError
+        return {shop: rewards[0][shop] for shop in self.agents[agent_index].shops}, rewards[1]
+
+    def _build_actions(self, agent_index, actions):
+        """ extracts the relevant actions taken per agent
+        """
+        return {index: action
+                for shop in self.agents[agent_index].shops
+                for index, action in enumerate(actions.values())
+                if action['shop'] == shop}

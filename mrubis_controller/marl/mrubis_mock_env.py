@@ -17,26 +17,18 @@ def get_observation(step):
         return json.load(json_data_file)
 
 
-def get_reward(observation):
-    """ returns the extracted reward per shop
-    """
-    shop_utility = [float(values['shop_utility']) for values in
-                    [list(components.values())[0] for shop, components in observation.items()]]
-    system_utility = sum(shop_utility)
-    return shop_utility, system_utility
-
-
-class MrubisEnv(gym.Env):
+class MrubisMockEnv(gym.Env):
     def __init__(self):
-        super(MrubisEnv, self).__init__()
+        super(MrubisMockEnv, self).__init__()
         self.action_space = None
         self.observation_space = None
         self.observation = None
+        self.prior_utility = None # used for calculation of diff as a reward
         self.t = 0
-        self.termination_t = 2
+        self.termination_t = 3
 
-        self.utility_decrease_amount = 1000  # if fix fails
-        self.utility_increase_amount = 1000  # if fix succeeds
+        self.utility_decrease_amount = 1  # if fix fails
+        self.utility_increase_amount = 1  # if fix succeeds
 
     def step(self, actions):
         """ Returns observation, reward, terminated, info
@@ -67,16 +59,19 @@ class MrubisEnv(gym.Env):
             else:
                 # action for a shop without any failure
                 raise NotImplementedError
+        _reward = self._get_reward(self.observation)
         # check if all issues are fixed and load new observation if all are fixed
         if all(failure is None for failure in
                [get_failing_component(self.observation[shop]) for shop in self.observation]):
             self.t += 1
-            self.observation = get_observation(self.t)
-        return get_reward(self.observation), self.observation, self._terminated(), self._info()
+            self.prior_utility = None
+            if not self._terminated():
+                self.observation = get_observation(self.t)
+        return _reward, self.observation, self._terminated(), self._info()
 
     def reset(self):
         """ Returns initial observations and states """
-        self.t = 1
+        self.t = 0
         self.observation = get_observation(self.t)
         self.action_space = [components for shops, components in self.observation.items()][0].keys()
         return self.observation
@@ -95,13 +90,26 @@ class MrubisEnv(gym.Env):
 
     def last(self):
         """ returns last state, reward, terminated, info """
-        return self.observation, get_reward(self.observation), self._terminated(), self._info()
+        return self.observation, self._get_reward(self.observation), self._terminated(), self._info()
 
     def _terminated(self):
         return self.t == self.termination_t
 
     def _info(self):
         return {'t': self.t}
+
+    def _get_reward(self, observation):
+        """ returns the extracted reward per shop
+        """
+        current_utility = {shop: float(list(components.items())[0][1]['shop_utility']) for shop, components in
+                        observation.items()}
+        if self.prior_utility is None:
+            diff_utility = {shop: 0 for shop, utility in current_utility.items()}
+        else:
+            diff_utility = {shop: current_utility[shop] - utility for shop, utility in self.prior_utility.items()}
+        self.prior_utility = current_utility
+        system_utility = sum(diff_utility.values())
+        return diff_utility, system_utility
 
 # code for local testing/debugging - until test framework is available
 # mrubis_env = MrubisEnv()
