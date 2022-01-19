@@ -49,6 +49,7 @@ class Runner:
         plt.savefig(f"./logs/rewards_{episode}")
         plt.clf()  # clear current plot
 
+
 logging.basicConfig()
 logger = logging.getLogger('controller')
 logger.setLevel(logging.INFO)

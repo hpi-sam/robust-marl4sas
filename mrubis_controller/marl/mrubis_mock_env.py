@@ -23,7 +23,7 @@ class MrubisMockEnv(gym.Env):
         self.action_space = None
         self.observation_space = None
         self.observation = None
-        self.prior_utility = None # used for calculation of diff as a reward
+        self.prior_utility = None  # used for calculation of diff as a reward
         self.t = 0
         self.termination_t = 3
 
@@ -102,7 +102,7 @@ class MrubisMockEnv(gym.Env):
         """ returns the extracted reward per shop
         """
         current_utility = {shop: float(list(components.items())[0][1]['shop_utility']) for shop, components in
-                        observation.items()}
+                           observation.items()}
         if self.prior_utility is None:
             diff_utility = {shop: 0 for shop, utility in current_utility.items()}
         else:
