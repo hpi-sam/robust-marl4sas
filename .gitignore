@@ -1,4 +1,4 @@
-path.json
+mrubis_controller/path.json
 /.idea/
 /.settings/
 /.vscode/
@@ -216,3 +216,6 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+/.project
+/mRUBiS/ML_based_Control/.settings/
+/mRUBiS/ML_based_Control/issueToRulesMap.json
