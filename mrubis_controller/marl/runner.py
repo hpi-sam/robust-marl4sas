@@ -29,7 +29,7 @@ class Runner:
         """ runs the simulation """
         rewards = []
         self.reset()
-        count_till_fixed = { shop: [] for agent in self.shop_distribution for shop in agent}
+        count_till_fixed = {shop: [] for agent in self.shop_distribution for shop in agent}
         while self.t < episodes:
             terminated = False
             observations = self.env.reset()
@@ -73,6 +73,7 @@ class Runner:
         plt.legend()
         plt.savefig(f"./logs/tries_{episode}")
         plt.clf()  # clear current plot
+
 
 logging.basicConfig()
 logger = logging.getLogger('controller')

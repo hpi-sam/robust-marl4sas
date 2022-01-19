@@ -71,7 +71,7 @@ class MrubisMockEnv(gym.Env):
         _reward = self._get_reward(self.observation)
         # check if all issues are fixed and load new observation if all are fixed
         if not actions or all(failure is None for failure in
-               [get_failing_component(self.observation[shop]) for shop in self.observation]):
+                              [get_failing_component(self.observation[shop]) for shop in self.observation]):
             self.t += 1
             self.inner_t = 0
             if not self._terminated():
