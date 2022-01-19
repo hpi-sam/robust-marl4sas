@@ -35,7 +35,7 @@ class Agent:
     def __init__(self, index, shops, action_space_inverted, load_models_data):
         self.index = index
         self.shops = shops
-        self.base_model_dir = f"./data/models"
+        self.base_model_dir = './data/models'
         self.start_time = get_current_time()
         self.load_models_data = load_models_data
 
