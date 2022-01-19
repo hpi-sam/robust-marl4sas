@@ -292,30 +292,27 @@ public class Task_1 {
 				allIssues.addAll(annotations.getIssues());
 				
 				// do propagation
-				List<List<Issue>> allIssuesPerShop = new LinkedList<>(new LinkedList<>());
+				List<List<Issue>> listofTraces = new ArrayList<>(new ArrayList<>());
 				
 				for (Issue issue : allIssues) {
-					
-					//List<Issue> Trace = new LinkedList<>();
+					List<Issue> trace = new LinkedList<>();
 					String componentName = issue.getAffectedComponent().getType().getName();
-					// while there is a next component
-					/*String currentComponent = componentName;
-					Trace.add(issue);
-					while(true) {
-						Hashtable<String,Double> dependentComponents = transitionMatrix.get(currentComponent);
-						Double trace_choice = Math.random();
-						for (String component : dependentComponents.keySet()) {
-							if (dependentComponents.get(component) >= trace_choice) {
-								
-								IssueType issueType = IssueType.valueOf(issue.getClass().getInterfaces()[0].getSimpleName());
-								
-//								new Injection<Component>(issueType, this
-//										.getComponent(0, 1)));
+					trace.add(issue);
+					List<String> traceOfFailingComponentNames = FailurePropagationTraceCreator.createTrace(componentName);
+					for (String currentComponent : traceOfFailingComponentNames) {
+						
+						IssueType issueType = IssueType.valueOf(issue.getClass().getInterfaces()[0].getSimpleName());
+						Tenant tenant = issue.getAffectedComponent().getTenant();	
+						// find correct component to inject
+						for( Component component : tenant.getComponents()) {
+							if (component.getType().getName().equals(currentComponent)) {
+								new Injection<Component>(issueType, component);
+								trace.add(component.getIssues().get(0));
 							}
+
 						}
-					}*/
+					}
 					
-					List<String> trace = FailurePropagationTraceCreator.createTrace(componentName);
 					
 				}
 

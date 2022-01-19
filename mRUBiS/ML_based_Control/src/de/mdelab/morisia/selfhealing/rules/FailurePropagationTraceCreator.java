@@ -14,7 +14,6 @@ public class FailurePropagationTraceCreator {
 	
 	public static List<String> createTrace(String failingComponent) {
 		List<String> trace = new LinkedList<String>();
-		trace.add(failingComponent);
 		
 		String currentComponent = failingComponent;
 		
