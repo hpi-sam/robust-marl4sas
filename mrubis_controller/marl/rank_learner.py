@@ -29,3 +29,8 @@ class RankLearner:
     def learn(self):
         """ learn to rank """
         raise NotImplementedError
+
+    def save(self, episode):
+        """ save model """
+        if self.stage != 0:
+            raise NotImplementedError

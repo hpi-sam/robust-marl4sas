@@ -5,6 +5,8 @@ from keras.optimizers import Adam
 import tensorflow as tf
 import numpy as np
 
+from mrubis_controller.marl.helper import get_current_time
+
 tf.config.experimental_run_functions_eagerly(True)
 
 
@@ -19,9 +21,24 @@ def _encode_observations(observations):
     return np.array(encoded_observations, dtype=float)
 
 
+def _delta_custom_loss(delta):
+    def custom_loss(y_true, y_pred):
+        out = K.clip(y_pred, 1e-8, 1 - 1e-8)
+        log_like = y_true * K.log(out)
+
+        return K.sum(-log_like * delta)
+
+    return custom_loss
+
+
 class Agent:
-    def __init__(self, shops, action_space_inverted):
+    def __init__(self, index, shops, action_space_inverted, load_models_data):
+        self.index = index
         self.shops = shops
+        self.base_model_dir = './data/models'
+        self.start_time = get_current_time()
+        self.load_models_data = load_models_data
+
         self.action_space_inverted = list(action_space_inverted)
         self.gamma = 0.99
         self.alpha = 0.00001
@@ -84,26 +101,41 @@ class Agent:
         raise NotImplementedError
 
     def _build_network(self):
-        input = Input(shape=(self.input_dims,))
+        if self.load_models_data is None:
+            input = Input(shape=(self.input_dims,))
+            delta = Input(shape=[1])
+            dense1 = Dense(self.fc1_dims, activation='relu')(input)
+            dense2 = Dense(self.fc2_dims, activation='relu')(dense1)
+
+            probs = Dense(self.n_actions, activation='softmax')(dense2)
+            values = Dense(1, activation='linear')(dense2)
+
+            actor = Model(inputs=[input, delta], outputs=[probs])
+            actor.compile(optimizer=Adam(lr=self.alpha), loss=_delta_custom_loss(delta))
+
+            critic = Model(inputs=[input], outputs=[values])
+            critic.compile(optimizer=Adam(lr=self.beta), loss='mean_squared_error')
+
+            policy = Model(inputs=[input], outputs=[probs])
+
+            return actor, critic, policy
+        else:
+            return self.load_models(self.load_models_data)
+
+    def save(self, episode):
+        self.actor.save(f"{self.base_model_dir}/{self.start_time}/agent_{self.index}/actor/episode_{episode}")
+        self.critic.save(f"{self.base_model_dir}/{self.start_time}/agent_{self.index}/critic/episode_{episode}")
+        self.policy.save(f"{self.base_model_dir}/{self.start_time}/agent_{self.index}/policy/episode_{episode}")
+
+    def load_models(self, load_models_data):
+        # recheck if model implementation has changed
+        # maybe custom loss function is not working properly
+        base_dir = f"{self.base_model_dir}/{load_models_data['start_time']}/agent_{self.index}"
         delta = Input(shape=[1])
-        dense1 = Dense(self.fc1_dims, activation='relu')(input)
-        dense2 = Dense(self.fc2_dims, activation='relu')(dense1)
-
-        probs = Dense(self.n_actions, activation='softmax')(dense2)
-        values = Dense(1, activation='linear')(dense2)
-
-        def custom_loss(y_true, y_pred):
-            out = K.clip(y_pred, 1e-8, 1 - 1e-8)
-            log_like = y_true * K.log(out)
-
-            return K.sum(-log_like * delta)
-
-        actor = Model(inputs=[input, delta], outputs=[probs])
-        actor.compile(optimizer=Adam(lr=self.alpha), loss=custom_loss)
-
-        critic = Model(inputs=[input], outputs=[values])
-        critic.compile(optimizer=Adam(lr=self.beta), loss='mean_squared_error')
-
-        policy = Model(inputs=[input], outputs=[probs])
-
+        actor = tf.keras.models.load_model(
+            f"{base_dir}/actor/episode_{load_models_data['episode']}",
+            custom_objects={'custom_loss': _delta_custom_loss(delta)}
+        )
+        critic = tf.keras.models.load_model(f"{base_dir}/critic/episode_{load_models_data['episode']}")
+        policy = tf.keras.models.load_model(f"{base_dir}/policy/episode_{load_models_data['episode']}")
         return actor, critic, policy

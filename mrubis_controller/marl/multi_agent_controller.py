@@ -3,9 +3,10 @@ from rank_learner import RankLearner
 
 
 class MultiAgentController:
-    def __init__(self, shop_distribution):
+    def __init__(self, shop_distribution, load_models_data):
         # list of named shops per agent identified by the index
         self.shop_distribution = shop_distribution
+        self.load_models_data = load_models_data
         self.rank_learner = RankLearner(0, None)
         self.agents = None
 
@@ -21,12 +22,16 @@ class MultiAgentController:
 
         return self.rank_learner.sort_actions(actions)
 
-    def save_models(self):
+    def save_models(self, episode):
         """ save models of agents and rank learner """
-        raise NotImplementedError
+        for agent in self.agents:
+            agent.save(episode)
+        self.rank_learner.save(episode)
 
     def load_models(self):
-        """ init models of agents and rank learner """
+        """ init models of agents and rank learner
+            is loaded when creating the agent and the correct parameters are set
+        """
         raise NotImplementedError
 
     def learn(self, states, actions, rewards, states_, dones):
@@ -46,8 +51,8 @@ class MultiAgentController:
     def _build_agents(self, action_space):
         """ based on shop distribution the agents will be initialized """
         agents = []
-        for shops in self.shop_distribution:
-            agents.append(Agent(shops, action_space))
+        for index, shops in enumerate(self.shop_distribution):
+            agents.append(Agent(index, shops, action_space, self.load_models_data))
         return agents
 
     def _build_observations(self, agent_index, observation):
