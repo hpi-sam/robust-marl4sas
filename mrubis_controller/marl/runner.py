@@ -5,12 +5,16 @@ import matplotlib.pyplot as plt
 
 
 class Runner:
-    def __init__(self, args, logger, shop_distribution):
+    def __init__(self, args, logger, shop_distribution, save_model=False, load_models_data=None):
         self.args = args
         self.logger = logger
+        self.shop_distribution = shop_distribution
+        self.load_models_data = load_models_data  # if not None saved models are loaded
         self.env = MrubisMockEnv()
-        self.mac = MultiAgentController(shop_distribution)
+        self.mac = MultiAgentController(shop_distribution, self.load_models_data)
         self.t = 0
+        self.save_model_interval = 1  # interval of saving models
+        self.save_model = save_model
 
     def reset(self):
         """ reset all variables and init env """
@@ -37,6 +41,9 @@ class Runner:
                 self.mac.learn(observations, actions, reward, observations_, terminated)
                 observations = observations_
 
+            if self.t % self.save_model_interval == 0:
+                self.mac.save_models(self.t)
+
             self.t += 1
             self.build_plot(rewards, f"Rewards till {self.t}", self.t)
 
@@ -53,5 +60,7 @@ class Runner:
 logging.basicConfig()
 logger = logging.getLogger('controller')
 logger.setLevel(logging.INFO)
-shop_distribution = [{'mRUBiS #1', 'mRUBiS #2'}, {'mRUBiS #3'}]
-Runner(None, logger, shop_distribution).run(20)
+shop_distribution_example = [{'mRUBiS #1', 'mRUBiS #2'}, {'mRUBiS #3'}]
+# load_model = {"start_time": "2022_01_19_12_37", "episode": 1}
+load_model = None
+Runner(None, logger, shop_distribution_example, save_model=True, load_models_data=load_model).run(2)
