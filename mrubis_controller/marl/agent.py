@@ -45,8 +45,8 @@ class Agent:
         self.beta = 0.00005
         self.n_actions = len(action_space_inverted)
         self.input_dims = self.n_actions
-        self.fc1_dims = 1024
-        self.fc2_dims = 512
+        self.fc1_dims = 24
+        self.fc2_dims = 24
 
         self.actor, self.critic, self.policy = self._build_network()
         self.action_space = [i for i in range(self.n_actions)]
