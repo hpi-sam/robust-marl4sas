@@ -17,6 +17,11 @@ def get_observation(step):
         return json.load(json_data_file)
 
 
+def get_current_utility(observation):
+    return {shop: float(list(components.items())[0][1]['shop_utility']) for shop, components in
+            observation.items()}
+
+
 class MrubisMockEnv(gym.Env):
     def __init__(self):
         super(MrubisMockEnv, self).__init__()
@@ -26,9 +31,11 @@ class MrubisMockEnv(gym.Env):
         self.prior_utility = None  # used for calculation of diff as a reward
         self.t = 0
         self.termination_t = 3
+        self.inner_t = 0
+        self.stats = {}
 
         self.utility_decrease_amount = 1  # if fix fails
-        self.utility_increase_amount = 1  # if fix succeeds
+        self.utility_increase_amount = 10  # if fix succeeds
 
     def step(self, actions):
         """ Returns observation, reward, terminated, info
@@ -37,6 +44,7 @@ class MrubisMockEnv(gym.Env):
             increases component_utility if fix is correct
             decreases component_utility if fix is wrong
         """
+        self.inner_t += 1
         for action in actions.values():
             current_shop = self.observation[action['shop']]
             current_failing_component = get_failing_component(current_shop)
@@ -49,6 +57,7 @@ class MrubisMockEnv(gym.Env):
                     # shop utility must be increased as well
                     current_shop['Availability Item Filter']['shop_utility'] = float(
                         current_shop['Availability Item Filter']['shop_utility']) + self.utility_increase_amount
+                    self.stats[action['shop']] = self.inner_t
                 else:
                     current_shop[current_failing_component]['component_utility'] = float(
                         current_shop[current_failing_component]['component_utility']) - self.utility_decrease_amount
@@ -61,18 +70,20 @@ class MrubisMockEnv(gym.Env):
                 raise NotImplementedError
         _reward = self._get_reward(self.observation)
         # check if all issues are fixed and load new observation if all are fixed
-        if all(failure is None for failure in
+        if not actions or all(failure is None for failure in
                [get_failing_component(self.observation[shop]) for shop in self.observation]):
             self.t += 1
-            self.prior_utility = None
+            self.inner_t = 0
             if not self._terminated():
                 self.observation = get_observation(self.t)
+                self.prior_utility = get_current_utility(self.observation)
         return _reward, self.observation, self._terminated(), self._info()
 
     def reset(self):
         """ Returns initial observations and states """
         self.t = 0
         self.observation = get_observation(self.t)
+        self.prior_utility = get_current_utility(self.observation)
         self.action_space = [components for shops, components in self.observation.items()][0].keys()
         return self.observation
 
@@ -96,17 +107,13 @@ class MrubisMockEnv(gym.Env):
         return self.t == self.termination_t
 
     def _info(self):
-        return {'t': self.t}
+        return {'t': self.t, 'stats': self.stats}
 
     def _get_reward(self, observation):
         """ returns the extracted reward per shop
         """
-        current_utility = {shop: float(list(components.items())[0][1]['shop_utility']) for shop, components in
-                           observation.items()}
-        if self.prior_utility is None:
-            diff_utility = {shop: 0 for shop, utility in current_utility.items()}
-        else:
-            diff_utility = {shop: current_utility[shop] - utility for shop, utility in self.prior_utility.items()}
+        current_utility = get_current_utility(observation)
+        diff_utility = {shop: current_utility[shop] - utility for shop, utility in self.prior_utility.items()}
         self.prior_utility = current_utility
         system_utility = sum(diff_utility.values())
         return diff_utility, system_utility
