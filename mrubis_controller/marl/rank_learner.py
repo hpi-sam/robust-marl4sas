@@ -1,3 +1,13 @@
+def prepare_step(inputs):
+    index = 0
+    sorted_actions = {}
+    for sublist in inputs:
+        for item in sublist:
+            sorted_actions[index] = item
+            index += 1
+    return sorted_actions
+
+
 class RankLearner:
     def __init__(self, stage, args):
         # stage 0 = no sorting as a baseline
@@ -11,7 +21,10 @@ class RankLearner:
 
     def sort_actions(self, inputs):
         """ Sorts the actions of each agents """
-        raise NotImplementedError
+        if self.stage == 0:
+            return prepare_step(inputs)
+        else:
+            raise NotImplementedError
 
     def learn(self):
         """ learn to rank """
