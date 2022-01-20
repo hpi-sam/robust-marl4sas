@@ -46,7 +46,7 @@ class Agent:
         self.n_actions = len(action_space_inverted)
         self.input_dims = self.n_actions
         self.fc1_dims = 24
-        self.fc2_dims = 24
+        # self.fc2_dims = 24
 
         self.actor, self.critic, self.policy = self._build_network()
         self.action_space = [i for i in range(self.n_actions)]
@@ -105,10 +105,10 @@ class Agent:
             input = Input(shape=(self.input_dims,))
             delta = Input(shape=[1])
             dense1 = Dense(self.fc1_dims, activation='relu')(input)
-            dense2 = Dense(self.fc2_dims, activation='relu')(dense1)
+            # dense2 = Dense(self.fc2_dims, activation='relu')(dense1)
 
-            probs = Dense(self.n_actions, activation='softmax')(dense2)
-            values = Dense(1, activation='linear')(dense2)
+            probs = Dense(self.n_actions, activation='softmax')(dense1)
+            values = Dense(1, activation='linear')(dense1)
 
             actor = Model(inputs=[input, delta], outputs=[probs])
             actor.compile(optimizer=Adam(lr=self.alpha), loss=_delta_custom_loss(delta))
