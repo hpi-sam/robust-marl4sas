@@ -16,7 +16,9 @@ import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
 
+import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.mdelab.morisia.comparch.AddReplica;
@@ -49,36 +51,11 @@ import mRUBiS_Tasks.Task_1;
 public class RuleSelector {
 
 	private static Random random = new Random();
-	// Open up the socket
-	private static int port = 8080;
 	
-	//System.out.println(port);
-	private static ServerSocket server;
-	private static Socket client;
-	public static BufferedReader in;
-    public static PrintWriter out;
-    public static PrintWriter logger;
     private static Path issueToRulesPath = Paths.get("issueToRulesMap.json"); // issues, affected components and associated rules;
     private static Path rulesToExecutePath= Paths.get("rulesToExecute.json"); // rules to execute on this run
     private static int run = 1;
     private static Boolean initialStateSent = false;
-    
-    private static void ensureSocketIsOpen() {
-    	if (server == null || (server != null && !server.isBound())) {
-        	try {
-    			server = new ServerSocket(port);
-    			System.out.println("wait for connection on port " + port);
-    			client = server.accept();
-    			System.out.println("got connection on port " + port);
-    			in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-    			out = new PrintWriter(client.getOutputStream(),true);
-    			logger = new PrintWriter("log.txt", "UTF-8");
-    		} catch (IOException e) {
-    			System.out.println("Problem with opening the socket");
-    			e.printStackTrace();
-    		}	
-    	}
-    }
 	
 
 	private final static Logger LOGGER = Logger.getLogger(RuleSelector.class
@@ -98,16 +75,16 @@ public class RuleSelector {
 		Utilityfunction UTILITY_FUNCTION = Utilityfunction.Optimal_Combined;
 		
 		LearningQuality quality=null;
-	LearningModel model=null;
-
-		
-		
-	if (Task_1.CURRENT_APPROACH==Approaches.Learning){
-		System.out.print("\n >> Loading Input to select Actions");
-		learningApproach(issue , UTILITY_FUNCTION );
-		
-	}
-	else if (Task_1.CURRENT_APPROACH == Approaches.Udriven) {
+		LearningModel model=null;
+	
+			
+			
+		if (Task_1.CURRENT_APPROACH==Approaches.Learning){
+			System.out.print("\n >> Loading Input to select Actions");
+			learningApproach(issue , UTILITY_FUNCTION );
+			
+		}
+		else if (Task_1.CURRENT_APPROACH == Approaches.Udriven) {
 			ourApproach(issue , UTILITY_FUNCTION , quality, model);
 		}else if (Task_1.CURRENT_APPROACH == Approaches.RANDOM) {
 
@@ -155,38 +132,54 @@ public class RuleSelector {
 	
 	
 	private static void sendNumberOfShopsToPython(Architecture architecture) {
-		ensureSocketIsOpen();
+		/*String toPython = "a";
 		
-		String fromPython = "";
+		for (Integer i = 1; i < 64001; i++) {
+			System.out.println("Sending string of length " + i.toString());
+			ChunkedSocketCommunicator.println(toPython);
+			String fromPython = "";
+			while (true) {
+				try {
+					fromPython = ChunkedSocketCommunicator.readln();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				if (Integer.parseInt(fromPython) == i) {
+					System.out.println("Sent successfully.");
+					break;
+				}
+				else {
+					System.out.println("Error sending at length " + i.toString());
+					break;
+				}
+			}
+			toPython += "a";
+		}*/
+		
+		/*String fromPython = "";
 		System.out.println("Waiting for Python to send 'get_number_of_shops'...");
 		while(true) { 
-			try {
-				fromPython = in.readLine();
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
+			fromPython = ChunkedSocketCommunicator.readln();
 			if (fromPython.equals("get_number_of_shops")) {
 				String state = "not_available";
 				state = Observations.getNumberOfShops(architecture);
-				out.println(state);
-				logger.println(state);
+				ChunkedSocketCommunicator.println(state);
+				ChunkedSocketCommunicator.logger.println(state);
 				break;
 			}
-		}
+		}*/
+		ChunkedSocketCommunicator.waitForMessage("get_number_of_shops");
+		String state = "not_available";
+		state = Observations.getNumberOfShops(architecture);
+		ChunkedSocketCommunicator.println(state);
 	}
 	
 	
 	public static void sendFailProbabilityToPython() {
-		ensureSocketIsOpen();
-		
 		String fromPython = "";
 		System.out.println("Waiting for Python to send json...");
 		while(true) { 
-			try {
-				fromPython = in.readLine();
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
+			fromPython = ChunkedSocketCommunicator.readln();
 			if (fromPython.equals("fail_probability_finished")) {
 				System.out.println("Finished writing fail probabilities.");
 				break;
@@ -211,22 +204,10 @@ public class RuleSelector {
 						e.printStackTrace();
 					}
 					
-					out.println(json);
-					logger.println(json);
+					ChunkedSocketCommunicator.println(json);
 				} catch (IOException e) {
 					System.out.println("Did not receive valid json from Python:");
 					System.out.println(fromPython);
-					if (fromPython.equals("exit")) {
-						logger.println("closed");
-						out.close();
-						logger.close();
-						try {
-							server.close();
-						} catch (IOException e1) {
-							e1.printStackTrace();
-						}
-						break;
-					}
 				}
 			}
 		}
@@ -234,72 +215,22 @@ public class RuleSelector {
 	
 	
 	private static void sendInitialStateToPython(Tenant shop) {
-		
-		ensureSocketIsOpen();
-		
-		String fromPython = "";
-		System.out.println("Waiting for Python to send 'get_initial_state'...");
-		while(true) { 
-			try {
-				fromPython = in.readLine();
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-			if (fromPython.equals("get_initial_state")) {
-				String state = "not_available";
-				state = Observations.getInitialState(shop);
-				out.println(state);
-				logger.println(state);
-				break;
-			}
-		}
+		ChunkedSocketCommunicator.waitForMessage("get_initial_state");
+		String state = "not_available";
+		state = Observations.getInitialState(shop);
+		ChunkedSocketCommunicator.println(state);
 	}
 	
 	
 	private static void sendNumberOfIssuesPerShopToPython(Architecture architecture) {
-		
-		ensureSocketIsOpen();
-		
-		String fromPython = "";
-		System.out.println("Waiting for Python to send 'get_number_of_issues_in_run'...");
-		while(true) { 
-			try {
-				fromPython = in.readLine();
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-			if (fromPython.equals("get_number_of_issues_in_run")) {
-				String state = "not_available";
-				state = Observations.getNumberOfIssuesPerShop(architecture);
-				out.println(state);
-				logger.println(state);
-				break;
-			}  else if (fromPython.equals("exit")) {
-				logger.println("closed");
-				out.close();
-				logger.close();
-				try {
-					server.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				break;
-			}
-		}
-		
-		// Break the mRUBIS loop if exit signal received from Python
-		if (fromPython.equals("exit")) {
-			System.out.println("Received 'exit' signal from Python, exiting...");
-			System.exit(1);
-		}
-		
+		ChunkedSocketCommunicator.waitForMessage("get_number_of_issues_in_run");
+		String state = "not_available";
+		state = Observations.getNumberOfIssuesPerShop(architecture);
+		ChunkedSocketCommunicator.println(state);		
 	}
 	
 	
 	private static void sendCurrentIssueToPython(Issue issue) {
-		
-		ensureSocketIsOpen();
-		
 		// Read json file generated in UtilityIncreasePredictor
 		ObjectMapper mapper = new ObjectMapper();
 		HashMap<String, HashMap<String, HashMap<String, HashMap<String, Double>>>> issueToRulesMapFromFile = null;
@@ -311,65 +242,29 @@ public class RuleSelector {
 
 		// send current state to the python side
 		Architecture architecture = issue.getAnnotations().getArchitecture();
-		String fromPython = "";
-		System.out.println("Waiting for Python to send 'get_issue'...");
-		while(true) { 
-			try {
-				fromPython = in.readLine();
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-			if (fromPython.equals("get_issue")) {
-				String state = "not_available";
-				state = Observations.getAffectedComponentStatus(architecture, issueToRulesMapFromFile);
-				out.println(state);
-				logger.println(state);
-				break;
-			}
-		}
-		
+		ChunkedSocketCommunicator.waitForMessage("get_issue");
+		String state = "not_available";
+		state = Observations.getAffectedComponentStatus(architecture, issueToRulesMapFromFile);
+		ChunkedSocketCommunicator.println(state);		
 	}
 		
 	private static void getRuleFromPython (Issue issue) {
 		// Get the rules to execute from the python side
 		System.out.println("Waiting for rules from Python side...");
-		String fromPython = "";
-		while(true) {
-			try {
-				fromPython = in.readLine();
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-
-			try {
-
-				HashMap<String, HashMap<String, HashMap<String, String>>> rulesToExecute = new HashMap<String, HashMap<String, HashMap<String, String>>>();
-
-				ObjectMapper fromPythonMapper = new ObjectMapper();
-				rulesToExecute = new ObjectMapper().readValue(fromPython, HashMap.class);
-				fromPythonMapper.writeValue(rulesToExecutePath.toFile(), rulesToExecute);
-				out.println("rule_received");
-				logger.println(rulesToExecute);
-				System.out.println("Rule received: " + rulesToExecute);
-				break;
-
-			} catch (IOException e) {
-				System.out.println("Did not receive valid json from Python:");
-				System.out.println(fromPython);
-				if (fromPython.equals("exit")) {
-					logger.println("closed");
-					out.close();
-					logger.close();
-					try {
-						server.close();
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-					break;
-				}
-			}
-
+		HashMap<String, HashMap<String, HashMap<String, String>>> rulesToExecute = ChunkedSocketCommunicator.readJSON(rulesToExecute);
+		try {
+			ObjectMapper fromPythonMapper = new ObjectMapper();
+			fromPythonMapper.writeValue(rulesToExecutePath.toFile(), rulesToExecute);
+		} catch (IOException e) {
+			System.out.println("Failed to write JSON to file:");
+			System.out.println(rulesToExecute);
+			e.printStackTrace();
 		}
+		
+		ChunkedSocketCommunicator.println("rule_received");
+		
+		System.out.println("Rule received: " + rulesToExecute);
+		
 	}
 
 	
