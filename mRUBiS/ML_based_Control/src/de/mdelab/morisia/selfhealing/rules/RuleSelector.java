@@ -251,7 +251,7 @@ public class RuleSelector {
 	private static void getRuleFromPython (Issue issue) {
 		// Get the rules to execute from the python side
 		System.out.println("Waiting for rules from Python side...");
-		HashMap<String, HashMap<String, HashMap<String, String>>> rulesToExecute = ChunkedSocketCommunicator.readJSON(rulesToExecute);
+		HashMap<String, HashMap<String, HashMap<String, String>>> rulesToExecute = ChunkedSocketCommunicator.readJSON(new HashMap<String, HashMap<String, HashMap<String, String>>>());
 		try {
 			ObjectMapper fromPythonMapper = new ObjectMapper();
 			fromPythonMapper.writeValue(rulesToExecutePath.toFile(), rulesToExecute);
