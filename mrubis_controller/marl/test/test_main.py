@@ -1,3 +1,3 @@
 
 def test():
-    assert 4 == 3
+    assert 4 == 4
