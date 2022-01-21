@@ -76,6 +76,16 @@ class MRubisController():
 
     def _get_initial_state(self):
         '''Query mRUBiS for the number of shops, get their initial states'''
+        """for i in range(1, 64001):
+            from_mrubis = ''
+            while True:
+                data = self.socket.recv(64000)
+                from_mrubis = data.decode('utf-8').strip()
+                if from_mrubis != '':                    
+                    logger.info('Received message of length ' + str(len(from_mrubis)))
+                    self.socket.send(f'{str(len(from_mrubis))}\n'.encode("utf-8"))
+                    break"""
+
         self.number_of_shops = self._get_from_mrubis(
             'get_number_of_shops').get('number_of_shops')
         logger.info(f'Number of mRUBIS shops: {self.number_of_shops}')
