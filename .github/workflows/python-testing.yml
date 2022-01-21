@@ -19,6 +19,5 @@ jobs:
           pip install pytest
           pip install mypy
       - name: Test with pytest
-        with:
-          run: python -m pytest
-          working-directory: ./mrubis_controller/marl
+        run: python -m pytest
+        working-directory: ./mrubis_controller/marl
