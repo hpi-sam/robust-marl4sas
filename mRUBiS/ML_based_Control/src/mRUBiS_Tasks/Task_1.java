@@ -61,6 +61,7 @@ import de.mdelab.morisia.comparch.simulator.impl.Trace_Deterministic;
 import de.mdelab.morisia.comparch.simulator.impl.testTrace;
 import de.mdelab.morisia.selfhealing.incremental.EventListener;
 import de.mdelab.morisia.selfhealing.incremental.EventQueue;
+import de.mdelab.morisia.selfhealing.rules.ChunkedSocketCommunicator;
 import de.mdelab.morisia.selfhealing.rules.ComponentDependencies;
 import de.mdelab.morisia.selfhealing.rules.CostPredictor;
 import de.mdelab.morisia.selfhealing.rules.IssueComparator;
@@ -395,26 +396,8 @@ public class Task_1 {
 
 					// Get custom fix ordering from the controller
 					System.out.println("Waiting for Python to send order in which to apply fixes...");
-					String fromPython = "";
-					HashMap<String, HashMap<String, String>> fixOrder = new HashMap<String, HashMap<String, String>>();
-					while(true) {
-						fromPython = RuleSelector.in.readLine();
-
-						try {
-							// get order in which to apply fixes from python
-							fixOrder = new ObjectMapper().readValue(fromPython, HashMap.class);
-
-							RuleSelector.out.println("fix_order_received");
-							RuleSelector.logger.println("fix_order_received");
-							break;
-						} catch (IOException e) {
-							System.out.println("Did not receive valid json from Python:");
-							System.out.println(fromPython);
-							continue;
-						}
-
-					}
-
+					HashMap<String, HashMap<String, String>> fixOrder = ChunkedSocketCommunicator.readJSON(new HashMap<String, HashMap<String, String>>());
+					ChunkedSocketCommunicator.println("fix_order_received");
 					// reorder the issues according to the order sent by the controller
 					
 					System.out.println("org: " + allIssues);
@@ -472,29 +455,10 @@ public class Task_1 {
 
 
 					System.out.println("Waiting for Python to send fixed components JSON...");
-					String fromPython = "";
-					while(true) {
-						fromPython = RuleSelector.in.readLine();
-
-						try {
-							// get components fixed in this run from python
-							//HashMap<String, List<String>> fixedComponents = new HashMap<String, List<String>>();
-							HashMap<String, List<String>> fixedComponents = new HashMap<String, List<String>>();
-							fixedComponents = new ObjectMapper().readValue(fromPython, HashMap.class);
-
-							// lookup their current state and send to python
-							String state = "not_available";
-							state = Observations.getFixedComponentStatus(architecture, fixedComponents);
-							RuleSelector.out.println(state);
-							RuleSelector.logger.println(state);
-							break;
-						} catch (IOException e) {
-							System.out.println("Did not receive valid json from Python:");
-							System.out.println(fromPython);
-							continue;
-						}
-
-					}
+					HashMap<String, List<String>> fixedComponents = ChunkedSocketCommunicator.readJSON(new HashMap<String, List<String>>());
+					String state = "not_available";
+					state = Observations.getFixedComponentStatus(architecture, fixedComponents);
+					ChunkedSocketCommunicator.println(state);
 
 
 					annotations.getIssues().clear();

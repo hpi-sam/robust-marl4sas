@@ -52,7 +52,7 @@ class MrubisEnv(gym.Env):
         self.reset()
 
     def step(self, actions):
-        """ Returns reward, terminated, info """
+        """ Returns observation, reward, terminated, info """
         raise NotImplementedError
 
     def reset(self):
