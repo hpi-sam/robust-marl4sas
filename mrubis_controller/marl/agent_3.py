@@ -44,8 +44,8 @@ class Agent3:
 
         self.action_space_inverted = list(action_space_inverted)
         self.gamma = 0.99
-        self.alpha = 0.00001
-        self.beta = 0.00055
+        self.alpha = 0.001
+        self.beta = 0.005
         self.n_actions = len(action_space_inverted)
         self.input_dims = self.n_actions
         self.fc1_dims = 24
