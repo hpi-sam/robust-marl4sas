@@ -23,4 +23,4 @@ jobs:
           pip install mypy
       - name: Test with pytest
         run: python -m pytest
-        working-directory: .
+        working-directory: ./
