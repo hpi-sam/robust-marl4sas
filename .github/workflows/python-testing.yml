@@ -1,9 +1,6 @@
 name: pytest Test
 
-on:
-  push:
-    paths:
-      - 'mrubis_controller/**'
+on: [push, pull_request]
 
 jobs:
   build:
