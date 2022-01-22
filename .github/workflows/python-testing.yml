@@ -23,4 +23,4 @@ jobs:
           pip install mypy
       - name: Test with pytest
         run: python -m pytest
-        working-directory: ./mrubis_controller/marl
+        working-directory: .
