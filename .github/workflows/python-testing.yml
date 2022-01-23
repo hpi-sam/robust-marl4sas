@@ -19,5 +19,5 @@ jobs:
           pip install pipenv
           pipenv install
       - name: Test with pytest
-        run: pipenv run test
+        run: PYTHONPATH=. pipenv run test
         working-directory: ./
