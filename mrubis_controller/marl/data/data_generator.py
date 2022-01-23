@@ -1,5 +1,38 @@
 import random
-from shop_variables import shop_name, component_names, get_failing_dependencies
+
+
+shop_name = "mRUBiS #"
+component_names = ["Availability Item Filter",
+                   "Bid and Buy Service",
+                   "Seller Reputation Item Filter",
+                   "User Management Service",
+                   "Reputation Service",
+                   "Comment Item Filter",
+                   "Recommendation Item Filter",
+                   "Authentication Service",
+                   "Persistence Service",
+                   "Item Management Service",
+                   "Buy Now Item Filter",
+                   "Query Service",
+                   "Past Sales Item Filter",
+                   "Inventory Service",
+                   "Region Item Filter",
+                   "Category Item Filter",
+                   "Last Second Sales Item Filter",
+                   "Future Sales Item Filter"]
+
+
+def get_failing_dependencies(seed=1):
+    """ Returns for each component index a sorted list of most probable component indices
+        which would fail in the observations.
+        This should simulate the shop internal component dependencies.
+    """
+    random.seed(seed)
+    dependencies = []
+    for i in range(18):
+        probabilities = {i: random.uniform(0, 1) for i in range(18)}
+        dependencies.append(sorted(probabilities, key=probabilities.get, reverse=True))
+    return dependencies
 
 
 def _generate_shop(failing_component, failure_name="CF2"):
@@ -43,6 +76,7 @@ def _get_dependency_fails(failing_component_dependencies, number_of_failures, of
 
 def generate_shops_with_offset_failures(number_of_shops, number_of_failures=1, offset=1, use_dependencies=True, seed=1):
     """ returns shop observations and the actual failing component per shop """
+    # TODO return ranking component failures
     failing_dependencies = get_failing_dependencies(1)
     random.seed(seed)
     shops_obs = {}
