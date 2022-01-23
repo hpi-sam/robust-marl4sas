@@ -43,26 +43,14 @@ def _generate_state_fails(number_of_shops):
     return failing_components
 
 
-def generate_shops_with_offset(number_of_shops, offset=1, seed=1):
+def generate_shops_with_offset_failures(number_of_shops, offset=1, number_of_failures=1, seed=1):
     random.seed(seed)
     shops_obs = {}
     shops_state = {}
     failing_component_indices = _generate_state_fails(number_of_shops)
     for i in range(1, 1 + number_of_shops):
-        obs_fails = [component_names[(failing_component_indices[i - 1] + offset) % 18]]
-        shops_obs[shop_name + str(i)] = _generate_shop(obs_fails)
-        shops_state[shop_name + str(i)] = component_names[failing_component_indices[i - 1]]
-
-    return shops_obs, shops_state
-
-
-def generate_shops_with_multiple_failures(number_of_shops, number_of_failures=2, seed=1):
-    random.seed(seed)
-    shops_obs = {}
-    shops_state = {}
-    failing_component_indices = _generate_state_fails(number_of_shops)
-    for i in range(1, 1 + number_of_shops):
-        obs_fails = [component_names[i] for i in random.sample(range(0, 17), number_of_failures)]
+        obs_fails = [component_names[(failing_component_indices[i - 1] + offset + j) % 18] for j in
+                     range(number_of_failures)]
         shops_obs[shop_name + str(i)] = _generate_shop(obs_fails)
         shops_state[shop_name + str(i)] = component_names[failing_component_indices[i - 1]]
 
@@ -70,4 +58,4 @@ def generate_shops_with_multiple_failures(number_of_shops, number_of_failures=2,
 
 
 if __name__ == "__main__":
-    generate_shops_with_offset(5)
+    generate_shops_with_offset_failures(2, 3, 2)

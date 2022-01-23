@@ -1,9 +1,8 @@
 import gym
-import json
-import os
-from data.data_generator import generate_shops_with_offset
+# import json
+# import os
+from data.data_generator import generate_shops_with_offset_failures
 
-NUMBER_OF_SHOPS = 5
 
 def get_failing_component(current_shop):
     """ returns the current failing component or None if no failure available """
@@ -13,9 +12,9 @@ def get_failing_component(current_shop):
     return None
 
 
-def get_observation(step):
+def get_observation(number_of_shops, step):
     """ returns the observation and actual state for the given step """
-    return generate_shops_with_offset(NUMBER_OF_SHOPS)
+    return generate_shops_with_offset_failures(number_of_shops)
     # with open(os.path.dirname(__file__) + f"/data/test/observation_step_{step}.json") as json_data_file:
     #     return json.load(json_data_file)
 
@@ -26,8 +25,9 @@ def get_current_utility(observation):
 
 
 class MrubisMockEnv(gym.Env):
-    def __init__(self):
+    def __init__(self, number_of_shops=3):
         super(MrubisMockEnv, self).__init__()
+        self.number_of_shops = number_of_shops
         self.action_space = None
         self.observation_space = None
         self.failing_components = None
@@ -80,14 +80,14 @@ class MrubisMockEnv(gym.Env):
             self.t += 1
             self.inner_t = 0
             if not self._terminated():
-                self.observation, self.failing_components = get_observation(self.t)
+                self.observation, self.failing_components = get_observation(self.number_of_shops, self.t)
                 self.prior_utility = get_current_utility(self.observation)
         return _reward, self.observation, self._terminated(), self._info()
 
     def reset(self):
         """ Returns initial observations and states """
         self.t = 0
-        self.observation, self.failing_components = get_observation(self.t)
+        self.observation, self.failing_components = get_observation(self.number_of_shops, self.t)
         self.prior_utility = get_current_utility(self.observation)
         self.action_space = [components for shops, components in self.observation.items()][0].keys()
         return self.observation
