@@ -1,6 +1,6 @@
 name: pytest Test
 
-on: [push, pull_request]
+on: push
 
 jobs:
   build:
@@ -19,5 +19,5 @@ jobs:
           pip install pipenv
           pipenv install
       - name: Test with pytest
-        run: python -m pytest
+        run: pipenv run test
         working-directory: ./
