@@ -36,7 +36,7 @@ def _delta_custom_loss(delta):
 
 
 class Agent3:
-    def __init__(self, index, shops, action_space_inverted, load_models_data):
+    def __init__(self, index, shops, action_space_inverted, load_models_data, ridge_regression_train_data_path):
         self.index = index
         self.shops = shops
         self.base_model_dir = './data/models'
@@ -60,7 +60,7 @@ class Agent3:
         # stage 1 = sorting of actions
         self.stage = 1
 
-        self.agent_action_sorter = AgentActionSorter()
+        self.agent_action_sorter = AgentActionSorter(ridge_regression_train_data_path)
 
     def choose_action(self, observations):
         """ chooses actions based on observations

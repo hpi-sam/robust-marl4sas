@@ -1,5 +1,5 @@
 from numpy.testing import assert_array_equal
-
+from pathlib import Path
 from mrubis_controller.marl.agent_3 import Agent3 as Agent
 
 
@@ -12,7 +12,7 @@ def test_save_and_load_models():
                     'Future Sales Item Filter']
     shops = {'mRUBiS #1'}
     episode = 0
-    agent = Agent(0, shops, action_space, None)
+    agent = Agent(0, shops, action_space, None, Path('./data/TrainingmRUBiS_Theta0.05_NonStationary.csv'))
     agent.save(episode)
     load_model = {"start_time": agent.start_time, "episode": episode}
     actor, critic, policy = agent.load_models(load_model)
