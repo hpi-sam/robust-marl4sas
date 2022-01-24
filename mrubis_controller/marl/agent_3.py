@@ -116,13 +116,13 @@ class Agent3:
 
     def _build_network(self):
         if self.load_models_data is None:
-            input = Input(shape=(self.input_dims,))
-            delta = Input(shape=[1])
-            dense1 = Dense(self.fc1_dims, activation='relu')(input)
+            input = Input(shape=(self.input_dims,), name='input')
+            delta = Input(shape=[1], name='delta')
+            dense1 = Dense(self.fc1_dims, activation='relu', name='dense1')(input)
             # dense2 = Dense(self.fc2_dims, activation='relu')(dense1)
 
-            probs = Dense(self.n_actions, activation='softmax')(dense1)
-            values = Dense(1, activation='linear')(dense1)
+            probs = Dense(self.n_actions, activation='softmax', name='probs')(dense1)
+            values = Dense(1, activation='linear', name='values')(dense1)
 
             actor = Model(inputs=[input, delta], outputs=[probs])
             # actor.compile(optimizer=Adam(lr=self.alpha), loss=_delta_custom_loss(delta))
@@ -139,17 +139,21 @@ class Agent3:
     def save(self, episode):
         self.actor.save(f"{self.base_model_dir}/{self.start_time}/agent_{self.index}/actor/episode_{episode}")
         self.critic.save(f"{self.base_model_dir}/{self.start_time}/agent_{self.index}/critic/episode_{episode}")
-        self.policy.save(f"{self.base_model_dir}/{self.start_time}/agent_{self.index}/policy/episode_{episode}")
 
     def load_models(self, load_models_data):
         # recheck if model implementation has changed
         # maybe custom loss function is not working properly
         base_dir = f"{self.base_model_dir}/{load_models_data['start_time']}/agent_{self.index}"
-        delta = Input(shape=[1])
-        actor = tf.keras.models.load_model(
-            f"{base_dir}/actor/episode_{load_models_data['episode']}",
-            custom_objects={'custom_loss': _delta_custom_loss(delta)}
-        )
+
+        # load critic
         critic = tf.keras.models.load_model(f"{base_dir}/critic/episode_{load_models_data['episode']}")
-        policy = tf.keras.models.load_model(f"{base_dir}/policy/episode_{load_models_data['episode']}")
+
+        # load actor and set layers
+        actor_copy = tf.keras.models.load_model(f"{base_dir}/actor/episode_{load_models_data['episode']}")
+        probs = actor_copy.get_layer('probs')(critic.get_layer('dense1').output)
+        actor = Model(inputs=[critic.get_layer('input').input, actor_copy.get_layer('delta').input], outputs=[probs])
+
+        # load policy
+        policy = Model(inputs=[critic.get_layer('input').input], outputs=[probs])
+
         return actor, critic, policy
