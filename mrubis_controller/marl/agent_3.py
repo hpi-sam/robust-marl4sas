@@ -77,7 +77,8 @@ class Agent3:
                 decoded_action = _decoded_action(action, observations)
                 step = {'shop': shop_name, 'component': decoded_action}
                 if self.stage >= 1:
-                    step['predicted_utility'] = self.agent_action_sorter.predict_optimal_utility_of_fixed_components(step, components)
+                    step['predicted_utility'] = self.agent_action_sorter.predict_optimal_utility_of_fixed_components(
+                        step, components)
                 if self.stage == 2:
                     # reduce predicted utility by uncertainty
                     step['predicted_utility'] *= probabilities[action]
@@ -105,9 +106,9 @@ class Agent3:
 
             with tf.GradientTape() as tape:
                 y_pred = self.actor(state)
-                out = K.clip(y_pred, 1e-8, 1-1e-8)
+                out = K.clip(y_pred, 1e-8, 1 - 1e-8)
                 log_lik = _actions * K.log(out)
-                myloss = K.sum(-log_lik*delta)
+                myloss = K.sum(-log_lik * delta)
                 print(f"loss: {myloss}")
             grads = tape.gradient(myloss, self.actor.trainable_variables)
 

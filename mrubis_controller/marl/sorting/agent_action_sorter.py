@@ -4,7 +4,6 @@ import pandas as pd
 from pathlib import Path
 
 
-
 class AgentActionSorter:
     def __init__(self):
         self.utility_model = RidgeUtilityPredictor()
