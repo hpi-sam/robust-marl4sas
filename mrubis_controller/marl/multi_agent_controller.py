@@ -9,7 +9,7 @@ class MultiAgentController:
         # list of named shops per agent identified by the index
         self.shop_distribution = shop_distribution
         self.load_models_data = load_models_data
-        self.rank_learner = RankLearner(0, None)
+        self.rank_learner = RankLearner(1, None)
         self.agents = None
 
     def select_actions(self, observations):
@@ -28,7 +28,6 @@ class MultiAgentController:
         """ save models of agents and rank learner """
         for agent in self.agents:
             agent.save(episode)
-        self.rank_learner.save(episode)
 
     def load_models(self):
         """ init models of agents and rank learner

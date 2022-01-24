@@ -1,11 +1,19 @@
+import numpy as np
+
+
 def prepare_step(inputs):
     index = 0
     sorted_actions = {}
-    for sublist in inputs:
-        for item in sublist:
-            sorted_actions[index] = item
-            index += 1
+    for input in inputs:
+        sorted_actions[index] = input
+        index += 1
     return sorted_actions
+
+
+def _rank_actions(inputs):
+    filtered_inputs = [i for i in inputs if i]  # remove empty arrays
+    sorted_inputs = sorted(np.array(filtered_inputs).flatten(), key=lambda d: d['predicted_utility'], reverse=True)
+    return prepare_step(sorted_inputs)
 
 
 class RankLearner:
@@ -22,15 +30,10 @@ class RankLearner:
     def sort_actions(self, inputs):
         """ Sorts the actions of each agents """
         if self.stage == 0:
-            return prepare_step(inputs)
+            return prepare_step(np.array(inputs).flatten())
         else:
-            raise NotImplementedError
+            return _rank_actions(inputs)
 
     def learn(self):
         """ learn to rank """
         raise NotImplementedError
-
-    def save(self, episode):
-        """ save model """
-        if self.stage != 0:
-            raise NotImplementedError

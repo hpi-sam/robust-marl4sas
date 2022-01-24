@@ -11,6 +11,8 @@ tensorflow = "==2.2.0"
 keras = "==2.4.2"
 pytest = "*"
 mypy = "*"
+pandas = "*"
+sklearn = "*"
 
 [dev-packages]
 numpy.testing = "*"

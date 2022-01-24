@@ -1,0 +1,17 @@
+from component_utility_predictor import RidgeUtilityPredictor
+# from component_dependencies import ComponentDependencyModel
+import pandas as pd
+from pathlib import Path
+
+
+
+class AgentActionSorter:
+    def __init__(self):
+        self.utility_model = RidgeUtilityPredictor()
+        # Train the model on the provided batch file
+        self.utility_model.load_train_data(Path('../../data/TrainingmRUBiS_Theta0.05_NonStationary.csv'))
+        self.utility_model.train_on_batch_file()
+
+    def predict_optimal_utility_of_fixed_components(self, action, observation):
+        """Predict the optimal utility of a component which should be fixed"""
+        return self.utility_model.predict_on_mrubis_output(pd.DataFrame(observation[action['component']], index=[0]))[0]
