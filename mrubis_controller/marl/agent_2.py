@@ -1,4 +1,4 @@
-# follows https://github.com/keras-team/keras-io/blob/8d04d58da31e609683ffb34f8a3907e1c5292a06/examples/rl/actor_critic_cartpole.py#L84
+# follows https://keras.io/examples/rl/actor_critic_cartpole/
 
 from keras import backend as K
 from keras.layers import Input
