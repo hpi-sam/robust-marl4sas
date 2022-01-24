@@ -8,7 +8,7 @@ from keras.optimizers import Adam
 import tensorflow as tf
 import numpy as np
 
-from marl.sorting.agent_action_sorter import AgentActionSorter
+from mrubis_controller.marl.sorting.agent_action_sorter import AgentActionSorter
 from mrubis_controller.marl.helper import get_current_time
 
 tf.config.experimental_run_functions_eagerly(True)
