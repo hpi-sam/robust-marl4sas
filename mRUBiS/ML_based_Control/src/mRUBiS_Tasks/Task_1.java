@@ -38,6 +38,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.mdelab.mlsdm.Activity;
 import de.mdelab.mlsdm.interpreter.MLSDMInterpreter;
 import de.mdelab.morisia.comparch.Annotations;
+import de.mdelab.morisia.comparch.ArchitecturalElement;
 import de.mdelab.morisia.comparch.Architecture;
 import de.mdelab.morisia.comparch.CF1;
 import de.mdelab.morisia.comparch.CF2;
@@ -55,8 +56,10 @@ import de.mdelab.morisia.comparch.Rule;
 import de.mdelab.morisia.comparch.Tenant;
 import de.mdelab.morisia.comparch.simulator.Capability;
 import de.mdelab.morisia.comparch.simulator.ComparchSimulator;
+import de.mdelab.morisia.comparch.simulator.ComparchSimulatorException;
 import de.mdelab.morisia.comparch.simulator.Injection;
 import de.mdelab.morisia.comparch.simulator.InjectionStrategy;
+import de.mdelab.morisia.comparch.simulator.Injector;
 import de.mdelab.morisia.comparch.simulator.IssueType;
 import de.mdelab.morisia.comparch.simulator.impl.Trace_1;
 import de.mdelab.morisia.comparch.simulator.impl.Trace_2;
@@ -279,25 +282,13 @@ public class Task_1 {
 				 * Analyze
 				 */
 				analyze(interpreter, annotations, A_CF1, A_CF2, A_CF3, A_CF5);
-				System.out.printf("\n>> Analyze Complete\n\n");
-				ArchitectureUtilCal.computeOverallUtility(architecture);
-
-
-				/*
-				 * Plan
-				 */
-				plan(interpreter, annotations, P_CF1, P_CF2, P_CF3, P_CF5);
-				// Sorting the failures to address first
+				
 				List<Issue> allIssues = new LinkedList<>();
 				allIssues.addAll(annotations.getIssues());
 				
-				// do propagation
-				List<List<Issue>> listofTraces = new ArrayList<>(new ArrayList<>());
-				
-				for (Issue issue : allIssues) {
-					List<Issue> trace = new LinkedList<>();
+//				 do propagation and reanalyze 			
+				for (Issue issue: allIssues) {
 					String componentName = issue.getAffectedComponent().getType().getName();
-					trace.add(issue);
 					List<String> traceOfFailingComponentNames = FailurePropagationTraceCreator.createTrace(componentName);
 					for (String currentComponent : traceOfFailingComponentNames) {
 						
@@ -306,17 +297,36 @@ public class Task_1 {
 						// find correct component to inject
 						for( Component component : tenant.getComponents()) {
 							if (component.getType().getName().equals(currentComponent)) {
-								new Injection<Component>(issueType, component);
-								trace.add(component.getIssues().get(0));
+								if (issueType == IssueType.CF2) {
+									Injector<ProvidedInterface> injector = getInjector(issueType,
+											component.getProvidedInterfaces().get(0), simulator);
+									injector.inject(component.getProvidedInterfaces().get(0));
+								}
+								else {
+									Injector<Component> injector = getInjector(issueType,
+										component, simulator);
+									injector.inject(component);
+								}
 							}
-
 						}
-					}
-					
-					
+					}	
 				}
+		
+				analyze(interpreter, annotations, A_CF1, A_CF2, A_CF3, A_CF5);
+				System.out.printf("\n>> Analyze Complete\n\n");
+				ArchitectureUtilCal.computeOverallUtility(architecture);
+
+				// Sorting the failures to address first
+				allIssues.clear();
+				allIssues.addAll(annotations.getIssues());
 
 
+				/*
+				 * Plan
+				 */
+				plan(interpreter, annotations, P_CF1, P_CF2, P_CF3, P_CF5);
+				
+				
 
 				//					if (CURRENT_APPROACH == Approaches.RANDOM) 
 				//						{shuffle(allIssues);}
@@ -589,6 +599,23 @@ public class Task_1 {
 		}
 
 
+	}
+	
+	private static <T extends ArchitecturalElement> Injector<T> getInjector(
+			IssueType issueType, T target, ComparchSimulator simulator) {
+		Injector<T> injector = null;
+		for (Injector<? extends ArchitecturalElement> i : simulator.getInjectors()) {
+			if (i.getIssueType() == issueType) {
+				injector = (Injector<T>) i;
+			}
+		}
+		if (injector == null) {
+			throw new ComparchSimulatorException(
+					"There is no injector available for the issue type "
+							+ issueType);
+		} else {
+			return injector;
+		}
 	}
 
 
