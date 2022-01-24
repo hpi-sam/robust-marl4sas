@@ -9,9 +9,6 @@
       <storyPatternLinks xsi:type="mlstorypatterns:StoryPatternLink" uuid="_3U7dwBQ-EealW6M9Tbwe1Q" modifier="CREATE" source="_UJ8-IBIXEeaGtfV5DkXcfA" target="_yB4-MBQ7EealW6M9Tbwe1Q">
         <feature xsi:type="ecore:EReference" href="http://www.mdelab.de/morisia/comparch#//Issue/handledBy"/>
       </storyPatternLinks>
-      <storyPatternLinks xsi:type="mlstorypatterns:StoryPatternLink" uuid="_4UxxMBQ-EealW6M9Tbwe1Q" modifier="CREATE" source="_UJ8-IBIXEeaGtfV5DkXcfA" target="_zoz4sBQ7EealW6M9Tbwe1Q">
-        <feature xsi:type="ecore:EReference" href="http://www.mdelab.de/morisia/comparch#//Issue/handledBy"/>
-      </storyPatternLinks>
       <storyPatternLinks xsi:type="mlstorypatterns:StoryPatternLink" uuid="_4yJpsBQ-EealW6M9Tbwe1Q" modifier="CREATE" source="_UJ8-IBIXEeaGtfV5DkXcfA" target="_y8mS8BQ7EealW6M9Tbwe1Q">
         <feature xsi:type="ecore:EReference" href="http://www.mdelab.de/morisia/comparch#//Issue/handledBy"/>
       </storyPatternLinks>
@@ -27,13 +24,10 @@
       <storyPatternLinks xsi:type="mlstorypatterns:StoryPatternLink" uuid="_UKQawBR1EeaLG9UmIRUnBQ" modifier="CREATE" source="_y8mS8BQ7EealW6M9Tbwe1Q" target="_wiUW8BQ9EealW6M9Tbwe1Q">
         <feature xsi:type="ecore:EReference" href="http://www.mdelab.de/morisia/comparch#//Rule/annotations"/>
       </storyPatternLinks>
-      <storyPatternLinks xsi:type="mlstorypatterns:StoryPatternLink" uuid="_XecIUBR1EeaLG9UmIRUnBQ" modifier="CREATE" source="_zoz4sBQ7EealW6M9Tbwe1Q" target="_wiUW8BQ9EealW6M9Tbwe1Q">
-        <feature xsi:type="ecore:EReference" href="http://www.mdelab.de/morisia/comparch#//Rule/annotations"/>
-      </storyPatternLinks>
       <storyPatternLinks xsi:type="mlstorypatterns:StoryPatternLink" uuid="_d_X74BXMEeaz88QvRAtFJg" source="_UJ8-IBIXEeaGtfV5DkXcfA" target="_rraqkBXLEeaz88QvRAtFJg">
         <feature xsi:type="ecore:EReference" href="http://www.mdelab.de/morisia/comparch#//Issue/affectedComponent"/>
       </storyPatternLinks>
-      <storyPatternObjects xsi:type="mlstorypatterns:StoryPatternObject" uuid="_UJ8-IBIXEeaGtfV5DkXcfA" name="cf1" outgoingLinks="_3U7dwBQ-EealW6M9Tbwe1Q _4UxxMBQ-EealW6M9Tbwe1Q _4yJpsBQ-EealW6M9Tbwe1Q _Z5nZ0BQ_EealW6M9Tbwe1Q _d_X74BXMEeaz88QvRAtFJg" bindingType="BOUND">
+      <storyPatternObjects xsi:type="mlstorypatterns:StoryPatternObject" uuid="_UJ8-IBIXEeaGtfV5DkXcfA" name="cf1" outgoingLinks="_3U7dwBQ-EealW6M9Tbwe1Q _4yJpsBQ-EealW6M9Tbwe1Q _Z5nZ0BQ_EealW6M9Tbwe1Q _d_X74BXMEeaz88QvRAtFJg" bindingType="BOUND">
         <type xsi:type="ecore:EClass" href="http://www.mdelab.de/morisia/comparch#//CF1"/>
       </storyPatternObjects>
       <storyPatternObjects xsi:type="mlstorypatterns:StoryPatternObject" uuid="_V4rQwBQ7EealW6M9Tbwe1Q" modifier="CREATE" name="restartComponent" outgoingLinks="_2GS34BR0EeaLG9UmIRUnBQ" incomingLinks="_Z5nZ0BQ_EealW6M9Tbwe1Q">
@@ -45,10 +39,7 @@
       <storyPatternObjects xsi:type="mlstorypatterns:StoryPatternObject" uuid="_y8mS8BQ7EealW6M9Tbwe1Q" modifier="CREATE" name="hwRedeployComponent" outgoingLinks="_UKQawBR1EeaLG9UmIRUnBQ" incomingLinks="_4yJpsBQ-EealW6M9Tbwe1Q">
         <type xsi:type="ecore:EClass" href="http://www.mdelab.de/morisia/comparch#//HwRedeployComponent"/>
       </storyPatternObjects>
-      <storyPatternObjects xsi:type="mlstorypatterns:StoryPatternObject" uuid="_zoz4sBQ7EealW6M9Tbwe1Q" modifier="CREATE" name="replaceComponent" outgoingLinks="_XecIUBR1EeaLG9UmIRUnBQ" incomingLinks="_4UxxMBQ-EealW6M9Tbwe1Q">
-        <type xsi:type="ecore:EClass" href="http://www.mdelab.de/morisia/comparch#//ReplaceComponent"/>
-      </storyPatternObjects>
-      <storyPatternObjects xsi:type="mlstorypatterns:StoryPatternObject" uuid="_wiUW8BQ9EealW6M9Tbwe1Q" name="annotations" incomingLinks="_2GS34BR0EeaLG9UmIRUnBQ _BWxGkBR1EeaLG9UmIRUnBQ _UKQawBR1EeaLG9UmIRUnBQ _XecIUBR1EeaLG9UmIRUnBQ" bindingType="BOUND">
+      <storyPatternObjects xsi:type="mlstorypatterns:StoryPatternObject" uuid="_wiUW8BQ9EealW6M9Tbwe1Q" name="annotations" incomingLinks="_2GS34BR0EeaLG9UmIRUnBQ _BWxGkBR1EeaLG9UmIRUnBQ _UKQawBR1EeaLG9UmIRUnBQ" bindingType="BOUND">
         <type xsi:type="ecore:EClass" href="http://www.mdelab.de/morisia/comparch#//Annotations"/>
       </storyPatternObjects>
       <storyPatternObjects xsi:type="mlstorypatterns:StoryPatternObject" uuid="_rraqkBXLEeaz88QvRAtFJg" name="component" incomingLinks="_d_X74BXMEeaz88QvRAtFJg">
