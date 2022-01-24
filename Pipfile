@@ -9,8 +9,13 @@ gym = "==0.21.0"
 matplotlib = "*"
 tensorflow = "==2.2.0"
 keras = "==2.4.2"
+pytest = "*"
+mypy = "*"
 
 [dev-packages]
 
 [requires]
 python_version = "3.8"
+
+[scripts]
+test = "pytest"
