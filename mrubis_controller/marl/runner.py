@@ -2,6 +2,7 @@ from mrubis_controller.marl.mrubis_mock_env import MrubisMockEnv
 from multi_agent_controller import MultiAgentController
 import logging
 import matplotlib.pyplot as plt
+import os
 
 
 class Runner:
@@ -53,6 +54,8 @@ class Runner:
             self.t += 1
             print(f"episode {self.t} done")
             if self.t % self.save_model_interval == 0:
+                if not os.path.exists('logs'):
+                    os.makedirs('logs')
                 self.build_reward_plot(rewards, f"Rewards till {self.t}", self.t)
                 self.build_count_plot(count_till_fixed, f"Tries till {self.t}", self.t)
 

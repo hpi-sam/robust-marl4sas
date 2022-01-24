@@ -1,9 +1,12 @@
+# follows https://keras.io/examples/rl/actor_critic_cartpole/
+
 from keras import backend as K
-from keras.layers import Dense, Input
-from keras.models import Model
-from keras.optimizers import Adam
-import tensorflow as tf
+from keras.layers import Input
 import numpy as np
+import tensorflow as tf
+from tensorflow import keras
+
+from tensorflow.keras import layers
 
 from mrubis_controller.marl.helper import get_current_time
 
@@ -31,7 +34,7 @@ def _delta_custom_loss(delta):
     return custom_loss
 
 
-class Agent:
+class Agent2:
     def __init__(self, index, shops, action_space_inverted, load_models_data):
         self.index = index
         self.shops = shops
@@ -46,9 +49,11 @@ class Agent:
         self.n_actions = len(action_space_inverted)
         self.input_dims = self.n_actions
         self.fc1_dims = 24
-        # self.fc2_dims = 24
+        self.fc2_dims = 24
 
-        self.actor, self.critic, self.policy = self._build_network()
+        self.model = self._build_network()
+        self.optimizer = keras.optimizers.Adam(learning_rate=0.01)
+        self.huber_loss = keras.losses.Huber()
         self.action_space = [i for i in range(self.n_actions)]
 
         # stage 0 = no sorting as a baseline
@@ -65,8 +70,8 @@ class Agent:
         for shop_name, components in observations.items():
             state = _encode_observations(components)[np.newaxis, :]
             if state.sum() > 0:  # skip shops without any failure
-                probabilities = self.policy.predict(state)[0]
-                action = np.random.choice(self.action_space, p=probabilities)
+                probabilities, critic_value = self.model(state)
+                action = np.random.choice(self.n_actions, p=np.squeeze(probabilities))
                 decoded_action = _decoded_action(action, observations)
                 actions.append({'shop': shop_name, 'component': decoded_action})
         if self.stage == 0:
@@ -81,8 +86,8 @@ class Agent:
             state = _encode_observations(states[shop_name])[np.newaxis, :]
             state_ = _encode_observations(states_[shop_name])[np.newaxis, :]
 
-            critic_value_ = self.critic.predict(state_)
-            critic_value = self.critic.predict(state)
+            action_probs, critic_value = self.model(state)
+            _, critic_value_ = self.model(state_)
 
             shop_reward = reward[0][shop_name]
             target = shop_reward + self.gamma * critic_value_ * (1 - int(dones))
@@ -91,8 +96,18 @@ class Agent:
             _actions = np.zeros([1, self.n_actions])
             _actions[np.arange(1), self.action_space_inverted.index(action)] = 1.0
 
-            self.actor.fit([state, delta], _actions, verbose=0)
-            self.critic.fit(state, target, verbose=0)
+            # actor loss
+            log_prob = tf.math.log(action_probs[0, self.action_space_inverted.index(action)])
+            actor_loss = -log_prob * delta
+
+            # critic loss
+            critic_loss = self.huber_loss(tf.expand_dims(critic_value, 0), tf.expand_dims(target, 0))
+
+            # Backpropagation
+            loss_value = [actor_loss] + [critic_loss]
+            with tf.GradientTape() as tape:
+                grads = tape.gradient(loss_value, self.model.trainable_variables)
+                self.optimizer.apply_gradients(zip(grads, self.model.trainable_variables))
 
     def _sort_actions(self, actions):
         """ sort actions with RidgeRegression
@@ -102,23 +117,13 @@ class Agent:
 
     def _build_network(self):
         if self.load_models_data is None:
-            input = Input(shape=(self.input_dims,))
-            delta = Input(shape=[1])
-            dense1 = Dense(self.fc1_dims, activation='relu')(input)
-            # dense2 = Dense(self.fc2_dims, activation='relu')(dense1)
+            inputs = layers.Input(shape=(self.input_dims,))
+            common = layers.Dense(self.fc1_dims, activation="relu")(inputs)
+            action = layers.Dense(self.n_actions, activation="softmax")(common)
+            critic = layers.Dense(1)(common)
 
-            probs = Dense(self.n_actions, activation='softmax')(dense1)
-            values = Dense(1, activation='linear')(dense1)
-
-            actor = Model(inputs=[input, delta], outputs=[probs])
-            actor.compile(optimizer=Adam(lr=self.alpha), loss=_delta_custom_loss(delta))
-
-            critic = Model(inputs=[input], outputs=[values])
-            critic.compile(optimizer=Adam(lr=self.beta), loss='mean_squared_error')
-
-            policy = Model(inputs=[input], outputs=[probs])
-
-            return actor, critic, policy
+            model = keras.Model(inputs=inputs, outputs=[action, critic])
+            return model
         else:
             return self.load_models(self.load_models_data)
 

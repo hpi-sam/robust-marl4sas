@@ -2,6 +2,7 @@ import gym
 # import json
 # import os
 from data.data_generator import generate_shops_with_offset_failures
+import copy
 
 
 def get_failing_component(current_shop):
@@ -82,7 +83,7 @@ class MrubisMockEnv(gym.Env):
             if not self._terminated():
                 self.observation, self.failing_components = get_observation(self.number_of_shops, self.t)
                 self.prior_utility = get_current_utility(self.observation)
-        return _reward, self.observation, self._terminated(), self._info()
+        return _reward, copy.deepcopy(self.observation), self._terminated(), self._info()
 
     def reset(self):
         """ Returns initial observations and states """
@@ -90,7 +91,7 @@ class MrubisMockEnv(gym.Env):
         self.observation, self.failing_components = get_observation(self.number_of_shops, self.t)
         self.prior_utility = get_current_utility(self.observation)
         self.action_space = [components for shops, components in self.observation.items()][0].keys()
-        return self.observation
+        return copy.deepcopy(self.observation)
 
     def render(self):
         """ Renders the environment. """

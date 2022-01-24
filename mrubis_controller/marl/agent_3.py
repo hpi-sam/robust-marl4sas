@@ -1,3 +1,6 @@
+# follows https://dev.to/jemaloqiu/reinforcement-learning-with-tf2-and-gym-actor-critic-3go5
+# which is a mix of agent1 and agent2
+
 from keras import backend as K
 from keras.layers import Dense, Input
 from keras.models import Model
@@ -31,7 +34,7 @@ def _delta_custom_loss(delta):
     return custom_loss
 
 
-class Agent:
+class Agent3:
     def __init__(self, index, shops, action_space_inverted, load_models_data):
         self.index = index
         self.shops = shops
@@ -41,12 +44,13 @@ class Agent:
 
         self.action_space_inverted = list(action_space_inverted)
         self.gamma = 0.99
-        self.alpha = 0.00001
-        self.beta = 0.00005
+        self.alpha = 0.001
+        self.beta = 0.005
         self.n_actions = len(action_space_inverted)
         self.input_dims = self.n_actions
         self.fc1_dims = 24
         # self.fc2_dims = 24
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.alpha)
 
         self.actor, self.critic, self.policy = self._build_network()
         self.action_space = [i for i in range(self.n_actions)]
@@ -91,8 +95,18 @@ class Agent:
             _actions = np.zeros([1, self.n_actions])
             _actions[np.arange(1), self.action_space_inverted.index(action)] = 1.0
 
-            self.actor.fit([state, delta], _actions, verbose=0)
-            self.critic.fit(state, target, verbose=0)
+            self.critic.fit(state, target, verbose=1)
+
+            with tf.GradientTape() as tape:
+                y_pred = self.actor(state)
+                out = K.clip(y_pred, 1e-8, 1-1e-8)
+                log_lik = _actions * K.log(out)
+                myloss = K.sum(-log_lik*delta)
+                print(f"loss: {myloss}")
+            grads = tape.gradient(myloss, self.actor.trainable_variables)
+
+            self.optimizer.apply_gradients(zip(grads, self.actor.trainable_variables))
+            # self.actor.fit([state, delta], _actions, verbose=1)
 
     def _sort_actions(self, actions):
         """ sort actions with RidgeRegression
@@ -102,16 +116,16 @@ class Agent:
 
     def _build_network(self):
         if self.load_models_data is None:
-            input = Input(shape=(self.input_dims,))
-            delta = Input(shape=[1])
-            dense1 = Dense(self.fc1_dims, activation='relu')(input)
+            input = Input(shape=(self.input_dims,), name='input')
+            delta = Input(shape=[1], name='delta')
+            dense1 = Dense(self.fc1_dims, activation='relu', name='dense1')(input)
             # dense2 = Dense(self.fc2_dims, activation='relu')(dense1)
 
-            probs = Dense(self.n_actions, activation='softmax')(dense1)
-            values = Dense(1, activation='linear')(dense1)
+            probs = Dense(self.n_actions, activation='softmax', name='probs')(dense1)
+            values = Dense(1, activation='linear', name='values')(dense1)
 
             actor = Model(inputs=[input, delta], outputs=[probs])
-            actor.compile(optimizer=Adam(lr=self.alpha), loss=_delta_custom_loss(delta))
+            # actor.compile(optimizer=Adam(lr=self.alpha), loss=_delta_custom_loss(delta))
 
             critic = Model(inputs=[input], outputs=[values])
             critic.compile(optimizer=Adam(lr=self.beta), loss='mean_squared_error')
@@ -125,17 +139,21 @@ class Agent:
     def save(self, episode):
         self.actor.save(f"{self.base_model_dir}/{self.start_time}/agent_{self.index}/actor/episode_{episode}")
         self.critic.save(f"{self.base_model_dir}/{self.start_time}/agent_{self.index}/critic/episode_{episode}")
-        self.policy.save(f"{self.base_model_dir}/{self.start_time}/agent_{self.index}/policy/episode_{episode}")
 
     def load_models(self, load_models_data):
         # recheck if model implementation has changed
         # maybe custom loss function is not working properly
         base_dir = f"{self.base_model_dir}/{load_models_data['start_time']}/agent_{self.index}"
-        delta = Input(shape=[1])
-        actor = tf.keras.models.load_model(
-            f"{base_dir}/actor/episode_{load_models_data['episode']}",
-            custom_objects={'custom_loss': _delta_custom_loss(delta)}
-        )
+
+        # load critic
         critic = tf.keras.models.load_model(f"{base_dir}/critic/episode_{load_models_data['episode']}")
-        policy = tf.keras.models.load_model(f"{base_dir}/policy/episode_{load_models_data['episode']}")
+
+        # load actor and set layers
+        actor_copy = tf.keras.models.load_model(f"{base_dir}/actor/episode_{load_models_data['episode']}")
+        probs = actor_copy.get_layer('probs')(critic.get_layer('dense1').output)
+        actor = Model(inputs=[critic.get_layer('input').input, actor_copy.get_layer('delta').input], outputs=[probs])
+
+        # load policy
+        policy = Model(inputs=[critic.get_layer('input').input], outputs=[probs])
+
         return actor, critic, policy
