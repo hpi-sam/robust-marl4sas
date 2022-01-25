@@ -4,8 +4,9 @@ import socket
 from json.decoder import JSONDecodeError
 from time import sleep
 
+
 class ChunkedSocketCommunicator(object):
-    def __init__(self, host='localhost', port = 8080):
+    def __init__(self, host='localhost', port=8080):
         self.host = host
         self.port = port
         self.socket = None
@@ -34,7 +35,7 @@ class ChunkedSocketCommunicator(object):
 
         try:
             json_message = json.loads(message)
-            if json_message.get('number_of_chunks') != None:
+            if json_message.get('number_of_chunks') is not None:
                 return self.read_chunked(json_message.get('number_of_chunks'))
             else:
                 return message
@@ -63,7 +64,7 @@ class ChunkedSocketCommunicator(object):
                     message += from_mrubis
                     break
             self.println("received")
-        
+
         return message
 
     def println(self, message):
@@ -71,4 +72,3 @@ class ChunkedSocketCommunicator(object):
 
     def close_socket(self):
         self.socket.close()
-
