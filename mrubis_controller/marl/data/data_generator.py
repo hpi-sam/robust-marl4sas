@@ -42,7 +42,18 @@ def _generate_shop(failing_component, failure_name="CF2"):
     for component in component_names:
         shop[component] = {
             "failure_name": failure_name if component in failing_component else "None",
-            "component_utility": random.uniform(3000, 25000)
+            "component_utility": random.uniform(3000, 25000),
+            "criticality": random.uniform(10, 30),
+            "connectivity": random.uniform(1, 10),
+            "reliability": 0.5,
+            "importance": 12.0,
+            "provided_interface": 1,
+            "required_interface": random.randint(0, 5),
+            "adt": random.uniform(1, 1.5),
+            "perf_max": random.uniform(5, 20),
+            "sat_point": random.uniform(0, 0.2),
+            "replica": random.uniform(1, 30),
+            "request": random.uniform(50, 450),
         }
         shop_utility += shop[component]["component_utility"]
     for component in component_names:
