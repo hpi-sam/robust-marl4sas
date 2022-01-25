@@ -90,7 +90,7 @@ public class ChunkedSocketCommunicator {
 			e.printStackTrace();
 		}
 		
-		println(json);
+		out.println(json);
 		
 		waitForMessage("send_chunks");
 		
