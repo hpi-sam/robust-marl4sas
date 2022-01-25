@@ -133,17 +133,14 @@ public class RuleSelector {
 	
 	private static void sendNumberOfShopsToPython(Architecture architecture) {
 		/*String toPython = "a";
+		String stringAdd = new String(new char[1000]).replace('\0', 'a');
 		
-		for (Integer i = 1; i < 64001; i++) {
+		for (Integer i = 1; i < 64001; i += 1000) {
 			System.out.println("Sending string of length " + i.toString());
 			ChunkedSocketCommunicator.println(toPython);
 			String fromPython = "";
 			while (true) {
-				try {
-					fromPython = ChunkedSocketCommunicator.readln();
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
+				fromPython = ChunkedSocketCommunicator.readln();
 				if (Integer.parseInt(fromPython) == i) {
 					System.out.println("Sent successfully.");
 					break;
@@ -153,7 +150,7 @@ public class RuleSelector {
 					break;
 				}
 			}
-			toPython += "a";
+			toPython += stringAdd;
 		}*/
 		
 		/*String fromPython = "";
