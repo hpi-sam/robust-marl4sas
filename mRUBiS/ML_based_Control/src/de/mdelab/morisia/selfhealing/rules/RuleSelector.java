@@ -132,39 +132,6 @@ public class RuleSelector {
 	
 	
 	private static void sendNumberOfShopsToPython(Architecture architecture) {
-		/*String toPython = "a";
-		String stringAdd = new String(new char[1000]).replace('\0', 'a');
-		
-		for (Integer i = 1; i < 64001; i += 1000) {
-			System.out.println("Sending string of length " + i.toString());
-			ChunkedSocketCommunicator.println(toPython);
-			String fromPython = "";
-			while (true) {
-				fromPython = ChunkedSocketCommunicator.readln();
-				if (Integer.parseInt(fromPython) == i) {
-					System.out.println("Sent successfully.");
-					break;
-				}
-				else {
-					System.out.println("Error sending at length " + i.toString());
-					break;
-				}
-			}
-			toPython += stringAdd;
-		}*/
-		
-		/*String fromPython = "";
-		System.out.println("Waiting for Python to send 'get_number_of_shops'...");
-		while(true) { 
-			fromPython = ChunkedSocketCommunicator.readln();
-			if (fromPython.equals("get_number_of_shops")) {
-				String state = "not_available";
-				state = Observations.getNumberOfShops(architecture);
-				ChunkedSocketCommunicator.println(state);
-				ChunkedSocketCommunicator.logger.println(state);
-				break;
-			}
-		}*/
 		ChunkedSocketCommunicator.waitForMessage("get_number_of_shops");
 		String state = "not_available";
 		state = Observations.getNumberOfShops(architecture);
