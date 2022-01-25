@@ -37,14 +37,17 @@ class MultiAgentController:
 
     def learn(self, states, actions, rewards, states_, dones):
         """ start learning for Agents and RankLearner """
+        metrics = {}
         for index, agent in enumerate(self.agents):
             # calc threshold
             # if threshold > defined_:
-            agent.learn(self._build_observations(index, states),
-                        self._build_actions(index, actions),
-                        self._build_rewards(index, rewards),
-                        self._build_observations(index, states_),
-                        dones)
+            metric = agent.learn(self._build_observations(index, states),
+                                 self._build_actions(index, actions),
+                                 self._build_rewards(index, rewards),
+                                 self._build_observations(index, states_),
+                                 dones)
+            metrics[index] = metric
+        return metrics
 
     def init(self, action_space):
         self.agents = self._build_agents(action_space)

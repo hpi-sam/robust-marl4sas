@@ -74,6 +74,7 @@ class Agent:
     def learn(self, states, actions, reward, states_, dones):
         """ network learns to improve """
         actions = {action['shop']: action['component'] for action in actions.values()}
+        metrics = []
         for shop_name, action in actions.items():
             state = _encode_observations(states[shop_name])[np.newaxis, :]
             state_ = _encode_observations(states_[shop_name])[np.newaxis, :]
@@ -88,17 +89,19 @@ class Agent:
             _actions = np.zeros([1, self.n_actions])
             _actions[np.arange(1), self.action_space_inverted.index(action)] = 1.0
 
-            self.critic.fit(state, target, verbose=1)
+            critic_history = self.critic.fit(state, target, verbose=0)
 
             with tf.GradientTape() as tape:
                 y_pred = self.actor(state)
                 out = K.clip(y_pred, 1e-8, 1 - 1e-8)
                 log_lik = _actions * K.log(out)
-                myloss = K.sum(-log_lik * delta)
-                print(f"loss: {myloss}")
-            grads = tape.gradient(myloss, self.actor.trainable_variables)
+                actor_loss = K.sum(-log_lik * delta)
+            grads = tape.gradient(actor_loss, self.actor.trainable_variables)
 
             self.optimizer.apply_gradients(zip(grads, self.actor.trainable_variables))
+
+            metrics.append({"actor": float(actor_loss), "critic": critic_history.history['loss'][0]})
+        return metrics
 
     def _build_network(self):
         if self.load_models_data is None:
