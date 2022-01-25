@@ -1,7 +1,7 @@
 import gym
 # import json
 # import os
-from data.data_generator import generate_shops_with_offset_failures
+from mrubis_controller.marl.data.data_generator import generate_shops_with_offset_failures
 import copy
 
 
