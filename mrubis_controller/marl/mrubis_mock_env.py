@@ -1,6 +1,7 @@
 import gym
-import json
-import os
+# import json
+# import os
+from mrubis_controller.marl.data.data_generator import generate_shops_with_offset_failures
 import copy
 
 
@@ -12,10 +13,11 @@ def get_failing_component(current_shop):
     return None
 
 
-def get_observation(step):
-    """ returns the observation for the given step """
-    with open(os.path.dirname(__file__) + f"/data/test/observation_step_{step}.json") as json_data_file:
-        return json.load(json_data_file)
+def get_observation(number_of_shops, step):
+    """ returns the observation and actual state for the given step """
+    return generate_shops_with_offset_failures(number_of_shops)
+    # with open(os.path.dirname(__file__) + f"/data/test/observation_step_{step}.json") as json_data_file:
+    #     return json.load(json_data_file)
 
 
 def get_current_utility(observation):
@@ -24,10 +26,12 @@ def get_current_utility(observation):
 
 
 class MrubisMockEnv(gym.Env):
-    def __init__(self):
+    def __init__(self, number_of_shops=3):
         super(MrubisMockEnv, self).__init__()
+        self.number_of_shops = number_of_shops
         self.action_space = None
         self.observation_space = None
+        self.failing_components = None
         self.observation = None
         self.prior_utility = None  # used for calculation of diff as a reward
         self.t = 0
@@ -48,10 +52,11 @@ class MrubisMockEnv(gym.Env):
         self.inner_t += 1
         for action in actions.values():
             current_shop = self.observation[action['shop']]
-            current_failing_component = get_failing_component(current_shop)
+            current_failing_component = self.failing_components[action['shop']]
             if current_failing_component is not None:
                 if current_failing_component == action['component']:
-                    current_shop[current_failing_component]['failure_name'] = 'None'
+                    for component in current_shop:
+                        current_shop[component]['failure_name'] = 'None'
                     current_shop[current_failing_component]['component_utility'] = float(
                         current_shop[current_failing_component]['component_utility']) + self.utility_increase_amount
                     # first component holds information of utility
@@ -76,14 +81,14 @@ class MrubisMockEnv(gym.Env):
             self.t += 1
             self.inner_t = 0
             if not self._terminated():
-                self.observation = get_observation(self.t)
+                self.observation, self.failing_components = get_observation(self.number_of_shops, self.t)
                 self.prior_utility = get_current_utility(self.observation)
         return _reward, copy.deepcopy(self.observation), self._terminated(), self._info()
 
     def reset(self):
         """ Returns initial observations and states """
         self.t = 0
-        self.observation = get_observation(self.t)
+        self.observation, self.failing_components = get_observation(self.number_of_shops, self.t)
         self.prior_utility = get_current_utility(self.observation)
         self.action_space = [components for shops, components in self.observation.items()][0].keys()
         return copy.deepcopy(self.observation)
