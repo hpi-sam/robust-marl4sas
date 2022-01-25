@@ -47,6 +47,7 @@ class Runner:
                     for shop, count in env_info['stats'].items():
                         count_till_fixed[shop].append(count)
 
+            self.t += 1
             if self.t % self.save_model_interval == 0:
                 if not os.path.exists(self.base_dir):
                     os.makedirs(self.base_dir)
@@ -54,7 +55,6 @@ class Runner:
                 build_reward_plot(self.base_dir, rewards, self.t, self.shop_distribution)
                 build_count_plot(self.base_dir, count_till_fixed, self.t, self.shop_distribution)
                 build_loss_plot(self.base_dir, metrics, self.t, self.shop_distribution)
-            self.t += 1
             print(f"episode {self.t} done")
 
 

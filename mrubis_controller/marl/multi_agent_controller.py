@@ -11,6 +11,20 @@ class MultiAgentController:
         self.rank_learner = RankLearner(1, None)
         self.agents = None
         self.ridge_regression_train_data_path = Path('../../data/TrainingmRUBiS_Theta0.05_NonStationary.csv')
+        self.metrics = []
+        self.robustness = {
+            'activated': True,  # activates or deactivates the robustness feature
+            'actor_threshold': 2,  # value against which the specified statistic is compared
+            'critic_threshold': 0.5,  # value against which the specified statistic is compared
+            'evaluation_periods': 5,  # number of periods over which data is compared to the specified threshold
+            'datapoints_to_alarm': 3,
+            # number of data points within the Evaluation Periods that must be breaching to cause the alarm
+        }
+        self.agents_status = {}
+        # OK –                  The metric or expression is within the defined threshold.
+        # ALARM –               The metric or expression is outside of the defined threshold.
+        # INSUFFICIENT_DATA –   The alarm has just started, the metric is not available,
+        #                       or not enough data is available for the metric to determine the alarm state.
 
     def select_actions(self, observations):
         """ based on observations select actions
@@ -20,6 +34,13 @@ class MultiAgentController:
         """
         actions = []
         for index, agent in enumerate(self.agents):
+            #  TODO: decide for possible robustness options
+            #  a) retrain agent
+            #  b) ask others agents critic to judge the last step taken -> lowest critic loss
+            #  c) or just ask another policy and take the one that would have solved the last evaluation_periods
+            #     steps correctly
+            #  d) if b) or c) -> switch weights
+            #  if self.robustness['activated'] and self.agents_status[index] == 'ALARM':
             actions.append(agent.choose_action(self._build_observations(index, observations)))
 
         return self.rank_learner.sort_actions(actions)
@@ -39,26 +60,27 @@ class MultiAgentController:
         """ start learning for Agents and RankLearner """
         metrics = {}
         for index, agent in enumerate(self.agents):
-            # calc threshold
-            # if threshold > defined_:
             metric = agent.learn(self._build_observations(index, states),
                                  self._build_actions(index, actions),
                                  self._build_rewards(index, rewards),
                                  self._build_observations(index, states_),
                                  dones)
             metrics[index] = metric
+        self.metrics.append(metrics)
+        self._validate_agents()
+        self._validate_rank_learner()
         return metrics
 
     def init(self, action_space):
-        self.agents = self._build_agents(action_space)
+        self._build_agents(action_space)
 
     def _build_agents(self, action_space):
         """ based on shop distribution the agents will be initialized """
-        agents = []
+        self.agents = []
         for index, shops in enumerate(self.shop_distribution):
-            agents.append(
+            self.agents.append(
                 Agent(index, shops, action_space, self.load_models_data, self.ridge_regression_train_data_path))
-        return agents
+            self.agents_status[index] = 'INSUFFICIENT_DATA'
 
     def _build_observations(self, agent_index, observation):
         """ extracts the relevant observations of the env per agent """
@@ -77,3 +99,34 @@ class MultiAgentController:
                 for shop in self.agents[agent_index].shops
                 for index, action in enumerate(actions.values())
                 if action['shop'] == shop}
+
+    def _validate_agents(self):
+        """
+        robustness feature
+        validate metrics and check if the network fails the criteria
+        """
+        for index, agent in enumerate(self.agents):
+            eval_periods = self.robustness['evaluation_periods']
+            agent_metric = [agent_metric for metric in self.metrics for agent_metric in metric[index]][-eval_periods:]
+            if len(agent_metric) < eval_periods:
+                self.agents_status[index] = 'INSUFFICIENT_DATA'
+            else:
+                # check if any NN is breaching the defined threshold
+                # at least datapoints_to_alarm steps must breach the threshold to set an ALARM
+                # otherwise the status is OK
+                for network in ['actor', 'critic']:
+                    breached_metrics = [item[network] for item in agent_metric if
+                                        abs(item[network]) >= self.robustness[f"{network}_threshold"]]
+                    if len(breached_metrics) >= self.robustness['datapoints_to_alarm']:
+                        self.agents_status[index] = 'ALARM'
+                        break
+                    else:
+                        self.agents_status[index] = 'OK'
+
+    def _validate_rank_learner(self):
+        """
+        robustness feature
+        validate ranking of rank_learner and check if it fails the criteria
+        :return:
+        """
+        return None

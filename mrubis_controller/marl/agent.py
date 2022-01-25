@@ -82,6 +82,7 @@ class Agent:
             critic_value = self.critic.predict(state)
             critic_value_ = self.critic.predict(state_)
 
+            # TODO: How important is the length of an episode? Is there a future reward of a solved state?
             shop_reward = reward[0][shop_name]
             target = shop_reward + self.gamma * critic_value_ * (1 - int(dones))
             delta = target - critic_value
