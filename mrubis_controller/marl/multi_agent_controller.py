@@ -1,6 +1,4 @@
-# from mrubis_controller.marl.agent_2 import Agent2 as Agent
-from mrubis_controller.marl.agent_3 import Agent3 as Agent
-# from mrubis_controller.marl.agent import Agent as Agent
+from mrubis_controller.marl.agent import Agent as Agent
 from rank_learner import RankLearner
 from pathlib import Path
 

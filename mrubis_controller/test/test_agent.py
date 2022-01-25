@@ -1,6 +1,6 @@
 from numpy.testing import assert_array_equal
 from pathlib import Path
-from mrubis_controller.marl.agent_3 import Agent3 as Agent
+from mrubis_controller.marl.agent import Agent
 
 
 def test_save_and_load_models():
@@ -25,3 +25,4 @@ def test_save_and_load_models():
 
     # loaded actor and critic share the same layer
     assert actor.get_layer('dense1') == critic.get_layer('dense1')
+
