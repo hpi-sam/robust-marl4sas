@@ -1,11 +1,11 @@
 import json
 import logging
 import random
-import socket
 from pathlib import Path
 from json.decoder import JSONDecodeError
 from subprocess import PIPE, Popen
 from time import sleep
+
 
 from component_utility_predictor import RidgeUtilityPredictor
 from component_dependencies import ComponentDependencyModel
@@ -69,11 +69,6 @@ class MRubisController():
 
     def _get_initial_state(self):
         '''Query mRUBiS for the number of shops, get their initial states'''
-        '''for _ in range(1, 64001, 1000):
-            from_mrubis = self.communicator.readln()
-            logger.info('Received message of length ' + str(len(from_mrubis)))
-            self.communicator.println(str(len(from_mrubis)))'''
-
         self.number_of_shops = self.communicator.get_from_mrubis(
             'get_number_of_shops').get('number_of_shops')
         logger.info(f'Number of mRUBIS shops: {self.number_of_shops}')
