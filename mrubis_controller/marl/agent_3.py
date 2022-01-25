@@ -8,6 +8,7 @@ from keras.optimizers import Adam
 import tensorflow as tf
 import numpy as np
 
+from mrubis_controller.marl.sorting.agent_action_sorter import AgentActionSorter
 from mrubis_controller.marl.helper import get_current_time
 
 tf.config.experimental_run_functions_eagerly(True)
@@ -35,7 +36,7 @@ def _delta_custom_loss(delta):
 
 
 class Agent3:
-    def __init__(self, index, shops, action_space_inverted, load_models_data):
+    def __init__(self, index, shops, action_space_inverted, load_models_data, ridge_regression_train_data_path):
         self.index = index
         self.shops = shops
         self.base_model_dir = './data/models'
@@ -57,7 +58,9 @@ class Agent3:
 
         # stage 0 = no sorting as a baseline
         # stage 1 = sorting of actions
-        self.stage = 0
+        self.stage = 1
+
+        self.agent_action_sorter = AgentActionSorter(ridge_regression_train_data_path)
 
     def choose_action(self, observations):
         """ chooses actions based on observations
@@ -72,11 +75,15 @@ class Agent3:
                 probabilities = self.policy.predict(state)[0]
                 action = np.random.choice(self.action_space, p=probabilities)
                 decoded_action = _decoded_action(action, observations)
-                actions.append({'shop': shop_name, 'component': decoded_action})
-        if self.stage == 0:
-            return actions
-        else:
-            return self._sort_actions(actions)
+                step = {'shop': shop_name, 'component': decoded_action}
+                if self.stage >= 1:
+                    step['predicted_utility'] = self.agent_action_sorter.predict_optimal_utility_of_fixed_components(
+                        step, components)
+                if self.stage == 2:
+                    # reduce predicted utility by uncertainty
+                    step['predicted_utility'] *= probabilities[action]
+                actions.append(step)
+        return actions
 
     def learn(self, states, actions, reward, states_, dones):
         """ network learns to improve """
@@ -85,8 +92,8 @@ class Agent3:
             state = _encode_observations(states[shop_name])[np.newaxis, :]
             state_ = _encode_observations(states_[shop_name])[np.newaxis, :]
 
-            critic_value_ = self.critic.predict(state_)
             critic_value = self.critic.predict(state)
+            critic_value_ = self.critic.predict(state_)
 
             shop_reward = reward[0][shop_name]
             target = shop_reward + self.gamma * critic_value_ * (1 - int(dones))
@@ -99,9 +106,9 @@ class Agent3:
 
             with tf.GradientTape() as tape:
                 y_pred = self.actor(state)
-                out = K.clip(y_pred, 1e-8, 1-1e-8)
+                out = K.clip(y_pred, 1e-8, 1 - 1e-8)
                 log_lik = _actions * K.log(out)
-                myloss = K.sum(-log_lik*delta)
+                myloss = K.sum(-log_lik * delta)
                 print(f"loss: {myloss}")
             grads = tape.gradient(myloss, self.actor.trainable_variables)
 

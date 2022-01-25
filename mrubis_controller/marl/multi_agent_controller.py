@@ -2,6 +2,7 @@
 from mrubis_controller.marl.agent_3 import Agent3 as Agent
 # from mrubis_controller.marl.agent import Agent as Agent
 from rank_learner import RankLearner
+from pathlib import Path
 
 
 class MultiAgentController:
@@ -9,8 +10,9 @@ class MultiAgentController:
         # list of named shops per agent identified by the index
         self.shop_distribution = shop_distribution
         self.load_models_data = load_models_data
-        self.rank_learner = RankLearner(0, None)
+        self.rank_learner = RankLearner(1, None)
         self.agents = None
+        self.ridge_regression_train_data_path = Path('../../data/TrainingmRUBiS_Theta0.05_NonStationary.csv')
 
     def select_actions(self, observations):
         """ based on observations select actions
@@ -28,7 +30,6 @@ class MultiAgentController:
         """ save models of agents and rank learner """
         for agent in self.agents:
             agent.save(episode)
-        self.rank_learner.save(episode)
 
     def load_models(self):
         """ init models of agents and rank learner
@@ -54,7 +55,8 @@ class MultiAgentController:
         """ based on shop distribution the agents will be initialized """
         agents = []
         for index, shops in enumerate(self.shop_distribution):
-            agents.append(Agent(index, shops, action_space, self.load_models_data))
+            agents.append(
+                Agent(index, shops, action_space, self.load_models_data, self.ridge_regression_train_data_path))
         return agents
 
     def _build_observations(self, agent_index, observation):
