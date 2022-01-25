@@ -13,6 +13,8 @@ from component_dependencies import ComponentDependencyModel
 import pandas as pd
 import numpy as np
 
+from marl.chunkedsocketcommunicator import ChunkedSocketCommunicator
+
 logging.basicConfig()
 logger = logging.getLogger('controller')
 logger.setLevel(logging.INFO)
@@ -20,15 +22,12 @@ logger.setLevel(logging.INFO)
 
 class MRubisController():
 
-    def __init__(self, host='localhost', port=8080, json_path='path.json') -> None:
+    def __init__(self, json_path='path.json') -> None:
         '''Create a new instance of the mRubisController class'''
 
         # Put your command line here (In Eclipse: Run -> Run Configurations... -> Show Command Line)
         with open(json_path, 'r') as f:
             variable_paths = json.load(f)
-
-        self.host = host
-        self.port = port
 
         self.launch_args = [
             variable_paths['java_path'],
@@ -47,11 +46,12 @@ class MRubisController():
         self.mrubis_state_history = []
         self.fix_history = []
         self.current_fixes = None
-        self.socket = None
         self.mrubis_process = None
         self.utility_model = RidgeUtilityPredictor()
         self.output_path = Path(__file__).parent.resolve() / 'output'
         self.component_dependency_model = ComponentDependencyModel()
+
+        self.communicator = ChunkedSocketCommunicator()
 
     def _start_mrubis(self):
         '''Launch mRUBiS as a subprocess. NOTE: Unstable. Manual startup from Eclipse is more robust.'''
@@ -67,53 +67,26 @@ class MRubisController():
         '''Terminate the mRUBiS process'''
         self.mrubis_process.terminate()
 
-    def _connect_to_java(self):
-        '''Connect to the socket opened on the java side'''
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sleep(1)
-        self.socket.connect((self.host, self.port))
-        logger.info('Connected to the Java side.')
-
     def _get_initial_state(self):
         '''Query mRUBiS for the number of shops, get their initial states'''
-        """for i in range(1, 64001):
-            from_mrubis = ''
-            while True:
-                data = self.socket.recv(64000)
-                from_mrubis = data.decode('utf-8').strip()
-                if from_mrubis != '':                    
-                    logger.info('Received message of length ' + str(len(from_mrubis)))
-                    self.socket.send(f'{str(len(from_mrubis))}\n'.encode("utf-8"))
-                    break"""
+        '''for _ in range(1, 64001, 1000):
+            from_mrubis = self.communicator.readln()
+            logger.info('Received message of length ' + str(len(from_mrubis)))
+            self.communicator.println(str(len(from_mrubis)))'''
 
-        self.number_of_shops = self._get_from_mrubis(
+        self.number_of_shops = self.communicator.get_from_mrubis(
             'get_number_of_shops').get('number_of_shops')
         logger.info(f'Number of mRUBIS shops: {self.number_of_shops}')
         for _ in range(self.number_of_shops):
-            shop_state = self._get_from_mrubis('get_initial_state')
+            shop_state = self.communicator.get_from_mrubis('get_initial_state')
             logger.info(f'Initial State: {shop_state}')
             shop_name = next(iter(shop_state))
             self.mrubis_state[shop_name] = shop_state[shop_name]
 
     def _update_number_of_issues_in_run(self):
         '''Update the number of issues present in the current run'''
-        self.number_of_issues_in_run = self._get_from_mrubis(
+        self.number_of_issues_in_run = self.communicator.get_from_mrubis(
             'get_number_of_issues_in_run').get('number_of_issues_in_run')
-
-    def _get_from_mrubis(self, message):
-        '''Send a message to mRUBiS and return the response as a dictionary'''
-        self.socket.send(f"{message}\n".encode("utf-8"))
-        logger.debug(f'Waiting for mRUBIS to answer to message {message}')
-        data = self.socket.recv(64000)
-
-        try:
-            mrubis_state = json.loads(data.decode("utf-8"))
-        except JSONDecodeError:
-            logger.error("Could not decode JSON input, received this:")
-            logger.error(data)
-            mrubis_state = "not available"
-
-        return mrubis_state
 
     @staticmethod
     def _get_info_from_issue(issue):
@@ -156,11 +129,10 @@ class MRubisController():
         logger.info(
             f"{shop_name}: Handling {issue_name} on {component_name} with {rule}")
         logger.info(f"Sending selected rule to mRUBIS: {picked_rule_message}")
-        self.socket.send(
-            (json.dumps(picked_rule_message) + '\n').encode("utf-8"))
+        self.communicator.println(json.dumps(picked_rule_message))
         logger.debug("Waiting for mRUBIS to answer with 'rule_received'...")
-        data = self.socket.recv(64000)
-        if data.decode('utf-8').strip() == 'rule_received':
+        data = self.communicator.readln()
+        if data == 'rule_received':
             logger.debug('Rule transmitted successfully.')
         # Remember components that have been fixed in this run
         if self.components_fixed_in_this_run.get(shop_name) is None:
@@ -182,11 +154,10 @@ class MRubisController():
                     type_of_component_to_fix = fixed_components[0][1]
                     fail_probability_message = {'type_of_component_to_fix': [type_of_component_to_fix], 'failing_component_types': failing_component_types}
                     logger.info(json.dumps(fail_probability_message))
-                    self.socket.send(
-                        (json.dumps(fail_probability_message) + '\n').encode('utf-8'))
-                    data = self.socket.recv(64000)
+                    self.communicator.println(json.dumps(fail_probability_message))
+                    data = self.communicator.readln()
                     try:
-                        mrubis_state = json.loads(data.decode("utf-8"))
+                        mrubis_state = json.loads(data)
                     except JSONDecodeError:
                         logger.error("Could not decode JSON input, received this:")
                         logger.error(data)
@@ -196,7 +167,7 @@ class MRubisController():
                     predicted_utility = predicted_utility * (1-fail_probability)
                 self.mrubis_state[shop][component]['predicted_optimal_utility'] = predicted_utility
         
-        self.socket.send('fail_probability_finished\n'.encode('utf-8'))
+        self.communicator.println('fail_probability_finished')
 
     def __get_ranked_fix_instructions(self, state_df_before: pd.DataFrame, ranking_strategy):
         '''Get a list of tuples containing the fixes to apply ranked by a strategy'''
@@ -256,22 +227,18 @@ class MRubisController():
             self.socket.send(json.dumps(issueComponent))
             data = self.socket.recv(64000)
         '''
-        self.socket.send((json.dumps(order_dict) + '\n').encode("utf-8"))
+        self.communicator.println(json.dumps(order_dict))
         logger.info(f"send order_dict: {order_dict}")
         logger.debug(
             "Waiting for mRUBIS to answer with 'fix_order_received'...")
-        data = self.socket.recv(64000)
-        if data.decode('utf-8').strip() == 'fix_order_received':
+        data = self.communicator.readln()
+        if data == 'fix_order_received':
             logger.debug('Order transmitted successfully.')
 
     def _send_exit_message(self):
         '''Tell mRUBiS to stop its main loop'''
-        self.socket.send("exit\n".encode("utf-8"))
-        _ = self.socket.recv(64000)
-
-    def _close_socket(self):
-        '''Close the socket'''
-        self.socket.close()
+        self.communicator.println("exit")
+        _ = self.communicator.readln()
 
     def _state_to_df(self, fix_status):
         '''Return the current mRUBiS state as a pandas dataframe'''
@@ -348,7 +315,7 @@ class MRubisController():
         # Account for Java being slow to start on some systems
         sleep(0.5)
 
-        self._connect_to_java()
+        # self._connect_to_java()
 
         # Train the model on the provided batch file
         self.utility_model.load_train_data()
@@ -372,7 +339,7 @@ class MRubisController():
                 self._update_number_of_issues_in_run()
 
                 # Get the current issue to handle
-                current_issue = self._get_from_mrubis('get_issue')
+                current_issue = self.communicator.get_from_mrubis('get_issue')
                 logger.info(
                     f'get current issue: {current_issue}')
                 #current_issues.append(current_issue)
@@ -410,7 +377,7 @@ class MRubisController():
             # Query the state of the affected components once more
             logger.info(
                 "Getting state of affected components after taking action...")
-            state_after_action = self._get_from_mrubis(
+            state_after_action = self.communicator.get_from_mrubis(
                 message=json.dumps(
                     {shop_name: [i_c_tuple[1] for i_c_tuple in i_c_tuples]
                         for shop_name, i_c_tuples in self.components_fixed_in_this_run.items()}
@@ -426,7 +393,7 @@ class MRubisController():
             self.mrubis_state_history.append(state_df_after)
 
         self._send_exit_message()
-        self._close_socket()
+        self.communicator.close_socket()
 
         if not external_start:
             self._stop_mrubis()

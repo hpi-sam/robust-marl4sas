@@ -20,12 +20,13 @@ public class ChunkedSocketCommunicator {
 	// Open up the socket
 	private static int port = 8080;
 	
-	//System.out.println(port);
-	public static ServerSocket server;
+	private static ServerSocket server;
 	private static Socket client;
 	private static BufferedReader in;
     private static PrintWriter out;
     private static PrintWriter logger;
+    
+    private final static Integer MAX_LENGTH = 8192;
     
     private static void ensureSocketIsOpen() {
     	if (server == null || (server != null && !server.isBound())) {
@@ -68,8 +69,36 @@ public class ChunkedSocketCommunicator {
     public static void println(String message) {
     	ensureSocketIsOpen();
     	
-    	out.println(message);
+    	if (message.length() >= MAX_LENGTH) {
+    		printChunked(message);
+    	}
+    	else {        	
+        	out.println(message);
+    	}
     	logger.println(message);
+    }
+    
+    private static void printChunked(String message) {
+    	Integer numChunks = (int) Math.ceil(message.length() / (double)MAX_LENGTH);
+    	HashMap<String, Integer> chunkMessage = new HashMap<String, Integer>();
+    	chunkMessage.put("number_of_chunks", numChunks);
+    	
+    	String json = "";
+		try {
+			json = new ObjectMapper().writeValueAsString(chunkMessage);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+		
+		println(json);
+		
+		waitForMessage("send_chunks");
+		
+		for (int i = 0; i < numChunks; i++) {
+			String partMessage = message.substring(i * MAX_LENGTH, Math.min((i + 1) * MAX_LENGTH, message.length()));
+			out.println(partMessage);
+			waitForMessage("received");
+		}
     }
     
     public static void log(String message) {
