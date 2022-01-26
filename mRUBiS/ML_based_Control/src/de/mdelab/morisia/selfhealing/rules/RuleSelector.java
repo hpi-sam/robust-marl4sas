@@ -105,6 +105,8 @@ public class RuleSelector {
 
 
 	private static void learningApproach(Issue issue, Utilityfunction uTILITY_FUNCTION) {
+		// TODO: get issueToRulesMap from UtilityIncreasePredictor, use getAffectedComponentStatus with it, put state into JSON for all issues
+		
 		
 		// read utility increase (make sure that rules are available)
 		UtilityIncreasePredictor.calculateCombinedUtilityIncrease(issue);

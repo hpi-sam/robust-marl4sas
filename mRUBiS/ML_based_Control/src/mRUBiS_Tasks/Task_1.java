@@ -198,6 +198,9 @@ public class Task_1 {
 		/*
 		 * Load model
 		 */
+		// TODO: use init_data from python, send "received"
+		// TODO: Set static state JSON for RuleSelector to initial state on first run
+		
 		Resource architectureResource = EnvSetUp
 
 				.loadFreshInstance("model/enriched/mRUBiS-10shop_enriched.comparch");
@@ -276,11 +279,14 @@ public class Task_1 {
 				System.out.printf("\n>> Analyze Compelete\n\n");
 				ArchitectureUtilCal.computeOverallUtility(architecture);
 
-
 				/*
 				 * Plan
 				 */
 				plan(interpreter, annotations, P_CF1, P_CF2, P_CF3, P_CF5);
+				
+				// TODO: send observation JSON to python
+				
+				
 				// Sorting the failures to address first
 				List<Issue> allIssues = new LinkedList<>();
 				allIssues.addAll(annotations.getIssues());
@@ -441,6 +447,10 @@ public class Task_1 {
 
 				execute(interpreter, allIssues, E_CF1, E_CF2, E_CF3, E_CF5);
 
+				// TODO: get step from python
+				// TODO: filter proposed fixes
+				// TODO: update observation JSON accordingly (how? -> reset fixed components, decrease utility on wrongly fixed components)
+				// TODO: figure out when issues are actually fixed?
 
 				if (CURRENT_APPROACH == Approaches.Learning) {
 
@@ -452,11 +462,11 @@ public class Task_1 {
 					} catch (IOException e2) {
 						e2.printStackTrace();
 					}
-
-
+					
 					System.out.println("Waiting for Python to send fixed components JSON...");
 					HashMap<String, List<String>> fixedComponents = ChunkedSocketCommunicator.readJSON(new HashMap<String, List<String>>());
 					String state = "not_available";
+					// TODO: use getFixedComponentStatus to update observation JSON
 					state = Observations.getFixedComponentStatus(architecture, fixedComponents);
 					ChunkedSocketCommunicator.println(state);
 
