@@ -12,6 +12,7 @@ def get_failing_component(current_shop):
 
 
 def get_observation(step):
+    # TODO: change to socket communication
     """ returns the observation for the given step """
     with open(os.path.dirname(__file__) + f"/data/test/observation_step_{step}.json") as json_data_file:
         return json.load(json_data_file)

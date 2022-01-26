@@ -7,13 +7,15 @@ from json.decoder import JSONDecodeError
 from time import sleep
 from subprocess import PIPE, Popen
 
+from mrubis_controller.marl.chunkedsocketcommunicator import ChunkedSocketCommunicator
+
 logging.basicConfig()
 logger = logging.getLogger('controller')
 logger.setLevel(logging.INFO)
 
 
 class MrubisEnv(gym.Env):
-    def __init__(self, host='localhost', port=8080, json_path='path.json', external_start=True):
+    def __init__(self, json_path='path.json', external_start=True):
         super(MrubisEnv, self).__init__()
         self.action_space = None
         self.observation_space = None
@@ -24,9 +26,6 @@ class MrubisEnv(gym.Env):
         # Put your command line here (In Eclipse: Run -> Run Configurations... -> Show Command Line)
         with open(json_path, 'r') as f:
             variable_paths = json.load(f)
-
-        self.host = host
-        self.port = port
 
         self.launch_args = [
             variable_paths['java_path'],
@@ -45,18 +44,26 @@ class MrubisEnv(gym.Env):
         self.mrubis_state_history = []
         self.fix_history = []
         self.current_fixes = None
-        self.socket = None
         self.mrubis_process = None
+        self.communicator = None
 
         # initial state and action
         self.reset()
 
     def step(self, actions):
         """ Returns observation, reward, terminated, info """
+        # TODO: Send actions to mRUBiS
+        # TODO: Get observation from mRUBiS
+        # TODO: Determine reward (calculate from observation)
+        # TODO: What to do once failure propagation is implemented?
         raise NotImplementedError
 
     def reset(self):
         """ Returns initial observations and states """
+        # TODO: send initiation data to mRUBiS (# shops, etc.)
+        # TODO: add additional argument for that
+        # TODO: get initial observation from mRUBiS
+
         # self.current_state = 0
         # self.current_state_name = list(self.observation_space_names[self.current_state])
         # self.last_action = None
@@ -72,7 +79,7 @@ class MrubisEnv(gym.Env):
         # Account for Java being slow to start on some systems
         sleep(0.5)
 
-        self._connect_to_java()
+        self.communicator = ChunkedSocketCommunicator()
 
         self._get_initial_state()
 
@@ -90,7 +97,7 @@ class MrubisEnv(gym.Env):
     def close(self):
         """ Override close in your subclass to perform any necessary cleanup. """
         self._send_exit_message()
-        self._close_socket()
+        self.communicator.close_socket()
 
         if not self.external_start:
             self._stop_mrubis()
@@ -113,6 +120,12 @@ class MrubisEnv(gym.Env):
             cwd="../mRUBiS/ML_based_Control"
         )
 
+    def _stop_mrubis(self):
+        '''Terminate the mRUBiS process'''
+        self.mrubis_process.terminate()
+
+    # TODO: All methods here can probably be removed
+
     def _get_initial_state(self):
         '''Query mRUBiS for the number of shops, get their initial states'''
         self.number_of_shops = self._get_from_mrubis(
@@ -123,13 +136,6 @@ class MrubisEnv(gym.Env):
             shop_name = next(iter(shop_state))
             self.mrubis_state[shop_name] = shop_state[shop_name]
 
-    def _connect_to_java(self):
-        '''Connect to the socket opened on the java side'''
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sleep(1)
-        self.socket.connect((self.host, self.port))
-        logger.info('Connected to the Java side.')
-
     def _update_number_of_issues_in_run(self):
         '''Update the number of issues present in the current run'''
         self.number_of_issues_in_run = self._get_from_mrubis(
@@ -137,18 +143,9 @@ class MrubisEnv(gym.Env):
 
     def _get_from_mrubis(self, message):
         """Send a message to mRUBiS and return the response as a dictionary"""
-        self.socket.send(f"{message}\n".encode("utf-8"))
+        self.communicator.println("message")
         logger.debug(f'Waiting for mRUBIS to answer to message {message}')
-        data = self.socket.recv(64000)
-
-        try:
-            mrubis_state = json.loads(data.decode("utf-8"))
-        except JSONDecodeError:
-            logger.error("Could not decode JSON input, received this:")
-            logger.error(data)
-            mrubis_state = "not available"
-
-        return mrubis_state
+        return self.communicator.read_json()
 
     def _send_rule_to_execute(self, issue, rule):
         '''Send a rule to apply to an issue to mRUBiS'''
@@ -158,11 +155,10 @@ class MrubisEnv(gym.Env):
         logger.info(
             f"{shop_name}: Handling {issue_name} on {component_name} with {rule}")
         logger.debug('Sending selected rule to mRUBIS...')
-        self.socket.send(
-            (json.dumps(picked_rule_message) + '\n').encode("utf-8"))
+        self.communicator.println(json.dumps(picked_rule_message))
         logger.debug("Waiting for mRUBIS to answer with 'rule_received'...")
-        data = self.socket.recv(64000)
-        if data.decode('utf-8').strip() == 'rule_received':
+        data = self.communicator.readln()
+        if data == 'rule_received':
             logger.debug('Rule transmitted successfully.')
         # Remember components that have been fixed in this run
         if self.components_fixed_in_this_run.get(shop_name) is None:
@@ -183,18 +179,14 @@ class MrubisEnv(gym.Env):
             self.socket.send(json.dumps(issueComponent))
             data = self.socket.recv(64000)
         '''
-        self.socket.send((json.dumps(order_dict) + '\n').encode("utf-8"))
+        self.communicator.println(json.dumps(order_dict))
         logger.debug(
             "Waiting for mRUBIS to answer with 'fix_order_received'...")
-        data = self.socket.recv(64000)
-        if data.decode('utf-8').strip() == 'fix_order_received':
+        data = self.communicator.readln()
+        if data == 'fix_order_received':
             logger.debug('Order transmitted successfully.')
 
     def _send_exit_message(self):
         '''Tell mRUBiS to stop its main loop'''
-        self.socket.send("exit\n".encode("utf-8"))
-        _ = self.socket.recv(64000)
-
-    def _close_socket(self):
-        '''Close the socket'''
-        self.socket.close()
+        self.communicator.println("exit")
+        _ = self.communicator.readln()
