@@ -55,7 +55,8 @@ public class RuleSelector {
     private static Path issueToRulesPath = Paths.get("issueToRulesMap.json"); // issues, affected components and associated rules;
     private static Path rulesToExecutePath= Paths.get("rulesToExecute.json"); // rules to execute on this run
     private static int run = 1;
-    private static Boolean initialStateSent = false;
+    private static HashMap<String, HashMap<String, HashMap<String, String>>> globalState;
+//    private static Boolean initialStateSent = false;
 	
 
 	private final static Logger LOGGER = Logger.getLogger(RuleSelector.class
@@ -109,24 +110,14 @@ public class RuleSelector {
 		
 		
 		// read utility increase (make sure that rules are available)
-		UtilityIncreasePredictor.calculateCombinedUtilityIncrease(issue);
+		HashMap<String, HashMap<String, HashMap<String, HashMap<String, Double>>>> shopToIssueMap;
+		shopToIssueMap = UtilityIncreasePredictor.calculateCombinedUtilityIncrease(issue);
 		
 		Architecture architecture = issue.getAnnotations().getArchitecture();
+
+//		sendNumberOfIssuesPerShopToPython(architecture);
+//		sendCurrentIssueToPython(issue);
 		
-		if (!initialStateSent) {
-			
-			sendNumberOfShopsToPython(architecture);
-			
-			for (Tenant tenant: architecture.getTenants()) {
-				sendInitialStateToPython(tenant);
-			}
-			
-			initialStateSent = true;
-			
-		}
-		
-		sendNumberOfIssuesPerShopToPython(architecture);
-		sendCurrentIssueToPython(issue);
 		getRuleFromPython(issue);
 		Input.selectAction(issue);
 		
@@ -180,39 +171,52 @@ public class RuleSelector {
 	}
 	
 	
-	private static void sendInitialStateToPython(Tenant shop) {
+	public static void sendInitialStateToPython(Architecture MRUBIS) {
 		ChunkedSocketCommunicator.waitForMessage("get_initial_state");
-		String state = "not_available";
-		state = Observations.getInitialState(shop);
-		ChunkedSocketCommunicator.println(state);
-	}
-	
-	
-	private static void sendNumberOfIssuesPerShopToPython(Architecture architecture) {
-		ChunkedSocketCommunicator.waitForMessage("get_number_of_issues_in_run");
-		String state = "not_available";
-		state = Observations.getNumberOfIssuesPerShop(architecture);
-		ChunkedSocketCommunicator.println(state);		
-	}
-	
-	
-	private static void sendCurrentIssueToPython(Issue issue) {
-		// Read json file generated in UtilityIncreasePredictor
-		ObjectMapper mapper = new ObjectMapper();
-		HashMap<String, HashMap<String, HashMap<String, HashMap<String, Double>>>> issueToRulesMapFromFile = null;
+		HashMap<String, HashMap<String, HashMap<String, String>>> state;
+		globalState = Observations.getInitialStates(MRUBIS);
+		String json = "";
 		try {
-			issueToRulesMapFromFile = mapper.readValue(issueToRulesPath.toFile(), HashMap.class);
-		} catch (IOException e2) {
-			e2.printStackTrace();
-		}
-
-		// send current state to the python side
-		Architecture architecture = issue.getAnnotations().getArchitecture();
-		ChunkedSocketCommunicator.waitForMessage("get_issue");
-		String state = "not_available";
-		state = Observations.getAffectedComponentStatus(architecture, issueToRulesMapFromFile);
-		ChunkedSocketCommunicator.println(state);		
+			json = new ObjectMapper().writeValueAsString(globalState);
+			ChunkedSocketCommunicator.println(json);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}	
 	}
+	
+	
+//	private static void sendNumberOfIssuesPerShopToPython(Architecture architecture) {
+//		ChunkedSocketCommunicator.waitForMessage("get_number_of_issues_in_run");
+//		globalState = Observations.getNumberOfIssuesPerShop(architecture);
+//	
+//		String json = "";
+//		try {
+//			json = new ObjectMapper().writeValueAsString(globalState);
+//			ChunkedSocketCommunicator.println(json);
+//		} catch (JsonProcessingException e) {
+//			e.printStackTrace();
+//		}	
+//		ChunkedSocketCommunicator.println(json);		
+//	}
+	
+	
+//	private static void sendCurrentIssueToPython(Issue issue, shopToIssueMap) {
+//		// Read json file generated in UtilityIncreasePredictor
+//		ObjectMapper mapper = new ObjectMapper();
+//		HashMap<String, HashMap<String, HashMap<String, HashMap<String, Double>>>> issueToRulesMapFromFile = null;
+////		try {
+////			issueToRulesMapFromFile = mapper.readValue(issueToRulesPath.toFile(), HashMap.class);
+////		} catch (IOException e2) {
+////			e2.printStackTrace();
+////		}
+//
+//		// send current state to the python side
+//		Architecture architecture = issue.getAnnotations().getArchitecture();
+//		ChunkedSocketCommunicator.waitForMessage("get_issue");
+//		String state = "not_available";
+//		state = Observations.getAffectedComponentStatus(architecture, issueToRulesMapFromFile);
+//		ChunkedSocketCommunicator.println(state);		
+//	}
 		
 	private static void getRuleFromPython (Issue issue) {
 		// Get the rules to execute from the python side

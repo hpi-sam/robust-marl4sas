@@ -82,6 +82,41 @@ public class Observations {
 
 	}
 	
+	public static HashMap<String, HashMap<String, HashMap<String, String>>> getInitialStates(Architecture MRUBIS) {
+		String json = "";
+
+		HashMap<String, HashMap<String, HashMap<String, String>>> shopMap = new HashMap<String, HashMap<String, HashMap<String, String>>>();
+
+		for (Tenant shop : MRUBIS.getTenants()) {
+			
+			HashMap<String, HashMap<String, String>> componentMap = new HashMap<String, HashMap<String, String>>();
+			shopMap.put(shop.getName(), componentMap);
+
+			for (Component component: shop.getComponents()) {
+				
+				HashMap<String, String> parameterMap = new HashMap<String, String>();
+				
+				parameterMap.put("uid", component.getUid());
+				parameterMap.put("adt", String.valueOf(component.getADT()));
+				parameterMap.put("connectivity", String.valueOf(new Double(component.getProvidedInterfaces().size() + component.getRequiredInterfaces().size())));
+				parameterMap.put("required_interface", String.valueOf(component.getRequiredInterfaces().size()));
+				parameterMap.put("provided_interface", String.valueOf(component.getProvidedInterfaces().size()));
+				parameterMap.put("importance", String.valueOf(component.getTenant().getImportance()));
+				parameterMap.put("reliability", String.valueOf(component.getType().getReliability()));
+				parameterMap.put("criticality", String.valueOf(component.getType().getCriticality()));
+				parameterMap.put("request", String.valueOf(component.getRequest()));
+				parameterMap.put("sat_point", String.valueOf(component.getType().getSatPoint()));
+				parameterMap.put("replica", String.valueOf(component.getInUseReplica()));
+				parameterMap.put("perf_max", String.valueOf(component.getType().getPerformanceMax()));
+				parameterMap.put("component_utility", String.valueOf(ArchitectureUtilCal.computeComponentUtility(component)));
+				parameterMap.put("system_utility", String.valueOf(ArchitectureUtilCal.computeOverallUtility(shop.getArchitecture())));
+				parameterMap.put("shop_utility", String.valueOf(ArchitectureUtilCal.computeShopUtility(shop)));
+				componentMap.put(component.getType().getName() , parameterMap);
+			}
+		}
+		return shopMap;
+	}
+	
 	
 	public static String getNumberOfIssuesPerShop(Architecture MRUBIS) {
 		String json = "";

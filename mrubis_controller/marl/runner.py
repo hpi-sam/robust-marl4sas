@@ -1,4 +1,4 @@
-from mrubis_controller.marl.mrubis_mock_env import MrubisMockEnv
+from marl.mrubis_env import MrubisEnv
 from multi_agent_controller import MultiAgentController
 import logging
 import matplotlib.pyplot as plt
@@ -10,7 +10,7 @@ class Runner:
         self.logger = logger
         self.shop_distribution = shop_distribution
         self.load_models_data = load_models_data  # if not None saved models are loaded
-        self.env = MrubisMockEnv()
+        self.env = MrubisEnv()
         self.mac = MultiAgentController(shop_distribution, self.load_models_data)
         self.t = 0
         self.save_model_interval = 10  # interval of saving models

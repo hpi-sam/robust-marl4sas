@@ -1,13 +1,13 @@
 from keras import backend as K
 from keras.layers import Dense, Input
 from keras.models import Model
-from keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adam
 import tensorflow as tf
 import numpy as np
 
-from mrubis_controller.marl.helper import get_current_time
+from marl.helper import get_current_time
 
-tf.config.experimental_run_functions_eagerly(True)
+# tf.config.experimental_run_functions_eagerly(True)
 
 
 def _decoded_action(action, observation):
