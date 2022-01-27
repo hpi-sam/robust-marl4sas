@@ -1,4 +1,4 @@
-from mrubis_controller.marl.agent import Agent
+from agent import Agent
 from rank_learner import RankLearner
 
 

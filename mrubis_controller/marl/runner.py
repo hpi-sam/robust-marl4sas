@@ -1,4 +1,4 @@
-from mrubis_controller.marl.mrubis_mock_env import MrubisMockEnv
+from mrubis_mock_env import MrubisMockEnv
 from multi_agent_controller import MultiAgentController
 import logging
 import matplotlib.pyplot as plt
