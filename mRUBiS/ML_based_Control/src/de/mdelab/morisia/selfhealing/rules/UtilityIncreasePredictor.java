@@ -48,7 +48,7 @@ public class UtilityIncreasePredictor {
 	 * @param issue
 	 *            the given issue.
 	 */
-	public static void calculateCombinedUtilityIncrease(Issue issue) {
+	public static HashMap<String, HashMap<String, HashMap<String, HashMap<String, Double>>>> calculateCombinedUtilityIncrease(Issue issue) {
 
 		LOGGER.info("\n --->Predicting utility increase for the " + issue.getHandledBy().size()
 				+ " rules attached to the issue " + issue);
@@ -238,9 +238,10 @@ public class UtilityIncreasePredictor {
 			LOGGER.info("Predicted utility increase of " + utilityIncrease + " for the rule " + rule);
 			//System.out.print("\n Predicted utility increase of " + utilityIncrease + " for the rule " + rule);
 			
+			
 		}
 		
-		Path jsonFile = Paths.get("issueToRulesMap.json");
+//		Path jsonFile = Paths.get("issueToRulesMap.json");
 		String affectedComponent = issue.getAffectedComponent().getType().getName();
 		String issueName = issue.getClass().getSimpleName().replaceAll("Impl", "");
 		String shopName = issue.getAffectedComponent().getTenant().getName();
@@ -262,14 +263,16 @@ public class UtilityIncreasePredictor {
 		issueToCompToRulesMap.put(issueName, compToRulesMap);
 		shopToissueToCompToRulesMap.put(shopName, issueToCompToRulesMap);
 		
-		try {
-			ObjectMapper mapper = new ObjectMapper();
-			mapper.writeValue(jsonFile.toFile(), shopToissueToCompToRulesMap);
-		} catch (JsonProcessingException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+//		try {
+//			ObjectMapper mapper = new ObjectMapper();
+////			mapper.writeValue(jsonFile.toFile(), shopToissueToCompToRulesMap);
+//		} catch (JsonProcessingException e) {
+//			e.printStackTrace();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+		
+		return shopToissueToCompToRulesMap;
 	}
 
 	

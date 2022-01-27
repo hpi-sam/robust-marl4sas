@@ -7,7 +7,7 @@ from json.decoder import JSONDecodeError
 from time import sleep
 from subprocess import PIPE, Popen
 
-from mrubis_controller.marl.chunkedsocketcommunicator import ChunkedSocketCommunicator
+from chunkedsocketcommunicator import ChunkedSocketCommunicator
 
 logging.basicConfig()
 logger = logging.getLogger('controller')
@@ -19,6 +19,7 @@ class MrubisEnv(gym.Env):
         super(MrubisEnv, self).__init__()
         self.action_space = None
         self.observation_space = None
+        self.communicator = None
 
         '''Create a new instance of the mRUBiS environment class'''
         self.external_start = external_start
@@ -50,6 +51,10 @@ class MrubisEnv(gym.Env):
         # initial state and action
         self.reset()
 
+    def _get_current_utility(self):
+        return {shop: float(list(components.items())[0][1]['shop_utility']) for shop, components in
+                self.observation.items()}
+
     def step(self, actions):
         """ Returns observation, reward, terminated, info """
         # TODO: Send actions to mRUBiS
@@ -60,10 +65,11 @@ class MrubisEnv(gym.Env):
 
     def reset(self):
         """ Returns initial observations and states """
-        # TODO: send initiation data to mRUBiS (# shops, etc.)
+        # TODO: send initiation data to mRUBiS (# shops, etc.) (for later!)
         # TODO: add additional argument for that
         # TODO: get initial observation from mRUBiS
-
+        if self.communicator is None:
+            self.communicator = ChunkedSocketCommunicator()
         # self.current_state = 0
         # self.current_state_name = list(self.observation_space_names[self.current_state])
         # self.last_action = None
@@ -79,16 +85,11 @@ class MrubisEnv(gym.Env):
         # Account for Java being slow to start on some systems
         sleep(0.5)
 
-        self.communicator = ChunkedSocketCommunicator()
-
-        self._get_initial_state()
-
-        self._update_number_of_issues_in_run()
-
-        if self.state_as_vec:
-            return self.masks[self.current_state].astype(float)
-        else:
-            return self.current_state
+        self.t = 0
+        self.observation = self._get_initial_state()
+        self.prior_utility = self._get_current_utility()
+        self.action_space = [components for shops, components in self.observation.items()][0].keys()
+        return self.observation
 
     def render(self):
         """ Renders the environment. """
@@ -128,13 +129,14 @@ class MrubisEnv(gym.Env):
 
     def _get_initial_state(self):
         '''Query mRUBiS for the number of shops, get their initial states'''
-        self.number_of_shops = self._get_from_mrubis(
-            'get_number_of_shops').get('number_of_shops')
-        logger.info(f'Number of mRUBIS shops: {self.number_of_shops}')
-        for _ in range(self.number_of_shops):
-            shop_state = self._get_from_mrubis('get_initial_state')
-            shop_name = next(iter(shop_state))
-            self.mrubis_state[shop_name] = shop_state[shop_name]
+        # self.number_of_shops = self._get_from_mrubis(
+        #     'get_number_of_shops').get('number_of_shops')
+        # logger.info(f'Number of mRUBIS shops: {self.number_of_shops}')
+        # for _ in range(self.number_of_shops):
+        #     shop_state = self._get_from_mrubis('get_initial_state')
+        #     shop_name = next(iter(shop_state))
+        #     self.mrubis_state[shop_name] = shop_state[shop_name]
+        return self.communicator.get_from_mrubis('get_initial_state')
 
     def _update_number_of_issues_in_run(self):
         '''Update the number of issues present in the current run'''

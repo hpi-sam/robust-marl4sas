@@ -1,4 +1,4 @@
-from agent import Agent
+from marl.agent import Agent
 from rank_learner import RankLearner
 
 

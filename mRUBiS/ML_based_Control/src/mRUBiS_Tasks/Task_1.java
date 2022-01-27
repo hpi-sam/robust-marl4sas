@@ -201,6 +201,8 @@ public class Task_1 {
 		// TODO: use init_data from python, send "received"
 		// TODO: Set static state JSON for RuleSelector to initial state on first run
 		
+
+		
 		Resource architectureResource = EnvSetUp
 
 				.loadFreshInstance("model/enriched/mRUBiS-10shop_enriched.comparch");
@@ -210,6 +212,9 @@ public class Task_1 {
 		Architecture architecture = (Architecture) architectureResource.getContents().get(0);
 
 
+		RuleSelector.sendInitialStateToPython(architecture);
+		
+		
 		// EMF Delete Optimization
 		if (useOptimization) {
 			((OptimizedMSLDMInstanceFacade) interpreter.getFacadeFactory().getInstanceFacade())
@@ -267,6 +272,7 @@ public class Task_1 {
 			// if run <= RUNS then the simulator injects issues. As soon as
 			// run > RUNS, the simulator is triggered only once to analyze
 			// the model and the last adaptation.
+		
 			if (run <= RUNS) {
 				System.out.print("\n Run : " + run);
 				System.out.print("\n . \n .");
@@ -279,6 +285,7 @@ public class Task_1 {
 				System.out.printf("\n>> Analyze Compelete\n\n");
 				ArchitectureUtilCal.computeOverallUtility(architecture);
 
+				
 				/*
 				 * Plan
 				 */
