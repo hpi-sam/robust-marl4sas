@@ -14,7 +14,7 @@ def _decoded_action(action, observation):
     return list([components.keys() for shop, components in observation.items()][0])[action]
 
 
-def _encode_observations(observations):
+def encode_observations(observations):
     encoded_observations = []
     for component in observations.values():
         encoded_observations += [1 if component['failure_name'] != 'None' else 0]
@@ -56,7 +56,7 @@ class Agent:
         """
         actions = []
         for shop_name, components in observations.items():
-            state = _encode_observations(components)[np.newaxis, :]
+            state = encode_observations(components)[np.newaxis, :]
             if state.sum() > 0:  # skip shops without any failure
                 probabilities = self.policy.predict(state)[0]
                 action = np.random.choice(self.action_space, p=probabilities)
@@ -76,8 +76,8 @@ class Agent:
         actions = {action['shop']: action['component'] for action in actions.values()}
         metrics = []
         for shop_name, action in actions.items():
-            state = _encode_observations(states[shop_name])[np.newaxis, :]
-            state_ = _encode_observations(states_[shop_name])[np.newaxis, :]
+            state = encode_observations(states[shop_name])[np.newaxis, :]
+            state_ = encode_observations(states_[shop_name])[np.newaxis, :]
 
             critic_value = self.critic.predict(state)
             critic_value_ = self.critic.predict(state_)
@@ -103,6 +103,9 @@ class Agent:
 
             metrics.append({"actor": float(actor_loss), "critic": critic_history.history['loss'][0]})
         return metrics
+
+    def get_probabilities_for_observations(self, observations):
+        return self.policy.predict(encode_observations(observations)[np.newaxis, :])[0]
 
     def _build_network(self):
         if self.load_models_data is None:
@@ -144,3 +147,9 @@ class Agent:
         policy = Model(inputs=[critic.get_layer('input').input], outputs=[probs])
 
         return actor, critic, policy
+
+    def remove_shops(self, shops):
+        self.shops = self.shops.difference(shops)
+
+    def add_shops(self, shops):
+        self.shops = self.shops.union(shops)
