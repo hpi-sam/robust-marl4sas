@@ -26,10 +26,12 @@ def build_count_plot(base_dir, count_data, episode, shop_distribution):
 def build_loss_plot(base_dir, loss_data, episode, shop_distribution):
     for index, agent in enumerate(shop_distribution):
         title = f"Loss for agent #{index} (episode {episode})"
-        data = {}
         agents_loss = [actor_critic for d in loss_data for actor_critic in d[index]]
-        for network in ['actor', 'critic']:
-            data[network] = [loss[network] for loss in agents_loss]
+        data = {
+            network: [loss[network] for loss in agents_loss]
+            for network in ['actor', 'critic']
+        }
+
         path = f"{base_dir}/loss_agent_{index}_{episode}"
         build_plot(data, title, path)
 

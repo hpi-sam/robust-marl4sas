@@ -43,7 +43,7 @@ class Runner:
                 metrics.append(self.mac.learn(observations, actions, reward, observations_, terminated))
                 observations = observations_
 
-                if not actions:
+                if terminated:
                     for shop, count in env_info['stats'].items():
                         count_till_fixed[shop].append(count)
 
@@ -60,7 +60,7 @@ class Runner:
 
 mock_env = MrubisMockEnv()
 # shop_distribution_example = [{'mRUBiS #1', 'mRUBiS #2'}, {'mRUBiS #3'}]
-shop_distribution_example = [{'mRUBiS #1'}, {'mRUBiS #2'}]
-load_model = {"start_time": "2022_01_24_08_58", "episode": 40}
-# load_model = None
+shop_distribution_example = [{'mRUBiS #1'}, {'mRUBiS #2'}, {'mRUBiS #3'}]
+# load_model = {0: { 'start_time': '2022_01_28_12_34', 'episode': 100 }, 1: None, 2: None}
+load_model = {0: None, 1: None, 2: None}
 Runner(None, mock_env, shop_distribution_example, save_model=True, load_models_data=load_model).run(100)

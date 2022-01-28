@@ -15,9 +15,11 @@ def _decoded_action(action, observation):
 
 
 def encode_observations(observations):
-    encoded_observations = []
-    for component in observations.values():
-        encoded_observations += [1 if component['failure_name'] != 'None' else 0]
+    encoded_observations = [
+        1 if component['failure_name'] != 'None' else 0
+        for component in observations.values()
+    ]
+
     return np.array(encoded_observations, dtype=float)
 
 
@@ -40,7 +42,7 @@ class Agent:
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.alpha)
 
         self.actor, self.critic, self.policy = self._build_network()
-        self.action_space = [i for i in range(self.n_actions)]
+        self.action_space = list(range(self.n_actions))
 
         # stage 0 = no sorting as a baseline
         # stage 1 = sorting of actions
@@ -108,25 +110,24 @@ class Agent:
         return self.policy.predict(encode_observations(observations)[np.newaxis, :])[0]
 
     def _build_network(self):
-        if self.load_models_data is None:
-            input = Input(shape=(self.input_dims,), name='input')
-            delta = Input(shape=[1], name='delta')
-            dense1 = Dense(self.fc1_dims, activation='relu', name='dense1')(input)
-            # dense2 = Dense(self.fc2_dims, activation='relu')(dense1)
-
-            probs = Dense(self.n_actions, activation='softmax', name='probs')(dense1)
-            values = Dense(1, activation='linear', name='values')(dense1)
-
-            actor = Model(inputs=[input, delta], outputs=[probs])
-
-            critic = Model(inputs=[input], outputs=[values])
-            critic.compile(optimizer=Adam(lr=self.beta), loss='mean_squared_error')
-
-            policy = Model(inputs=[input], outputs=[probs])
-
-            return actor, critic, policy
-        else:
+        if self.load_models_data is not None:
             return self.load_models(self.load_models_data)
+        input = Input(shape=(self.input_dims,), name='input')
+        delta = Input(shape=[1], name='delta')
+        dense1 = Dense(self.fc1_dims, activation='relu', name='dense1')(input)
+        # dense2 = Dense(self.fc2_dims, activation='relu')(dense1)
+
+        probs = Dense(self.n_actions, activation='softmax', name='probs')(dense1)
+        values = Dense(1, activation='linear', name='values')(dense1)
+
+        actor = Model(inputs=[input, delta], outputs=[probs])
+
+        critic = Model(inputs=[input], outputs=[values])
+        critic.compile(optimizer=Adam(lr=self.beta), loss='mean_squared_error')
+
+        policy = Model(inputs=[input], outputs=[probs])
+
+        return actor, critic, policy
 
     def save(self, episode):
         self.actor.save(f"{self.base_model_dir}/{self.start_time}/agent_{self.index}/actor/episode_{episode}")

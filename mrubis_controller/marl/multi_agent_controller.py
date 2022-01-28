@@ -129,7 +129,7 @@ class MultiAgentController:
         self.agents = []
         for index, shops in enumerate(self.shop_distribution):
             self.agents.append(
-                Agent(index, shops, action_space, self.load_models_data, self.ridge_regression_train_data_path))
+                Agent(index, shops, action_space, self.load_models_data[index], self.ridge_regression_train_data_path))
             self.agents_status[index] = 'INSUFFICIENT_DATA'
 
     def _build_observations(self, agent_index, observation, shops=None):
