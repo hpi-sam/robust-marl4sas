@@ -1,7 +1,7 @@
 import gym
 # import json
 # import os
-from mrubis_controller.marl.data.data_generator import generate_shops_with_offset_failures
+from mrubis_controller.marl.data.data_generator import DataGenerator
 import copy
 
 
@@ -11,13 +11,6 @@ def get_failing_component(current_shop):
         if current_shop[component]['failure_name'] != "None":
             return component
     return None
-
-
-def get_observation(number_of_shops, step):
-    """ returns the observation and actual state for the given step """
-    return generate_shops_with_offset_failures(number_of_shops)
-    # with open(os.path.dirname(__file__) + f"/data/test/observation_step_{step}.json") as json_data_file:
-    #     return json.load(json_data_file)
 
 
 def get_current_utility(observation):
@@ -42,6 +35,12 @@ class MrubisMockEnv(gym.Env):
 
         self.utility_decrease_amount = 1  # if fix fails
         self.utility_increase_amount = 10  # if fix succeeds
+        self.data_generator = DataGenerator(number_of_shops=number_of_shops)
+        self.data_generator.set_shop_config([2, 3, True])
+
+    def _get_observation(self, step):
+        """ returns the observation and actual state for the given step """
+        return self.data_generator.generate_shops_with_failures(step)
 
     def step(self, actions):
         """ Returns observation, reward, terminated, info
@@ -81,7 +80,7 @@ class MrubisMockEnv(gym.Env):
             self.inner_t = 0
             self.terminated = True
             # TODO: check with Ulrike whether we need this if check
-            self.observation, self.failing_components = get_observation(self.number_of_shops, self.t)
+            self.observation, self.failing_components = self._get_observation(self.t)
             self.prior_utility = get_current_utility(self.observation)
         return _reward, copy.deepcopy(self.observation), self.terminated, self._info()
 
@@ -93,7 +92,7 @@ class MrubisMockEnv(gym.Env):
         """ Returns initial observations and states """
         self.t = 0
         self.terminated = False
-        self.observation, self.failing_components = get_observation(self.number_of_shops, self.t)
+        self.observation, self.failing_components = self._get_observation(self.t)
         self.prior_utility = get_current_utility(self.observation)
         self.action_space = [components for shops, components in self.observation.items()][0].keys()
         return copy.deepcopy(self.observation)
