@@ -212,7 +212,7 @@ public class Task_1 {
 		Architecture architecture = (Architecture) architectureResource.getContents().get(0);
 
 
-		RuleSelector.sendInitialStateToPython(architecture);
+		RuleSelector.getInitialState(architecture);
 		
 		
 		// EMF Delete Optimization

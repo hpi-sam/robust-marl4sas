@@ -112,6 +112,8 @@ public class RuleSelector {
 		// read utility increase (make sure that rules are available)
 		HashMap<String, HashMap<String, HashMap<String, HashMap<String, Double>>>> shopToIssueMap;
 		shopToIssueMap = UtilityIncreasePredictor.calculateCombinedUtilityIncrease(issue);
+		updateGlobalState(shopToIssueMap);
+		// TODO: We can really solve this a lot easier by just outputting a shop-component-issue triple, right? Or can this contain multiple shops' issues?
 		
 		Architecture architecture = issue.getAnnotations().getArchitecture();
 
@@ -124,11 +126,26 @@ public class RuleSelector {
 	}
 	
 	
-	private static void sendNumberOfShopsToPython(Architecture architecture) {
-		ChunkedSocketCommunicator.waitForMessage("get_number_of_shops");
-		String state = "not_available";
-		state = Observations.getNumberOfShops(architecture);
-		ChunkedSocketCommunicator.println(state);
+	private static void updateGlobalState(HashMap<String, HashMap<String, HashMap<String, HashMap<String, Double>>>> shopToIssueMap) {
+		for (HashMap.Entry<String, HashMap<String, HashMap<String, HashMap<String, Double>>>> shop : shopToIssueMap.entrySet()) {
+			String shopName = shop.getKey();
+			HashMap<String, HashMap<String, HashMap<String, Double>>> issues = shop.getValue();
+			for (HashMap.Entry<String, HashMap<String, HashMap<String, Double>>> issue: issues.entrySet()) {
+				String issueName = issue.getKey();
+				HashMap<String, HashMap<String, Double>> components = issue.getValue();
+				for (HashMap.Entry<String, HashMap<String, Double>> component: components.entrySet()) {
+					String componentName = component.getKey();
+					HashMap<String, Double> rules = component.getValue();
+					Double maxUtilityIncrease = 0.0;
+					for (HashMap.Entry<String, Double> rule: rules.entrySet()) {
+						maxUtilityIncrease = Math.max(maxUtilityIncrease, rule.getValue());
+					}
+					
+					globalState.get(shopName).get(componentName).put("failure_name", issueName);
+					// TODO: update utility?
+				}
+			}
+		}
 	}
 	
 	
@@ -171,7 +188,7 @@ public class RuleSelector {
 	}
 	
 	
-	public static void sendInitialStateToPython(Architecture MRUBIS) {
+	public static void getInitialState(Architecture MRUBIS) {
 		ChunkedSocketCommunicator.waitForMessage("get_initial_state");
 		HashMap<String, HashMap<String, HashMap<String, String>>> state;
 		globalState = Observations.getInitialStates(MRUBIS);

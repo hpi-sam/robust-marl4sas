@@ -96,6 +96,7 @@ public class Observations {
 				
 				HashMap<String, String> parameterMap = new HashMap<String, String>();
 				
+				parameterMap.put("failure_name", "None");
 				parameterMap.put("uid", component.getUid());
 				parameterMap.put("adt", String.valueOf(component.getADT()));
 				parameterMap.put("connectivity", String.valueOf(new Double(component.getProvidedInterfaces().size() + component.getRequiredInterfaces().size())));
