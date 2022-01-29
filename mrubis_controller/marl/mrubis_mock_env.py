@@ -19,8 +19,10 @@ def get_current_utility(observation):
 
 
 class MrubisMockEnv(gym.Env):
-    def __init__(self, number_of_shops=3):
+    def __init__(self, number_of_shops=3, shop_config=None):
         super(MrubisMockEnv, self).__init__()
+        if shop_config is None:
+            shop_config = [1, 0, False]
         self.number_of_shops = number_of_shops
         self.action_space = None
         self.observation_space = None
@@ -36,7 +38,7 @@ class MrubisMockEnv(gym.Env):
         self.utility_decrease_amount = 1  # if fix fails
         self.utility_increase_amount = 10  # if fix succeeds
         self.data_generator = DataGenerator(number_of_shops=number_of_shops)
-        self.data_generator.set_shop_config([1, 0, False])
+        self.data_generator.set_shop_config(shop_config)
 
     def _get_observation(self, step):
         """ returns the observation and actual state for the given step """
