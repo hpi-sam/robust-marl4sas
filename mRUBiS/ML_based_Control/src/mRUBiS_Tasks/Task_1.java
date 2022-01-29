@@ -289,6 +289,14 @@ public class Task_1 {
 				/*
 				 * Plan
 				 */
+				
+				// TODO: get step from python
+				// TODO: filter proposed fixes
+				// TODO: update observation JSON accordingly (how? -> reset fixed components, decrease utility on wrongly fixed components)
+				// TODO: figure out when issues are actually fixed?
+				// TODO: This has to be done here as Python sends proposed fixes before we send them back
+				// TODO: In the first loop: Python sends an empty list, as the initial state is all-functioning
+				
 				plan(interpreter, annotations, P_CF1, P_CF2, P_CF3, P_CF5);
 				
 				// TODO: send observation JSON to python
@@ -453,11 +461,6 @@ public class Task_1 {
 				}
 
 				execute(interpreter, allIssues, E_CF1, E_CF2, E_CF3, E_CF5);
-
-				// TODO: get step from python
-				// TODO: filter proposed fixes
-				// TODO: update observation JSON accordingly (how? -> reset fixed components, decrease utility on wrongly fixed components)
-				// TODO: figure out when issues are actually fixed?
 
 				if (CURRENT_APPROACH == Approaches.Learning) {
 

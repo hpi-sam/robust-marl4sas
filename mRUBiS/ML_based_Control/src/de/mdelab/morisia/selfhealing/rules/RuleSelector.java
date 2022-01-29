@@ -120,8 +120,9 @@ public class RuleSelector {
 //		sendNumberOfIssuesPerShopToPython(architecture);
 //		sendCurrentIssueToPython(issue);
 		
-		getRuleFromPython(issue);
-		Input.selectAction(issue);
+		// getRuleFromPython(issue);
+		// Input.selectAction(issue);
+		// Pretty sure we can skip these methods, as selectAction merely removes the rules that were not chosen by the agent
 		
 	}
 	
@@ -143,6 +144,7 @@ public class RuleSelector {
 					
 					globalState.get(shopName).get(componentName).put("failure_name", issueName);
 					// TODO: update utility?
+					// Although updating utility would likely need to be done after fixes are sent
 				}
 			}
 		}
