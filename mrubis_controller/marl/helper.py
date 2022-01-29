@@ -27,13 +27,12 @@ def build_loss_plot(base_dir, loss_data, episode, shop_distribution):
     for index, agent in enumerate(shop_distribution):
         title = f"Loss for agent #{index} (episode {episode})"
         agents_loss = [actor_critic for d in loss_data for actor_critic in d[index]]
-        data = {
-            network: [loss[network] for loss in agents_loss]
-            for network in ['actor', 'critic']
-        }
-
-        path = f"{base_dir}/loss_agent_{index}_{episode}"
-        build_plot(data, title, path)
+        for network in ['actor', 'critic']:
+            data = {
+                network: [loss[network] for loss in agents_loss]
+            }
+            path = f"{base_dir}/{network}loss_agent_{index}_{episode}"
+            build_plot(data, title, path)
 
 
 def build_plot(data, title, path):

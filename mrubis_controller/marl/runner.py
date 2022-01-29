@@ -61,6 +61,6 @@ class Runner:
 mock_env = MrubisMockEnv()
 # shop_distribution_example = [{'mRUBiS #1', 'mRUBiS #2'}, {'mRUBiS #3'}]
 shop_distribution_example = [{'mRUBiS #1'}, {'mRUBiS #2'}, {'mRUBiS #3'}]
-# load_model = {0: { 'start_time': '2022_01_28_12_34', 'episode': 100 }, 1: None, 2: None}
+# load_model = {0: { 'start_time': '2022_01_28_19_03', 'episode': 600 }, 1: None, 2: None}
 load_model = {0: None, 1: None, 2: None}
-Runner(None, mock_env, shop_distribution_example, save_model=True, load_models_data=load_model).run(100)
+Runner(None, mock_env, shop_distribution_example, save_model=True, load_models_data=load_model).run(1000)

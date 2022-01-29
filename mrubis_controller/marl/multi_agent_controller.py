@@ -16,19 +16,25 @@ class MultiAgentController:
         self.replay_buffer = []
         self.robustness = {
             'activated': False,  # activates or deactivates the robustness feature
-            'actor_threshold': 2,  # value against which the specified statistic is compared
-            'critic_threshold': 0.5,  # value against which the specified statistic is compared
+            'actor_lower_threshold': 0,  # value against which the specified statistic is compared
+            'actor_upper_threshold': 0.75,  # value against which the specified statistic is compared
+            'critic_lower_threshold': 5,  # value against which the specified statistic is compared
+            'critic_upper_threshold': 15,  # value against which the specified statistic is compared
             'evaluation_periods': 5,  # number of periods over which data is compared to the specified threshold
             'datapoints_to_alarm': 3,
             # number of data points within the Evaluation Periods that must be breaching to cause the alarm
+            'retrain_episodes': 20,
         }
         self.agents_status = {}
         # OK –                  The metric or expression is within the defined threshold.
         # ALARM –               The metric or expression is outside of the defined threshold.
         # INSUFFICIENT_DATA –   The alarm has just started, the metric is not available,
         #                       or not enough data is available for the metric to determine the alarm state.
-        # IN_CALIBRATION        The agent is currently trying to recalibrate due to a prior ALARM status
+        # CALIBRATION           The agent is currently trying to recalibrate due to a prior ALARM status
+        # RETRAIN               The agent is trying to improve
+        # RETIRED               The agent has no shops left and has no tasks to do and is waiting for challenges
         self.calibration_distribution = {}  # stores the shop distribution during calibration mode
+        self.retrain_count = {}
 
     def select_actions(self, observations):
         """ based on observations select actions
@@ -36,29 +42,21 @@ class MultiAgentController:
             the rank learner has to be called to sort those actions
             returns a sorted list of actions
         """
+        if self.robustness['activated']:
+            # before selecting an action all agents have to be checked if they are in ALARM and init the calibration
+            self._update_calibration_distribution()
+
+        # after the calibration is done the agents are asked to perform the action selection
         actions = []
         for index, agent in enumerate(self.agents):
-            if self.robustness['activated'] and self.agents_status[index] == 'ALARM':
-                #  a) retrain agent
-                #  b) ask others agents critic to judge the last step taken -> lowest critic loss
-                #  c) or just ask another policy and take the one that would have solved the last evaluation_periods
-                #     steps correctly
-                #  d) if b) or c) -> switch weights
-                #  e) calibration run for testing other agent (rerun on previous data -> replay buffer)
-                #  either train_mode: return real state from mrubis as well
-                #  or: rerun on wrongly predicted observation:
-                #       - does policy give any information? could be that policy is 100% sure, but it's completely wrong
-                #  or: order agents by their certainty and ask mRUBiS
-                #  f) if no agent is performing great, retrain a new agent (retrain mode) by copying the old weights and transfer the shops over to this agent
-                self._init_calibration_distribution(index, agent)
-
             if self.robustness['activated'] and self.agents_status[index] == 'CALIBRATION':
                 # don't use an agent that is currently in calibration mode
                 continue
             elif self.robustness['activated'] and self._is_agent_in_charge_for_other_calibrating_agent(index):
                 failing_agent_shops = self._get_shops_of_agent_in_charge_for_other_calibrating_agent(index)
                 actions.append(
-                    agent.choose_action(self._build_observations(index, observations, failing_agent_shops['shops'])))
+                    agent.choose_action(
+                        self._build_observations(index, observations, set.union(*failing_agent_shops['shops']))))
             else:
                 actions.append(agent.choose_action(self._build_observations(index, observations)))
 
@@ -98,17 +96,19 @@ class MultiAgentController:
             if self.robustness['activated'] and self._is_agent_in_charge_for_other_calibrating_agent(index):
                 # check if other agent was doing a better job
                 failing_agent_shops = self._get_shops_of_agent_in_charge_for_other_calibrating_agent(index)
-                added_shops = failing_agent_shops['shops'].difference(agent.shops)
-                for shop in added_shops:
-                    if sum(encode_observations(self._build_observations(index, observations_, {shop})[shop])) > 0:
-                        # still an error
-                        self.calibration_distribution[failing_agent_shops['failing_agent_index']].popitem()
+                for n in range(len(failing_agent_shops['failing_agent_index'])):
+                    added_shops = failing_agent_shops['shops'][n].difference(agent.shops)
+                    for shop in added_shops:
+                        if sum(encode_observations(self._build_observations(index, observations_, {shop})[shop])) > 0:
+                            # still an error
+                            self.calibration_distribution[failing_agent_shops['failing_agent_index'][n]].popitem()
 
-                        # check if all agents were not able to help the agent
-                        if len(self.calibration_distribution[failing_agent_shops['failing_agent_index']].values()):
-                            self.agents_status[failing_agent_shops['failing_agent_index']] = 'RETRAIN'
-                    else:
-                        self._move_shops(failing_agent_shops['failing_agent_index'], index, added_shops)
+                            # check if all agents were not able to help the agent
+                            if len(self.calibration_distribution[
+                                       failing_agent_shops['failing_agent_index'][n]].values()) == 0:
+                                self.agents_status[failing_agent_shops['failing_agent_index'][n]] = 'RETRAIN'
+                        else:
+                            self._move_shops(failing_agent_shops['failing_agent_index'][n], index, added_shops)
 
             metric = agent.learn(self._build_observations(index, observations),
                                  self._build_actions(index, actions),
@@ -158,9 +158,17 @@ class MultiAgentController:
         """
         eval_periods = self.robustness['evaluation_periods']
         for index, agent in enumerate(self.agents):
-            if self.agents_status[index] in ['ALARM', 'CALIBRATION', 'RETRAIN']:
-                # TODO: after x steps, agent should move to OK to enable validation again
+            if self.agents_status[index] in ['ALARM', 'CALIBRATION', 'RETIRED']:
                 continue
+            if self.agents_status[index] in ['RETRAIN']:
+                # after x steps, the agent should move to OK or ALARM to enable validation again
+                self.retrain_count[index] += 1
+                if self.retrain_count[index] < self.robustness['retrain_episodes']:
+                    continue
+                else:
+                    # reset retrain count
+                    # status will be set to ALARM or OK following the code below
+                    self.retrain_count[index] = 0
             agent_metric = [agent_metric for metric in self.metrics for agent_metric in metric[index]][-eval_periods:]
             if len(agent_metric) < eval_periods:
                 self.agents_status[index] = 'INSUFFICIENT_DATA'
@@ -168,9 +176,11 @@ class MultiAgentController:
                 # check if any NN is breaching the defined threshold
                 # at least datapoints_to_alarm steps must breach the threshold to set an ALARM
                 # otherwise the status is OK
-                for network in ['actor', 'critic']:
+                # TODO: why does the critic loss change by changing the data generator?
+                for network in ['actor']:
                     breached_metrics = [item[network] for item in agent_metric if
-                                        abs(item[network]) >= self.robustness[f"{network}_threshold"]]
+                                        self.robustness[f"{network}_lower_threshold"] > abs(item[network]) or
+                                        abs(item[network]) > self.robustness[f"{network}_upper_threshold"]]
                     if len(breached_metrics) >= self.robustness['datapoints_to_alarm']:
                         self.agents_status[index] = 'ALARM'
                         break
@@ -185,6 +195,11 @@ class MultiAgentController:
                 # ignore agents similar to failing agent
                 if not self._is_agent_check_plausible(agent, relevant_history):
                     continue
+
+                # ignore agents in alarm or calibration state
+                if self.agents_status[index] not in ['OK']:
+                    continue
+
                 # calc predictions for last step by all agents
                 agent_predictions = {}
                 for shop_name, components in relevant_history['observations'].items():
@@ -204,11 +219,30 @@ class MultiAgentController:
             for agent_index in ranked_agents.keys()
         }
 
-        self.calibration_distribution[failing_agent_index] = ranked_test_distributions
-        self.agents_status[failing_agent_index] = 'CALIBRATION'
+        if not ranked_test_distributions:
+            # no agent is available to start a calibration so retrain that agent
+            self.agents_status[failing_agent_index] = 'RETRAIN'
+            self.retrain_count[failing_agent_index] = 0
+        else:
+            self.calibration_distribution[failing_agent_index] = ranked_test_distributions
+            self.agents_status[failing_agent_index] = 'CALIBRATION'
 
-    def _update_calibration_distribution(self, index, agent):
+    def _update_calibration_distribution(self):
         """ """
+        for index, agent in enumerate(self.agents):
+            if self.robustness['activated'] and self.agents_status[index] == 'ALARM':
+                #  a) retrain agent
+                #  b) ask others agents critic to judge the last step taken -> lowest critic loss
+                #  c) or just ask another policy and take the one that would have solved the last evaluation_periods
+                #     steps correctly
+                #  d) if b) or c) -> switch weights
+                #  e) calibration run for testing other agent (rerun on previous data -> replay buffer)
+                #  either train_mode: return real state from mrubis as well
+                #  or: rerun on wrongly predicted observation:
+                #       - does policy give any information? could be that policy is 100% sure, but it's completely wrong
+                #  or: order agents by their certainty and ask mRUBiS
+                #  f) if no agent is performing great, retrain a new agent (retrain mode) by copying the old weights and transfer the shops over to this agent
+                self._init_calibration_distribution(index, agent)
 
     def _is_agent_check_plausible(self, agent, relevant_history):
         """ filter agents which would have chosen the exact same action that was wrong """
@@ -248,16 +282,24 @@ class MultiAgentController:
         return dict(sorted(score_per_agent.items(), key=lambda item: item[1]))
 
     def _is_agent_in_charge_for_other_calibrating_agent(self, index):
-        return any(index == list(distribution.keys())[0] for distribution in self.calibration_distribution.values())
+        """
+        checks if index_agent is next in line and has currently a failing component so the agent can have a challenge
+        """
+        return any(len(distribution.keys()) > 0 and index == list(distribution.keys())[0] for distribution in
+                   self.calibration_distribution.values())
 
-    def _get_shops_of_agent_in_charge_for_other_calibrating_agent(self, index):
+    def _get_shops_of_agent_in_charge_for_other_calibrating_agent(self, agent_index):
+        """
+        get all distributions if agent_index is next in line and the failing agent has shops with failures
+        so we can have challenge for that agent, otherwise take the next agent
+        """
+        # TODO: return only shops that have failures
+        calibration_distribution = {'shops': [], 'failing_agent_index': []}
         for failing_agent_index, distribution in self.calibration_distribution.items():
-            if index == list(distribution.keys())[0]:
-                return {
-                    'shops': list(distribution.values())[0]['shops'],
-                    'failing_agent_index': failing_agent_index
-                }
-        return None
+            if len(distribution.keys()) > 0 and agent_index == list(distribution.keys())[0]:
+                calibration_distribution['shops'].append(list(distribution.values())[0]['shops'])
+                calibration_distribution['failing_agent_index'].append(failing_agent_index)
+        return calibration_distribution or None
 
     def _move_shops(self, source_index, destination_index, shops):
         self.agents[source_index].remove_shops(shops)

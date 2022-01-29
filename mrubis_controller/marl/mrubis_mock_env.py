@@ -36,7 +36,7 @@ class MrubisMockEnv(gym.Env):
         self.utility_decrease_amount = 1  # if fix fails
         self.utility_increase_amount = 10  # if fix succeeds
         self.data_generator = DataGenerator(number_of_shops=number_of_shops)
-        self.data_generator.set_shop_config([2, 3, True])
+        self.data_generator.set_shop_config([1, 0, False])
 
     def _get_observation(self, step):
         """ returns the observation and actual state for the given step """
@@ -111,10 +111,7 @@ class MrubisMockEnv(gym.Env):
 
     def last(self):
         """ returns last state, reward, terminated, info """
-        return self.observation, self._get_reward(self.observation), self._terminated(), self._info()
-
-    def _terminated(self):
-        return self.t == self.termination_t
+        return self.observation, self._get_reward(self.observation), self.terminated, self._info()
 
     def _info(self):
         return {'t': self.t, 'stats': self.stats}
