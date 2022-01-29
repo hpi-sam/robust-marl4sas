@@ -33,12 +33,12 @@ class Agent:
 
         self.action_space_inverted = list(action_space_inverted)
         self.gamma = 0.99
-        self.alpha = 0.001
-        self.beta = 0.005
+        self.alpha = 0.0001
+        self.beta = 0.0005
         self.n_actions = len(action_space_inverted)
         self.input_dims = self.n_actions
-        self.fc1_dims = 24
-        # self.fc2_dims = 24
+        self.fc1_dims = 36
+        self.fc2_dims = 72
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.alpha)
 
         self.actor, self.critic, self.policy = self._build_network()
@@ -115,10 +115,10 @@ class Agent:
         input = Input(shape=(self.input_dims,), name='input')
         delta = Input(shape=[1], name='delta')
         dense1 = Dense(self.fc1_dims, activation='relu', name='dense1')(input)
-        # dense2 = Dense(self.fc2_dims, activation='relu')(dense1)
+        dense2 = Dense(self.fc2_dims, activation='relu')(dense1)
 
-        probs = Dense(self.n_actions, activation='softmax', name='probs')(dense1)
-        values = Dense(1, activation='linear', name='values')(dense1)
+        probs = Dense(self.n_actions, activation='softmax', name='probs')(dense2)
+        values = Dense(1, activation='linear', name='values')(dense2)
 
         actor = Model(inputs=[input, delta], outputs=[probs])
 

@@ -36,7 +36,7 @@ class MrubisMockEnv(gym.Env):
         self.terminated = False
 
         self.utility_decrease_amount = 1  # if fix fails
-        self.utility_increase_amount = 10  # if fix succeeds
+        self.utility_increase_amount = 17  # if fix succeeds
         self.data_generator = DataGenerator(number_of_shops=number_of_shops)
         self.data_generator.set_shop_config(shop_config)
 

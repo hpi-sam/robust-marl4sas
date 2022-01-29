@@ -12,7 +12,7 @@ class Runner:
         self.env = env
         self.mac = MultiAgentController(self.shop_distribution, self.load_models_data)
         self.t = 0
-        self.save_model_interval = 10  # interval of saving models
+        self.save_model_interval = 50  # interval of saving models
         self.save_model = save_model
         self.base_dir = f"./data/logs/{get_current_time()}"
 
@@ -58,9 +58,11 @@ class Runner:
             print(f"episode {self.t} done")
 
 
-mock_env = MrubisMockEnv()
+mock_env = MrubisMockEnv(number_of_shops=1)
 # shop_distribution_example = [{'mRUBiS #1', 'mRUBiS #2'}, {'mRUBiS #3'}]
-shop_distribution_example = [{'mRUBiS #1'}, {'mRUBiS #2'}, {'mRUBiS #3'}]
+# shop_distribution_example = [{'mRUBiS #1'}, {'mRUBiS #2'}, {'mRUBiS #3'}]
+shop_distribution_example = [{'mRUBiS #1'}]
 # load_model = {0: { 'start_time': '2022_01_28_19_03', 'episode': 600 }, 1: None, 2: None}
-load_model = {0: None, 1: None, 2: None}
-Runner(None, mock_env, shop_distribution_example, save_model=True, load_models_data=load_model).run(1000)
+# load_model = {0: None, 1: None, 2: None}
+load_model = {0: None}
+Runner(None, mock_env, shop_distribution_example, save_model=True, load_models_data=load_model).run(10000)
