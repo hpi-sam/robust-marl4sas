@@ -23,8 +23,8 @@ component_names = ["Availability Item Filter",
 
 
 class DataGenerator:
-    def __init__(self, seed_dependencies=1, number_of_shops=3):
-        self.seed = seed_dependencies,
+    def __init__(self, seed=1, number_of_shops=3):
+        random.seed(seed)
         self.number_of_shops = number_of_shops
         # [[number_of_failures, offset, use_dependency]]
         self.shop_config = []
@@ -35,9 +35,9 @@ class DataGenerator:
             which would fail in the observations.
             This should simulate the shop internal component dependencies.
         """
-        random.seed(seed)
+        # random.seed(seed)
         dependencies = []
-        for i in range(18):
+        for _ in range(18):
             probabilities = {i: random.uniform(0, 1) for i in range(18)}
             dependencies.append(sorted(probabilities, key=probabilities.get, reverse=True))
         return dependencies
@@ -70,10 +70,7 @@ class DataGenerator:
 
     def _generate_state_fails(self):
         """ returns actual failing component indices """
-        failing_components = []
-        for i in range(self.number_of_shops):
-            failing_components.append(random.randint(1, 18))
-        return failing_components
+        return [random.randint(0, 17) for _ in range(self.number_of_shops)]
 
     def _get_offset_fails(self, failing_component_index, number_of_failures, offset):
         """ returns a list of false failing components starting with an offset of the actual failing component """
@@ -106,17 +103,18 @@ class DataGenerator:
     def generate_shops_with_failures(self, seed=1):
         """ returns shop observations and the actual failing component per shop """
         # TODO return ranking component failures
-        random.seed(seed)
+        # TODO we have not enough seeds for random data -> overfitting with only seeds in [0,1,2]
+        # random.seed(seed)
         shops_obs = {}
         shops_state = {}
         failing_component_indices = self._generate_state_fails()
         for i in range(1, 1 + self.number_of_shops):
-            if self.shop_config[i-1][2]:
+            if self.shop_config[i - 1][2]:
                 obs_fails = self._get_dependency_fails(self.shop_dep[failing_component_indices[i - 1]],
-                                                       self.shop_config[i-1][0], self.shop_config[i-1][1])
+                                                       self.shop_config[i - 1][0], self.shop_config[i - 1][1])
             else:
                 obs_fails = self._get_offset_fails(failing_component_indices[i - 1],
-                                                   self.shop_config[i-1][0], self.shop_config[i-1][1])
+                                                   self.shop_config[i - 1][0], self.shop_config[i - 1][1])
             shops_obs[shop_name + str(i)] = self._generate_shop(obs_fails)
             shops_state[shop_name + str(i)] = component_names[failing_component_indices[i - 1]]
 
