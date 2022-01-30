@@ -112,7 +112,7 @@ public class RuleSelector {
 		// read utility increase (make sure that rules are available)
 		HashMap<String, HashMap<String, HashMap<String, HashMap<String, Double>>>> shopToIssueMap;
 		shopToIssueMap = UtilityIncreasePredictor.calculateCombinedUtilityIncrease(issue);
-		updateGlobalState(shopToIssueMap);
+		updateGlobalState(shopToIssueMap, issue.getUtilityDrop());
 		// TODO: We can really solve this a lot easier by just outputting a shop-component-issue triple, right? Or can this contain multiple shops' issues?
 		
 		// Architecture architecture = issue.getAnnotations().getArchitecture();
@@ -127,7 +127,7 @@ public class RuleSelector {
 	}
 	
 	
-	private static void updateGlobalState(HashMap<String, HashMap<String, HashMap<String, HashMap<String, Double>>>> shopToIssueMap) {
+	private static void updateGlobalState(HashMap<String, HashMap<String, HashMap<String, HashMap<String, Double>>>> shopToIssueMap, double utilityDrop) {
 		for (HashMap.Entry<String, HashMap<String, HashMap<String, HashMap<String, Double>>>> shop : shopToIssueMap.entrySet()) {
 			String shopName = shop.getKey();
 			HashMap<String, HashMap<String, HashMap<String, Double>>> issues = shop.getValue();
@@ -141,14 +141,23 @@ public class RuleSelector {
 					for (HashMap.Entry<String, Double> rule: rules.entrySet()) {
 						maxUtilityIncrease = Math.max(maxUtilityIncrease, rule.getValue());
 					}
-					
+					double oldUtility = Double.parseDouble(globalState.get(shopName).get(componentName).get("component_utility"));
+					globalState.get(shopName).get(componentName).put("component_utility", Double.toString(oldUtility - utilityDrop));
 					globalState.get(shopName).get(componentName).put("failure_name", issueName);
+					
+					for (HashMap.Entry<String, HashMap<String, String>> shopComponent : globalState.get(shopName).entrySet()) {
+						double old_utility = Double.parseDouble(shopComponent.getValue().get("shop_utility"));
+						shopComponent.getValue().put("shop_utility", Double.toString(old_utility - utilityDrop));
+					}
+					
+					
 					// TODO: update utility?
 					// Although updating utility would likely need to be done after fixes are sent
 				}
 			}
 		}
 	}
+	
 	
 	
 	public static void sendFailProbabilityToPython() {
@@ -278,7 +287,10 @@ public class RuleSelector {
 	
 
 
-
+	public static void addUtilityDecrease(Issue issue) {
+		
+		
+	}
 
 	public static void addActualUtilityIncreaseToRule(Issue issue, Utilityfunction UTILITY_FUNCTION) {
 	 if (UTILITY_FUNCTION==Utilityfunction.Combined)
