@@ -1,4 +1,4 @@
-from marl.mrubis_env import MrubisEnv
+from mrubis_env import MrubisEnv
 from multi_agent_controller import MultiAgentController
 import logging
 import matplotlib.pyplot as plt
@@ -32,7 +32,9 @@ class Runner:
         count_till_fixed = {shop: [] for agent in self.shop_distribution for shop in agent}
         while self.t < episodes:
             terminated = False
+            print("Getting initial observations")
             observations = self.env.reset()
+            print(observations)
             while not terminated:
                 actions = self.mac.select_actions(observations)
 

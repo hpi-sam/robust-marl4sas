@@ -290,14 +290,9 @@ public class Task_1 {
 				 * Plan
 				 */
 				
-				// TODO: get step from python
-				// TODO: filter proposed fixes
-				// TODO: update observation JSON accordingly (how? -> reset fixed components, decrease utility on wrongly fixed components)
-				// TODO: figure out when issues are actually fixed?
-				// TODO: This has to be done here as Python sends proposed fixes before we send them back
-				// TODO: In the first loop: Python sends an empty list, as the initial state is all-functioning
-				
 				plan(interpreter, annotations, P_CF1, P_CF2, P_CF3, P_CF5);
+				
+				RuleSelector.sendGlobalState();
 				
 				// TODO: send observation JSON to python
 				
@@ -412,18 +407,41 @@ public class Task_1 {
 
 				if (CURRENT_APPROACH == Approaches.Learning) {
 					
-					System.out.println("Sending fail probability to Python...");
-					RuleSelector.sendFailProbabilityToPython();
+					//System.out.println("Sending fail probability to Python...");
+					//RuleSelector.sendFailProbabilityToPython();
 
 					// Get custom fix ordering from the controller
 					System.out.println("Waiting for Python to send order in which to apply fixes...");
-					HashMap<String, HashMap<String, String>> fixOrder = ChunkedSocketCommunicator.readJSON(new HashMap<String, HashMap<String, String>>());
+					/*HashMap<String, HashMap<String, String>> fixOrder = ChunkedSocketCommunicator.readJSON(new HashMap<String, HashMap<String, String>>());
 					ChunkedSocketCommunicator.println("fix_order_received");
 					// reorder the issues according to the order sent by the controller
 					
 					System.out.println("org: " + allIssues);
 					
 					List<Issue> orderedIssues = new LinkedList<>();
+					for (String priority: fixOrder.keySet()) {
+						String shopName = fixOrder.get(priority).get("shop");
+						String issueName = fixOrder.get(priority).get("issue");
+						String componentName = fixOrder.get(priority).get("component");
+
+						for (Issue issue: allIssues) {
+							if (issue.getAffectedComponent().getTenant().getName().equals(shopName)) {
+								if (issue.getClass().getSimpleName().replaceAll("Impl", "").equals(issueName)) {
+									if (issue.getAffectedComponent().getType().getName().equals(componentName)) {
+										orderedIssues.add(issue);
+									}
+								}
+							}
+						}
+					}*/
+					
+					HashMap<String, HashMap<String, String>> fixOrder = ChunkedSocketCommunicator.readJSON(new HashMap<String, HashMap<String, String>>());
+					System.out.println("org: " + allIssues);
+					
+					// TODO: Change this to handle Python not fixing all issues / fixing components that do not have issues
+					
+					List<Issue> orderedIssues = new LinkedList<>();
+					
 					for (String priority: fixOrder.keySet()) {
 						String shopName = fixOrder.get(priority).get("shop");
 						String issueName = fixOrder.get(priority).get("issue");
@@ -459,6 +477,13 @@ public class Task_1 {
 					allIssues = orderedIssues;
 
 				}
+				
+				// TODO: get actions from python
+				// TODO: filter proposed fixes
+				// TODO: update observation JSON accordingly (how? -> reset fixed components, decrease utility on wrongly fixed components)
+				// TODO: figure out when issues are actually fixed?
+				// TODO: This has to be done here as Python sends proposed fixes before we send them back
+				// TODO: In the first loop: Python sends an empty list, as the initial state is all-functioning
 
 				execute(interpreter, allIssues, E_CF1, E_CF2, E_CF3, E_CF5);
 

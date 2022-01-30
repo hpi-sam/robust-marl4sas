@@ -115,7 +115,7 @@ public class RuleSelector {
 		updateGlobalState(shopToIssueMap);
 		// TODO: We can really solve this a lot easier by just outputting a shop-component-issue triple, right? Or can this contain multiple shops' issues?
 		
-		Architecture architecture = issue.getAnnotations().getArchitecture();
+		// Architecture architecture = issue.getAnnotations().getArchitecture();
 
 //		sendNumberOfIssuesPerShopToPython(architecture);
 //		sendCurrentIssueToPython(issue);
@@ -191,16 +191,35 @@ public class RuleSelector {
 	
 	
 	public static void getInitialState(Architecture MRUBIS) {
-		ChunkedSocketCommunicator.waitForMessage("get_initial_state");
+		//ChunkedSocketCommunicator.waitForMessage("get_initial_state");
 		HashMap<String, HashMap<String, HashMap<String, String>>> state;
 		globalState = Observations.getInitialStates(MRUBIS);
-		String json = "";
+		/*String json = "";
 		try {
 			json = new ObjectMapper().writeValueAsString(globalState);
 			ChunkedSocketCommunicator.println(json);
 		} catch (JsonProcessingException e) {
 			e.printStackTrace();
-		}	
+		}*/	
+	}
+	
+	public static void sendGlobalState() {
+		String json = "";
+		try {
+			json = new ObjectMapper().writeValueAsString(globalState);
+			ChunkedSocketCommunicator.println(json);
+			
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+		try {
+			ObjectMapper globalStateMapper = new ObjectMapper();
+			globalStateMapper.writeValue(Paths.get("globalState.json").toFile(), globalState);
+		} catch (IOException e) {
+			System.out.println("Failed to write JSON to file:");
+			System.out.println(globalState);
+			e.printStackTrace();
+		}
 	}
 	
 	

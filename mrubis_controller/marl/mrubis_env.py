@@ -2,8 +2,6 @@ import gym
 import logging
 
 import json
-import socket
-from json.decoder import JSONDecodeError
 from time import sleep
 from subprocess import PIPE, Popen
 
@@ -47,6 +45,7 @@ class MrubisEnv(gym.Env):
         self.current_fixes = None
         self.mrubis_process = None
         self.communicator = None
+        self.observation = None
 
         # initial state and action
         self.reset()
@@ -61,6 +60,8 @@ class MrubisEnv(gym.Env):
         # TODO: Get observation from mRUBiS
         # TODO: Determine reward (calculate from observation)
         # TODO: What to do once failure propagation is implemented?
+        print(actions)
+        self.communicator.println(json.dumps(actions))
         raise NotImplementedError
 
     def reset(self):
@@ -86,7 +87,10 @@ class MrubisEnv(gym.Env):
         sleep(0.5)
 
         self.t = 0
-        self.observation = self._get_initial_state()
+        if self.observation is None:            
+            print("Getting intitial state")
+            self.observation = self._get_initial_state()
+            print("Got initial state")
         self.prior_utility = self._get_current_utility()
         self.action_space = [components for shops, components in self.observation.items()][0].keys()
         return self.observation
@@ -136,7 +140,8 @@ class MrubisEnv(gym.Env):
         #     shop_state = self._get_from_mrubis('get_initial_state')
         #     shop_name = next(iter(shop_state))
         #     self.mrubis_state[shop_name] = shop_state[shop_name]
-        return self.communicator.get_from_mrubis('get_initial_state')
+        # return self.communicator.get_from_mrubis('get_initial_state')
+        return self.communicator.read_json()
 
     def _update_number_of_issues_in_run(self):
         '''Update the number of issues present in the current run'''

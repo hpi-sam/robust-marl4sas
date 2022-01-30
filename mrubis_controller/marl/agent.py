@@ -5,7 +5,7 @@ from tensorflow.keras.optimizers import Adam
 import tensorflow as tf
 import numpy as np
 
-from marl.helper import get_current_time
+from helper import get_current_time
 
 # tf.config.experimental_run_functions_eagerly(True)
 
