@@ -102,7 +102,6 @@ class DataGenerator:
     def generate_shops_with_failures(self, seed=1):
         """ returns shop observations and the actual failing component per shop """
         # TODO return ranking component failures
-        # TODO we have not enough seeds for random data -> overfitting with only seeds in [0,1,2]
         shops_obs = {}
         shops_state = {}
         failing_component_indices = self._generate_state_fails()
