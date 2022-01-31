@@ -15,7 +15,7 @@ def init_agent(shops=None):
                     'Inventory Service', 'Region Item Filter', 'Category Item Filter', 'Last Second Sales Item Filter',
                     'Future Sales Item Filter']
     episode = 0
-    agent = Agent(0, shops, action_space, None, Path('../../data/TrainingmRUBiS_Theta0.05_NonStationary.csv'))
+    agent = Agent(0, shops, action_space, None, Path('./data/TrainingmRUBiS_Theta0.05_NonStationary.csv'))
     return episode, agent
 
 
