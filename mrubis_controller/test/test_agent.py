@@ -1,7 +1,7 @@
 from numpy.testing import assert_array_equal
 from pathlib import Path
 
-from marl.mrubis_mock_env import MrubisMockEnv
+from mrubis_controller.marl.mrubis_mock_env import MrubisMockEnv
 from mrubis_controller.marl.agent import Agent
 
 
