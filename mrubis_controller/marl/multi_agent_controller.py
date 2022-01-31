@@ -241,7 +241,8 @@ class MultiAgentController:
                 #  or: rerun on wrongly predicted observation:
                 #       - does policy give any information? could be that policy is 100% sure, but it's completely wrong
                 #  or: order agents by their certainty and ask mRUBiS
-                #  f) if no agent is performing great, retrain a new agent (retrain mode) by copying the old weights and transfer the shops over to this agent
+                #  f) if no agent is performing great, retrain a new agent (retrain mode)
+                #  by copying the old weights and transfer the shops over to this agent
                 self._init_calibration_distribution(index, agent)
 
     def _is_agent_check_plausible(self, agent, relevant_history):

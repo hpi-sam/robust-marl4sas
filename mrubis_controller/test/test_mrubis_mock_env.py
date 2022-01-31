@@ -41,3 +41,18 @@ def test_wrong_action_for_5_episodes():
         assert len(env_info['stats'].keys()) == 0
         assert sum(encode_observations(observations_[shop])[np.newaxis, :][0]) == 1
         observation = observations_
+
+def test_right_action_for_5_episodes():
+    mock_env = MrubisMockEnv(number_of_shops=1, shop_config=[1, 0, False])
+    shop = 'mRUBiS #1'
+    observation = mock_env.reset()
+    for _ in range(5):
+        one_hot_state = encode_observations(observation[shop])[np.newaxis, :][0]
+        wrong_failing_component_from_action_space = list(mock_env.action_space)[np.where(one_hot_state == 1)[0][0]]
+        action = {0: {'shop': shop, 'component': wrong_failing_component_from_action_space}}
+        reward, observations_, terminated, env_info = mock_env.step(action)
+        assert reward[0][shop] == 17
+        assert terminated is True
+        assert len(env_info['stats'].keys()) == 1
+        assert sum(encode_observations(observations_[shop])[np.newaxis, :][0]) == 1
+        observation = observations_
