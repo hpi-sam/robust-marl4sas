@@ -23,22 +23,21 @@ component_names = ["Availability Item Filter",
 
 
 class DataGenerator:
-    def __init__(self, seed=1, number_of_shops=3):
-        random.seed(seed)
+    def __init__(self, seed_shop_dependencies=1, number_of_shops=3):
         self.number_of_shops = number_of_shops
         # [[number_of_failures, offset, use_dependency]]
         self.shop_config = []
-        self.shop_dep = self._generate_failing_dependencies()
+        self.shop_dep = self._generate_failing_dependencies(seed_shop_dependencies)
 
-    def _generate_failing_dependencies(self, seed=1):
+    def _generate_failing_dependencies(self, seed):
         """ Returns for each component index a sorted list of most probable component indices
             which would fail in the observations.
             This should simulate the shop internal component dependencies.
         """
-        # random.seed(seed)
+        rng = numpy.random.RandomState(seed)
         dependencies = []
         for _ in range(18):
-            probabilities = {i: random.uniform(0, 1) for i in range(18)}
+            probabilities = {i: rng.uniform(0, 1) for i in range(18)}
             dependencies.append(sorted(probabilities, key=probabilities.get, reverse=True))
         return dependencies
 
@@ -104,7 +103,6 @@ class DataGenerator:
         """ returns shop observations and the actual failing component per shop """
         # TODO return ranking component failures
         # TODO we have not enough seeds for random data -> overfitting with only seeds in [0,1,2]
-        # random.seed(seed)
         shops_obs = {}
         shops_state = {}
         failing_component_indices = self._generate_state_fails()
@@ -122,6 +120,6 @@ class DataGenerator:
 
 
 if __name__ == "__main__":
-    generator = DataGenerator()
+    generator = DataGenerator(seed_shop_dependencies=1)
     generator.set_shop_config([2, 3, True])
     generator.generate_shops_with_failures()

@@ -21,7 +21,7 @@ def test_correct_action_for_5_episodes():
         failing_component_from_action_space = list(mock_env.action_space)[np.where(one_hot_state == 1)[0][0]]
         action = {0: {'shop': shop, 'component': failing_component_from_action_space}}
         reward, observations_, terminated, env_info = mock_env.step(action)
-        assert reward[0][shop] == 10
+        assert reward[0][shop] == 17
         assert terminated is True
         steps_till_solved = 1
         assert env_info['stats'][shop] == steps_till_solved

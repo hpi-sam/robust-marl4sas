@@ -39,6 +39,7 @@ class Agent:
         self.input_dims = self.n_actions
         self.fc1_dims = 36
         self.fc2_dims = 72
+        self.fc3_dims = 144
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.alpha)
 
         self.actor, self.critic, self.policy = self._build_network()
@@ -115,10 +116,11 @@ class Agent:
         input = Input(shape=(self.input_dims,), name='input')
         delta = Input(shape=[1], name='delta')
         dense1 = Dense(self.fc1_dims, activation='relu', name='dense1')(input)
-        dense2 = Dense(self.fc2_dims, activation='relu')(dense1)
+        dense2 = Dense(self.fc2_dims, activation='relu', name='dense2')(dense1)
+        dense3 = Dense(self.fc3_dims, name='dense3')(dense2)
 
-        probs = Dense(self.n_actions, activation='softmax', name='probs')(dense2)
-        values = Dense(1, activation='linear', name='values')(dense2)
+        probs = Dense(self.n_actions, activation='softmax', name='probs')(dense3)
+        values = Dense(1, activation='linear', name='values')(dense3)
 
         actor = Model(inputs=[input, delta], outputs=[probs])
 
@@ -141,7 +143,7 @@ class Agent:
 
         # load actor and set layers
         actor_copy = tf.keras.models.load_model(f"{base_dir}/actor/episode_{load_models_data['episode']}")
-        probs = actor_copy.get_layer('probs')(critic.get_layer('dense1').output)
+        probs = actor_copy.get_layer('probs')(critic.get_layer('dense3').output)
         actor = Model(inputs=[critic.get_layer('input').input, actor_copy.get_layer('delta').input], outputs=[probs])
 
         # load policy

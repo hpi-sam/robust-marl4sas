@@ -1,7 +1,7 @@
 from numpy.testing import assert_array_equal
 from pathlib import Path
 
-from marl.mrubis_mock_env import MrubisMockEnv
+from mrubis_controller.marl.mrubis_mock_env import MrubisMockEnv
 from mrubis_controller.marl.agent import Agent
 
 
@@ -15,7 +15,7 @@ def init_agent(shops=None):
                     'Inventory Service', 'Region Item Filter', 'Category Item Filter', 'Last Second Sales Item Filter',
                     'Future Sales Item Filter']
     episode = 0
-    agent = Agent(0, shops, action_space, None, Path('../../data/TrainingmRUBiS_Theta0.05_NonStationary.csv'))
+    agent = Agent(0, shops, action_space, None, Path('./data/TrainingmRUBiS_Theta0.05_NonStationary.csv'))
     return episode, agent
 
 
