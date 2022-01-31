@@ -1,21 +1,7 @@
 import gym
-# import json
-# import os
+from marl.mrubis_data_helper import get_failing_component, get_current_utility
 from mrubis_controller.marl.data.data_generator import DataGenerator
 import copy
-
-
-def get_failing_component(current_shop):
-    """ returns the current failing component or None if no failure available """
-    for component in current_shop:
-        if current_shop[component]['failure_name'] != "None":
-            return component
-    return None
-
-
-def get_current_utility(observation):
-    return {shop: float(list(components.items())[0][1]['shop_utility']) for shop, components in
-            observation.items()}
 
 
 class MrubisMockEnv(gym.Env):

@@ -5,12 +5,13 @@ import os
 
 
 class Runner:
-    def __init__(self, args, env, shop_distribution, save_model=False, load_models_data=None):
+    def __init__(self, args, env, shop_distribution, save_model=False, load_models_data=None,
+                 robustness_activated=False):
         self.args = args
         self.shop_distribution = shop_distribution
         self.load_models_data = load_models_data  # if not None saved models are loaded
         self.env = env
-        self.mac = MultiAgentController(self.shop_distribution, self.load_models_data)
+        self.mac = MultiAgentController(self.shop_distribution, self.load_models_data, robustness_activated)
         self.t = 0
         self.save_model_interval = 50  # interval of saving models
         self.save_model = save_model
@@ -65,4 +66,5 @@ shop_distribution_example = [{'mRUBiS #1'}]
 # load_model = {0: { 'start_time': '2022_01_28_19_03', 'episode': 600 }, 1: None, 2: None}
 # load_model = {0: None, 1: None, 2: None}
 load_model = {0: None}
-Runner(None, mock_env, shop_distribution_example, save_model=True, load_models_data=load_model).run(10000)
+Runner(None, mock_env, shop_distribution_example, save_model=True, load_models_data=load_model,
+       robustness_activated=True).run(10000)
