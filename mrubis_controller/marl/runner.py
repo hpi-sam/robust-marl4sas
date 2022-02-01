@@ -32,9 +32,7 @@ class Runner:
         count_till_fixed = {shop: [] for agent in self.shop_distribution for shop in agent}
         while self.t < episodes:
             terminated = False
-            print("Getting initial observations")
             observations = self.env.reset()
-            print(observations)
             while not terminated:
                 actions = self.mac.select_actions(observations)
 
@@ -81,7 +79,7 @@ logging.basicConfig()
 logger = logging.getLogger('controller')
 logger.setLevel(logging.INFO)
 # shop_distribution_example = [{'mRUBiS #1', 'mRUBiS #2'}, {'mRUBiS #3'}]
-shop_distribution_example = [{'mRUBiS #1'}, {'mRUBiS #2'}]
+shop_distribution_example = [{'mRUBiS #1', 'mRUBiS #2', 'mRUBiS #3', 'mRUBiS #4', 'mRUBiS #5'}, {'mRUBiS #6', 'mRUBiS #7', 'mRUBiS #8', 'mRUBiS #9', 'mRUBiS #10'}]
 # load_model = {"start_time": "2022_01_19_12_37", "episode": 1}
 load_model = None
 Runner(None, logger, shop_distribution_example, save_model=True, load_models_data=load_model).run(100)

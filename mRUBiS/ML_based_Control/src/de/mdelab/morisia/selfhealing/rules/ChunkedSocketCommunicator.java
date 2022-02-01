@@ -121,14 +121,8 @@ public class ChunkedSocketCommunicator {
     	String fromPython = "";
 		while(true) {
 			fromPython = readln();
-			try {
-				json = new ObjectMapper().readValue(fromPython, HashMap.class);
-				logger.println(json);	
-				return json;			
-			} catch (IOException e) {
-				System.out.println("Did not receive valid json from Python:");
-				System.out.println(fromPython);
-			}
+			json = parseJSON(json, fromPython);
+			return json;
 		}
     }
     
@@ -141,5 +135,17 @@ public class ChunkedSocketCommunicator {
 				return;
 			}
 		}
+    }
+    
+    public static <T> HashMap<String, T> parseJSON(HashMap<String, T> json, String message) {
+    	try {
+			json = new ObjectMapper().readValue(message, HashMap.class);
+			logger.println(json);	
+			return json;			
+		} catch (IOException e) {
+			System.out.println("Did not receive valid json from Python:");
+			System.out.println(message);
+		}
+		return null;
     }
 }

@@ -62,6 +62,9 @@ class MrubisEnv(gym.Env):
         # TODO: What to do once failure propagation is implemented?
         print(actions)
         self.communicator.println(json.dumps(actions))
+        message = self.communicator.readln()
+        assert message == "received"
+        self.observation = self._get_state()
         raise NotImplementedError
 
     def reset(self):
@@ -87,10 +90,8 @@ class MrubisEnv(gym.Env):
         sleep(0.5)
 
         self.t = 0
-        if self.observation is None:            
-            print("Getting intitial state")
-            self.observation = self._get_initial_state()
-            print("Got initial state")
+        self._reset_mrubis()
+        self.observation = self._get_state()
         self.prior_utility = self._get_current_utility()
         self.action_space = [components for shops, components in self.observation.items()][0].keys()
         return self.observation
@@ -125,23 +126,23 @@ class MrubisEnv(gym.Env):
             cwd="../mRUBiS/ML_based_Control"
         )
 
+    def _reset_mrubis(self):
+        self.communicator.println("reset")
+        response = self.communicator.readln()
+        if response == "resetting":
+            return True
+        else:
+            return False
+
     def _stop_mrubis(self):
         '''Terminate the mRUBiS process'''
         self.mrubis_process.terminate()
 
     # TODO: All methods here can probably be removed
 
-    def _get_initial_state(self):
-        '''Query mRUBiS for the number of shops, get their initial states'''
-        # self.number_of_shops = self._get_from_mrubis(
-        #     'get_number_of_shops').get('number_of_shops')
-        # logger.info(f'Number of mRUBIS shops: {self.number_of_shops}')
-        # for _ in range(self.number_of_shops):
-        #     shop_state = self._get_from_mrubis('get_initial_state')
-        #     shop_name = next(iter(shop_state))
-        #     self.mrubis_state[shop_name] = shop_state[shop_name]
-        # return self.communicator.get_from_mrubis('get_initial_state')
-        return self.communicator.read_json()
+    def _get_state(self):
+        '''Query mRUBiS for the state'''
+        return self.communicator.get_from_mrubis("get_state")
 
     def _update_number_of_issues_in_run(self):
         '''Update the number of issues present in the current run'''
