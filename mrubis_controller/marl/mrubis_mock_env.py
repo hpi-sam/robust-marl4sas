@@ -1,7 +1,9 @@
-import gym
-from marl.mrubis_data_helper import get_failing_component, get_current_utility
-from mrubis_controller.marl.data.data_generator import DataGenerator
 import copy
+
+import gym
+
+from mrubis_controller.marl.data.data_generator import DataGenerator
+from mrubis_controller.marl.mrubis_data_helper import get_failing_component, get_current_utility
 
 
 class MrubisMockEnv(gym.Env):
@@ -67,9 +69,9 @@ class MrubisMockEnv(gym.Env):
             self.t += 1
             self.inner_t = 0
             self.terminated = True
-            # TODO: check with Ulrike whether we need this if check
-            self.observation, self.failing_components = self._get_observation(self.t)
-            self.prior_utility = get_current_utility(self.observation)
+            # # TODO: check with Ulrike whether we need this if check
+            # self.observation, self.failing_components = self._get_observation(self.t)
+            # self.prior_utility = get_current_utility(self.observation)
         return _reward, copy.deepcopy(self.observation), self.terminated, self._info()
 
     def all_fixed(self, actions):

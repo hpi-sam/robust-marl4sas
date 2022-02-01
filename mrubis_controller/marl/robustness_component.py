@@ -1,7 +1,7 @@
 import numpy as np
 
-from marl.mrubis_data_helper import has_shop_remaining_issues
 from mrubis_controller.marl.mrubis_data_helper import build_replay_buffer
+from mrubis_controller.marl.mrubis_data_helper import has_shop_remaining_issues
 
 
 class RobustnessComponent:
@@ -56,6 +56,7 @@ class RobustnessComponent:
                             self._copy_agents(agents, failing_agent_shops['failing_agent_index'])
                             # TODO copy agent before retraining starts
                             self.agents_status[failing_agent_shops['failing_agent_index'][n]] = 'RETRAIN'
+                            self.retrain_count[failing_agent_shops['failing_agent_index'][n]] = 0
                     else:
                         self._move_shops(agents, failing_agent_shops['failing_agent_index'][n], agent_index,
                                          challenged_shops)
@@ -74,6 +75,9 @@ class RobustnessComponent:
             return set.union(*failing_agent_shops['shops'])
         else:
             return None
+
+    def skip_agent(self, index):
+        return self.agents_status[index] in ['CALIBRATION', 'RETIRED', 'ALARM']
 
     def monitor(self, metrics, history):
         """ this is the MONITOR stage that saves metrics and history """

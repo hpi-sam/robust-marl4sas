@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from mrubis_controller.marl.mrubis_data_helper import build_observations, build_rewards, build_actions
 from mrubis_controller.marl.agent import Agent as Agent
-from mrubis_controller.marl.robustness_component import RobustnessComponent
+from mrubis_controller.marl.mrubis_data_helper import build_observations, build_rewards, build_actions
 from mrubis_controller.marl.rank_learner import RankLearner
+from mrubis_controller.marl.robustness_component import RobustnessComponent
 
 
 class MultiAgentController:
@@ -13,7 +13,7 @@ class MultiAgentController:
         self.load_models_data = load_models_data
         self.rank_learner = RankLearner(1, None)
         self.agents = None
-        self.ridge_regression_train_data_path = Path('../../data/TrainingmRUBiS_Theta0.05_NonStationary.csv')
+        self.ridge_regression_train_data_path = Path('./data/TrainingmRUBiS_Theta0.05_NonStationary.csv')
         self.robustness = RobustnessComponent(len(self.shop_distribution))
         self.robustness_activated = robustness_activated
 
@@ -28,6 +28,8 @@ class MultiAgentController:
 
         actions = []
         for index, agent in enumerate(self.agents):
+            if self.robustness_activated and self.robustness.skip_agent(index):
+                continue
             challenged_shops = self.robustness.get_execution_plan(index) if self.robustness_activated else None
             actions.append(agent.choose_action(build_observations(self.agents, index, observations, challenged_shops)))
 
@@ -42,6 +44,9 @@ class MultiAgentController:
         """ start learning for Agents and RankLearner """
         metrics = {}
         for index, agent in enumerate(self.agents):
+            if self.robustness_activated and self.robustness.skip_agent(index):
+                continue
+
             if self.robustness_activated:
                 self.robustness.validate_execution(self.agents, index, observations_)
 

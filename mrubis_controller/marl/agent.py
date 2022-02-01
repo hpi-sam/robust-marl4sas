@@ -1,13 +1,14 @@
 # follows https://dev.to/jemaloqiu/reinforcement-learning-with-tf2-and-gym-actor-critic-3go5
 
+import numpy as np
+import tensorflow as tf
 from keras import backend as K
 from keras.layers import Dense, Input
 from keras.models import Model
 from keras.optimizers import Adam
-import tensorflow as tf
-import numpy as np
-from mrubis_controller.marl.sorting.agent_action_sorter import AgentActionSorter
+
 from mrubis_controller.marl.helper import get_current_time
+from mrubis_controller.marl.sorting.agent_action_sorter import AgentActionSorter
 
 
 def _decoded_action(action, observation):
@@ -27,7 +28,7 @@ class Agent:
     def __init__(self, index, shops, action_space_inverted, load_models_data, ridge_regression_train_data_path):
         self.index = index
         self.shops = shops
-        self.base_model_dir = './data/models'
+        self.base_model_dir = './mrubis_controller/marl/data/models'
         self.start_time = get_current_time()
         self.load_models_data = load_models_data
 
