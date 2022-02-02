@@ -38,6 +38,7 @@ import de.mdelab.morisia.comparch.RestartComponent;
 import de.mdelab.morisia.comparch.Rule;
 import de.mdelab.morisia.comparch.Tenant;
 import de.mdelab.morisia.selfhealing.Approaches;
+import de.mdelab.morisia.selfhealing.ArchitectureUtilCal;
 import de.mdelab.morisia.selfhealing.Evaluation_ML;
 import de.mdelab.morisia.selfhealing.LearningModel;
 import de.mdelab.morisia.selfhealing.LearningQuality;
@@ -158,6 +159,84 @@ public class RuleSelector {
 		}
 	}
 	
+	public static boolean applyActionUpdate(Component component) {
+		
+		
+		String shopName = component.getTenant().getName();
+		String componentName = component.getType().getName();
+		double oldUtility =  Double.parseDouble(globalState.get(shopName).get(componentName).get("component_utility"));
+		double updateUtility;
+		
+		if (component.getIssues().size() == 0) {
+			updateUtility = - 1.0;
+			globalState.get(shopName).get(componentName).put("component_utility", Double.toString(oldUtility + updateUtility));
+			double oldShopUtility = Double.parseDouble(globalState.get(shopName).get(componentName).get("shop_utility"));
+			for (Component relatedComponent : component.getTenant().getComponents()) {
+				String relatedComponentName = relatedComponent.getType().getName();
+				globalState.get(shopName).get(relatedComponentName).put("shop_utility", Double.toString(oldShopUtility + updateUtility));
+			}
+			return false;
+		}
+		
+		else {
+			updateUtility = component.getIssues().get(0).getUtilityDrop();
+			
+			Double originalShopUtility = ArchitectureUtilCal.computeShopUtility(component.getTenant());
+			globalState.get(shopName).get(componentName).put("failure_name", "None");
+			
+			for (Component relatedComponent : component.getTenant().getComponents()) { 
+				// TODO: Think about how we want traces to behave and when to clear issues coming with the trace
+				Double originalComponentUtility = ArchitectureUtilCal.computeComponentUtility(component);
+				String relatedComponentName = relatedComponent.getType().getName();
+				
+				if (relatedComponent == component) {
+					globalState.get(shopName).get(relatedComponentName).put("component_utility", Double.toString(originalComponentUtility + updateUtility));
+					
+				}
+				else {
+					globalState.get(shopName).get(relatedComponentName).put("component_utility", Double.toString(originalComponentUtility));
+				}
+				
+				globalState.get(shopName).get(relatedComponentName).put("shop_utility", Double.toString(originalShopUtility + updateUtility));		
+			}		
+			return true;
+		}
+	}
+			
+				
+		
+		
+		
+		
+			
+//			HashMap<String, HashMap<String, HashMap<String, Double>>> issues = shop.getValue();
+//			for (HashMap.Entry<String, HashMap<String, HashMap<String, Double>>> issue: issues.entrySet()) {
+//				String issueName = issue.getKey();
+//				HashMap<String, HashMap<String, Double>> components = issue.getValue();
+//				for (HashMap.Entry<String, HashMap<String, Double>> component: components.entrySet()) {
+//					String componentName = component.getKey();
+//					HashMap<String, Double> rules = component.getValue();
+//					Double maxUtilityIncrease = 0.0;
+//					for (HashMap.Entry<String, Double> rule: rules.entrySet()) {
+//						maxUtilityIncrease = Math.max(maxUtilityIncrease, rule.getValue());
+//					}
+//					double oldUtility = Double.parseDouble(globalState.get(shopName).get(componentName).get("component_utility"));
+//					globalState.get(shopName).get(componentName).put("component_utility", Double.toString(oldUtility - utilityDrop));
+//					globalState.get(shopName).get(componentName).put("failure_name", issueName);
+//					
+//					for (HashMap.Entry<String, HashMap<String, String>> shopComponent : globalState.get(shopName).entrySet()) {
+//						double old_utility = Double.parseDouble(shopComponent.getValue().get("shop_utility"));
+//						shopComponent.getValue().put("shop_utility", Double.toString(old_utility - utilityDrop));
+//					}
+					
+					
+					// TODO: update utility?
+					// Although updating utility would likely need to be done after fixes are sent
+//				}
+//			}
+//		}
+//	}
+	
 	
 	
 	public static void sendFailProbabilityToPython() {
@@ -199,10 +278,10 @@ public class RuleSelector {
 	}
 	
 	
-	public static void getInitialState(Architecture MRUBIS) {
+	public static void setGlobalState(Architecture MRUBIS) {
 		//ChunkedSocketCommunicator.waitForMessage("get_initial_state");
 		HashMap<String, HashMap<String, HashMap<String, String>>> state;
-		globalState = Observations.getInitialStates(MRUBIS);
+		globalState = Observations.getCurrentStates(MRUBIS);
 		/*String json = "";
 		try {
 			json = new ObjectMapper().writeValueAsString(globalState);

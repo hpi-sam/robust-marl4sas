@@ -82,8 +82,7 @@ public class Observations {
 
 	}
 	
-	public static HashMap<String, HashMap<String, HashMap<String, String>>> getInitialStates(Architecture MRUBIS) {
-		String json = "";
+	public static HashMap<String, HashMap<String, HashMap<String, String>>> getCurrentStates(Architecture MRUBIS) {
 
 		HashMap<String, HashMap<String, HashMap<String, String>>> shopMap = new HashMap<String, HashMap<String, HashMap<String, String>>>();
 
@@ -96,7 +95,12 @@ public class Observations {
 				
 				HashMap<String, String> parameterMap = new HashMap<String, String>();
 				
-				parameterMap.put("failure_name", "None");
+				if (component.getIssues().size() == 0) {
+					parameterMap.put("failure_name", "None");
+				}
+				else {
+					parameterMap.put("failure_name", component.getIssues().get(0).getClass().getInterfaces()[0].getSimpleName());
+				}
 				parameterMap.put("uid", component.getUid());
 				parameterMap.put("adt", String.valueOf(component.getADT()));
 				parameterMap.put("connectivity", String.valueOf(new Double(component.getProvidedInterfaces().size() + component.getRequiredInterfaces().size())));

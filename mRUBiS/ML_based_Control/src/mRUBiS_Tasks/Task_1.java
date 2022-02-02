@@ -201,7 +201,7 @@ public class Task_1 {
 	
 			Architecture architecture = (Architecture) architectureResource.getContents().get(0);	
 	
-			RuleSelector.getInitialState(architecture);
+			RuleSelector.setGlobalState(architecture);
 			
 			HashMap<String, Tenant> shopDict = createShopDict(architecture);
 			HashMap<String, HashMap<String, Component>> componentDict = createComponentDict(architecture);
@@ -431,24 +431,57 @@ public class Task_1 {
 						
 						List<Issue> orderedIssues = new LinkedList<>();
 						
-						for (String priority: fixOrder.keySet()) {
-							String shopName = fixOrder.get(priority).get("shop");
-							String componentName = fixOrder.get(priority).get("component");
+						while(true) {
+						
+							for (String priority: fixOrder.keySet()) {
+								String shopName = fixOrder.get(priority).get("shop");
+								String componentName = fixOrder.get(priority).get("component");
+								
+								Component component = componentDict.get(shopName).get(componentName);							
+								List<Issue> issues = component.getIssues();
+								
+								
+								if (RuleSelector.applyActionUpdate(component)) {
+									orderedIssues.add(issues.get(0));
+								};
+							}
+		
+							System.out.println("ord: " + orderedIssues);
 							
-							Component component = componentDict.get(shopName).get(componentName);							
-							List<Issue> issues = component.getIssues();
-							if (issues.size() == 0) {
-								// TODO: Reduce utility
+							if (allIssues.size() == orderedIssues.size()) {
+								break;
 							}
-							else {
-								// assumption: a component only has one issue at a time
-								orderedIssues.add(issues.get(0));
-								// TODO: Increase utility
-								// TODO: Fix Issue (here or all at once later?)
+							
+							fromPython = "";
+							while(true) { 
+								fromPython = ChunkedSocketCommunicator.readln();
+								if (fromPython.equals("reset") || fromPython.equals("get_state")) {
+									break;
+								}
 							}
+							if (fromPython.equals("reset")) {
+								ChunkedSocketCommunicator.println("resetting");
+								reset = true;
+								break;
+								// reset execution
+							}
+							RuleSelector.sendGlobalState();
+							
+							// Get custom fix ordering from the controller
+							System.out.println("Waiting for Python to send order in which to apply fixes...");		
+
+							fromPython = ChunkedSocketCommunicator.readln();					
+							if (fromPython.equals("reset")) {
+								ChunkedSocketCommunicator.println("resetting");
+								reset = true;
+								break;
+							}
+							
+							fixOrder = ChunkedSocketCommunicator.parseJSON(new HashMap<String, HashMap<String, String>>(), fromPython);
+							ChunkedSocketCommunicator.println("received");
+								
+							run += 1;
 						}
-	
-						System.out.println("ord: " + orderedIssues);
 						
 						List<Issue> issueDiff = new ArrayList(allIssues);
 						issueDiff.removeAll(orderedIssues);
@@ -480,20 +513,20 @@ public class Task_1 {
 					if (CURRENT_APPROACH == Approaches.Learning) {
 	
 						// sample affected components one more time (get all params sampled in getComponentsUtility)
-						ObjectMapper mapper = new ObjectMapper();
-						HashMap<String, HashMap<String, HashMap<String, Double>>> issueToRulesMapFromFile = null;
-						try {
-							issueToRulesMapFromFile = mapper.readValue(issueToRulesPath.toFile(), HashMap.class);
-						} catch (IOException e2) {
-							e2.printStackTrace();
-						}
+//						ObjectMapper mapper = new ObjectMapper();
+//						HashMap<String, HashMap<String, HashMap<String, Double>>> issueToRulesMapFromFile = null;
+//						try {
+//							issueToRulesMapFromFile = mapper.readValue(issueToRulesPath.toFile(), HashMap.class);
+//						} catch (IOException e2) {
+//							e2.printStackTrace();
+//						}
 						
-						System.out.println("Waiting for Python to send fixed components JSON...");
-						HashMap<String, List<String>> fixedComponents = ChunkedSocketCommunicator.readJSON(new HashMap<String, List<String>>());
-						String state = "not_available";
+//						System.out.println("Waiting for Python to send fixed components JSON...");
+//						HashMap<String, List<String>> fixedComponents = ChunkedSocketCommunicator.readJSON(new HashMap<String, List<String>>());
+//						String state = "not_available";
 						// TODO: use getFixedComponentStatus to update observation JSON
-						state = Observations.getFixedComponentStatus(architecture, fixedComponents);
-						ChunkedSocketCommunicator.println(state);
+//						state = Observations.getFixedComponentStatus(architecture, fixedComponents);
+//						ChunkedSocketCommunicator.println(state);
 	
 	
 						annotations.getIssues().clear();
