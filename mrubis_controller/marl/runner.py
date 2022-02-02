@@ -5,7 +5,7 @@ import os
 
 
 class Runner:
-    def __init__(self, args, env, shop_distribution, save_model=False, load_models_data=None,
+    def __init__(self, args, env, shop_distribution, shop_config, save_model=False, load_models_data=None,
                  robustness_activated=False):
         self.args = args
         self.shop_distribution = shop_distribution
@@ -13,9 +13,12 @@ class Runner:
         self.env = env
         self.mac = MultiAgentController(self.shop_distribution, self.load_models_data, robustness_activated)
         self.t = 0
-        self.save_model_interval = 50  # interval of saving models
+        self.inner_t = 0
+        self.save_model_interval = 100  # interval of saving models
         self.save_model = save_model
-        self.base_dir = f"./data/logs/{get_current_time()}"
+        self.base_dir = f"./mrubis_controller/marl/data/logs/{get_current_time()}"
+
+        self.env.set_shop_config(shop_config)
 
     def reset(self):
         """ reset all variables and init env """
@@ -26,7 +29,7 @@ class Runner:
     def close_env(self):
         self.env.close()
 
-    def run(self, episodes, test_mode=False):
+    def run(self, episodes, test_mode=False, switch=None):
         """ runs the simulation """
         rewards = []
         metrics = []
@@ -34,8 +37,12 @@ class Runner:
         count_till_fixed = {shop: [] for agent in self.shop_distribution for shop in agent}
         while self.t < episodes:
             terminated = False
+            if switch is not None and (self.t == episodes / 2 or self.t == episodes / 2 + 1):
+                print("NEW CONFIG")
+                self.env.set_shop_config(switch)
             observations = self.env.reset()
             while not terminated:
+                self.inner_t += 1
                 actions = self.mac.select_actions(observations)
 
                 reward, observations_, terminated, env_info = self.env.step(actions)
@@ -44,7 +51,12 @@ class Runner:
                 metrics.append(self.mac.learn(observations, actions, reward, observations_, terminated))
                 observations = observations_
 
+                if self.inner_t > 200:
+                    terminated = True
+                    print("Forced termination")
+
                 if terminated:
+                    self.inner_t = 0
                     for shop, count in env_info['stats'].items():
                         count_till_fixed[shop].append(count)
 
@@ -59,12 +71,13 @@ class Runner:
             print(f"episode {self.t} done")
 
 
-mock_env = MrubisMockEnv(number_of_shops=1)
+mock_env = MrubisMockEnv(number_of_shops=2)
 # shop_distribution_example = [{'mRUBiS #1', 'mRUBiS #2'}, {'mRUBiS #3'}]
 # shop_distribution_example = [{'mRUBiS #1'}, {'mRUBiS #2'}, {'mRUBiS #3'}]
-shop_distribution_example = [{'mRUBiS #1'}]
-# load_model = {0: { 'start_time': '2022_01_28_19_03', 'episode': 600 }, 1: None, 2: None}
+shop_distribution_example = [{'mRUBiS #1'}, {'mRUBiS #2'}]
+shop_config_example = [[1, 0, False], [2, 2, False]]
+load_model = {0: {'start_time': '2022_02_02_13_13', 'episode': 1300}, 1: {'start_time': '2022_02_02_13_13', 'episode': 1300}}
 # load_model = {0: None, 1: None, 2: None}
-load_model = {0: None}
-Runner(None, mock_env, shop_distribution_example, save_model=True, load_models_data=load_model,
-       robustness_activated=True).run(10000)
+# load_model = {0: None, 1: None}
+Runner(None, mock_env, shop_distribution_example, shop_config_example, save_model=True, load_models_data=load_model,
+       robustness_activated=True).run(15000, switch=[[2, 2, False], [2, 2, False]])

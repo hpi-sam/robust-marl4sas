@@ -1,9 +1,7 @@
-import copy
-
 import gym
-
-from mrubis_controller.marl.data.data_generator import DataGenerator
 from mrubis_controller.marl.mrubis_data_helper import get_failing_component, get_current_utility
+from mrubis_controller.marl.data.data_generator import DataGenerator
+import copy
 
 
 class MrubisMockEnv(gym.Env):
@@ -31,6 +29,9 @@ class MrubisMockEnv(gym.Env):
     def _get_observation(self, step):
         """ returns the observation and actual state for the given step """
         return self.data_generator.generate_shops_with_failures(step)
+
+    def set_shop_config(self, config):
+        self.data_generator.set_shop_config(config)
 
     def step(self, actions):
         """ Returns observation, reward, terminated, info
