@@ -1,5 +1,6 @@
 import numpy as np
 
+from marl.agent import Agent
 from mrubis_controller.marl.mrubis_data_helper import build_replay_buffer
 from mrubis_controller.marl.mrubis_data_helper import has_shop_remaining_issues
 
@@ -15,10 +16,12 @@ class RobustnessComponent:
                 'evaluation_periods': 5,  # number of periods over which data is compared to the specified threshold
                 'datapoints_to_alarm': 3,
                 # number of data points within the Evaluation Periods that must be breaching to cause the alarm
-                'retrain_episodes': 20,
+                'retrain_episodes': 100,
             }
 
         self.agents_status = {index: 'INSUFFICIENT_DATA' for index in range(number_of_agents)}
+        # only copy agents that have been OK
+        self.previously_stable_agents = {index: False for index in range(number_of_agents)}
         # OK –                  The metric or expression is within the defined threshold.
         # ALARM –               The metric or expression is outside of the defined threshold.
         # INSUFFICIENT_DATA –   The alarm has just started, the metric is not available,
@@ -53,8 +56,8 @@ class RobustnessComponent:
                         # check if all agents were not able to help the agent
                         if len(self.calibration_distribution[
                                    failing_agent_shops['failing_agent_index'][n]].values()) == 0:
-                            self._copy_agents(agents, failing_agent_shops['failing_agent_index'])
-                            # TODO copy agent before retraining starts
+                            if self.previously_stable_agents[failing_agent_shops['failing_agent_index'][n]]:
+                                self._copy_agent(agents, failing_agent_shops['failing_agent_index'][n])
                             self.agents_status[failing_agent_shops['failing_agent_index'][n]] = 'RETRAIN'
                             self.retrain_count[failing_agent_shops['failing_agent_index'][n]] = 0
                     else:
@@ -77,7 +80,9 @@ class RobustnessComponent:
             return None
 
     def skip_agent(self, index):
-        return self.agents_status[index] in ['CALIBRATION', 'RETIRED', 'ALARM']
+        """ skip agents that are in calibration and alarm and skip retired agents only if there are not challenged """
+        return self.agents_status[index] in ['CALIBRATION', 'ALARM'] or \
+               (self.agents_status[index] == 'RETIRED' and self._is_agent_in_charge_for_other_calibrating_agent(index))
 
     def monitor(self, metrics, history):
         """ this is the MONITOR stage that saves metrics and history """
@@ -117,6 +122,8 @@ class RobustnessComponent:
                         break
                     else:
                         self.agents_status[index] = 'OK'
+                        # agent that was OK at some point can be copied before retrained
+                        self.previously_stable_agents[index] = True
 
     def plan(self, agents):
         """ before selecting an action all agents have to be checked if they are in ALARM and init the calibration """
@@ -229,9 +236,29 @@ class RobustnessComponent:
         if len(agents[source_index].shops) == 0:
             self.agents_status[source_index] = 'RETIRED'
 
-    def _copy_agents(self, agents, param):
+    def _copy_agent(self, agents, agent_index):
         """ copy agent and retire copy of that agent
             retired agent is a snapshot of a shop configuration that could eventually be relevant in the future
             e.g. a rollback of a shop
         """
-        pass
+        agents[agent_index].save('copy')
+        load_model = {'start_time': agents[agent_index].start_time, 'episode': 'copy', 'index': agent_index}
+        copy_index = len(agents)
+        copy_agent = Agent(
+            copy_index,
+            {},
+            agents[agent_index].action_space_inverted,
+            load_model,
+            agents[agent_index].ridge_regression_train_data_path,
+        )
+        copy_agent.start_time = agents[agent_index].start_time
+
+        # append new agent
+        agents.append(copy_agent)
+
+        # update status
+        self.agents_status[copy_index] = 'RETIRED'
+
+        # setting this to false prevents to copy agent each retrain loop
+        self.previously_stable_agents[agent_index] = False
+        self.previously_stable_agents[copy_index] = False
