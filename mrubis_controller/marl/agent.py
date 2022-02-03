@@ -40,7 +40,7 @@ class Agent:
         self.input_dims = self.n_actions
         self.fc1_dims = 36
         self.fc2_dims = 72
-        self.fc3_dims = 144
+        # self.fc3_dims = 144
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.alpha)
 
         self.actor, self.critic, self.policy = self._build_network()
@@ -117,11 +117,11 @@ class Agent:
         input = Input(shape=(self.input_dims,), name='input')
         delta = Input(shape=[1], name='delta')
         dense1 = Dense(self.fc1_dims, activation='relu', name='dense1')(input)
-        dense2 = Dense(self.fc2_dims, activation='relu', name='dense2')(dense1)
-        dense3 = Dense(self.fc3_dims, name='dense3')(dense2)
+        dense2 = Dense(self.fc2_dims, activation='relu', name='last_layer')(dense1)
+        # dense3 = Dense(self.fc3_dims, activation='relu', name='dense3')(dense2)
 
-        probs = Dense(self.n_actions, activation='softmax', name='probs')(dense3)
-        values = Dense(1, activation='linear', name='values')(dense3)
+        probs = Dense(self.n_actions, activation='softmax', name='probs')(dense2)
+        values = Dense(1, activation='linear', name='values')(dense2)
 
         actor = Model(inputs=[input, delta], outputs=[probs])
 
@@ -137,14 +137,15 @@ class Agent:
         self.critic.save(f"{self.base_model_dir}/{self.start_time}/agent_{self.index}/critic/episode_{episode}")
 
     def load_models(self, load_models_data):
-        base_dir = f"{self.base_model_dir}/{load_models_data['start_time']}/agent_{self.index}"
+        index = self.index if load_models_data['index'] is None else load_models_data['index']
+        base_dir = f"{self.base_model_dir}/{load_models_data['start_time']}/agent_{index}"
 
         # load critic
         critic = tf.keras.models.load_model(f"{base_dir}/critic/episode_{load_models_data['episode']}")
 
         # load actor and set layers
         actor_copy = tf.keras.models.load_model(f"{base_dir}/actor/episode_{load_models_data['episode']}")
-        probs = actor_copy.get_layer('probs')(critic.get_layer('dense3').output)
+        probs = actor_copy.get_layer('probs')(critic.get_layer('last_layer').output)
         actor = Model(inputs=[critic.get_layer('input').input, actor_copy.get_layer('delta').input], outputs=[probs])
 
         # load policy
