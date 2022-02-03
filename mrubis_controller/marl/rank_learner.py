@@ -2,17 +2,12 @@ import numpy as np
 
 
 def prepare_step(inputs):
-    index = 0
-    sorted_actions = {}
-    for input in inputs:
-        sorted_actions[index] = input
-        index += 1
-    return sorted_actions
+    return dict(enumerate(inputs))
 
 
 def _rank_actions(inputs):
     filtered_inputs = [i for i in inputs if i]  # remove empty arrays
-    sorted_inputs = sorted(np.array(filtered_inputs).flatten(), key=lambda d: d['predicted_utility'], reverse=True)
+    sorted_inputs = sorted(np.hstack(filtered_inputs), key=lambda d: d['predicted_utility'], reverse=True)
     return prepare_step(sorted_inputs)
 
 
