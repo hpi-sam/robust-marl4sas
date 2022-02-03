@@ -81,6 +81,7 @@ class Agent:
             state = _encode_observations(states[shop_name])[np.newaxis, :]
             state_ = _encode_observations(states_[shop_name])[np.newaxis, :]
 
+            print("Now predicting using critics")
             critic_value_ = self.critic.predict(state_)
             critic_value = self.critic.predict(state)
 
@@ -91,7 +92,12 @@ class Agent:
             _actions = np.zeros([1, self.n_actions])
             _actions[np.arange(1), self.action_space_inverted.index(action)] = 1.0
 
+            print("Now fitting actor")
+            print(state)
+            print(delta)
+            print(_actions)
             self.actor.fit([state, delta], _actions, verbose=0)
+            print("Now fitting critic")
             self.critic.fit(state, target, verbose=0)
 
     def _sort_actions(self, actions):

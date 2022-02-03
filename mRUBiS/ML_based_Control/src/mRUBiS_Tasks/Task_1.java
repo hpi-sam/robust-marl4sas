@@ -479,8 +479,6 @@ public class Task_1 {
 							
 							fixOrder = ChunkedSocketCommunicator.parseJSON(new HashMap<String, HashMap<String, String>>(), fromPython);
 							ChunkedSocketCommunicator.println("received");
-								
-							run += 1;
 						}
 						
 						List<Issue> issueDiff = new ArrayList(allIssues);

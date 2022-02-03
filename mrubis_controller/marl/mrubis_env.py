@@ -18,6 +18,11 @@ class MrubisEnv(gym.Env):
         self.action_space = None
         self.observation_space = None
         self.communicator = None
+        self.prior_utility = None  # used for calculation of diff as a reward
+        self.t = 0
+        self.termination_t = 3
+        self.inner_t = 0
+        self.stats = {}
 
         '''Create a new instance of the mRUBiS environment class'''
         self.external_start = external_start
@@ -60,12 +65,27 @@ class MrubisEnv(gym.Env):
         # TODO: Get observation from mRUBiS
         # TODO: Determine reward (calculate from observation)
         # TODO: What to do once failure propagation is implemented?
-        print(actions)
-        self.communicator.println(json.dumps(actions))
+        if actions is not None:
+            self.communicator.println(json.dumps(actions))
+        else:
+            self.communicator.println(json.dumps([[]]))
         message = self.communicator.readln()
         assert message == "received"
         self.observation = self._get_state()
-        raise NotImplementedError
+
+        _reward = self._get_reward()
+
+        print(_reward)
+
+        for shop in _reward[0]:
+            if _reward[0][shop] > 0:
+                self.stats[shop] = self.inner_t
+
+        if actions is None or self._is_fixed():
+            self.t += 1
+            self.inner_t = 0
+
+        return _reward, self.observation, self._terminated(), self._info()
 
     def reset(self):
         """ Returns initial observations and states """
@@ -102,7 +122,7 @@ class MrubisEnv(gym.Env):
 
     def close(self):
         """ Override close in your subclass to perform any necessary cleanup. """
-        self._send_exit_message()
+        self.communicator.send_exit_message()
         self.communicator.close_socket()
 
         if not self.external_start:
@@ -115,6 +135,25 @@ class MrubisEnv(gym.Env):
     def last(self):
         """ returns last state, reward, terminated, info """
         raise NotImplementedError
+
+    def _is_fixed(self):
+        for shop in self.observation:
+            for component in self.observation[shop]:
+                if self.observation[shop][component]["failure_name"] != "None":
+                    return False
+        return True
+
+    def _get_reward(self):
+        """ returns the extracted reward per shop
+        """
+        current_utility = self._get_current_utility()
+        diff_utility = {shop: current_utility[shop] - utility for shop, utility in self.prior_utility.items()}
+        self.prior_utility = current_utility
+        system_utility = sum(diff_utility.values())
+        return diff_utility, system_utility
+
+    def _terminated(self):
+        return self.t == self.termination_t
 
     def _start_mrubis(self):
         '''Launch mRUBiS as a subprocess. NOTE: Unstable. Manual startup from Eclipse is more robust.'''
@@ -137,64 +176,10 @@ class MrubisEnv(gym.Env):
     def _stop_mrubis(self):
         '''Terminate the mRUBiS process'''
         self.mrubis_process.terminate()
-
-    # TODO: All methods here can probably be removed
+        
+    def _info(self):
+        return {'t': self.t, 'stats': self.stats}
 
     def _get_state(self):
         '''Query mRUBiS for the state'''
         return self.communicator.get_from_mrubis("get_state")
-
-    def _update_number_of_issues_in_run(self):
-        '''Update the number of issues present in the current run'''
-        self.number_of_issues_in_run = self._get_from_mrubis(
-            'get_number_of_issues_in_run').get('number_of_issues_in_run')
-
-    def _get_from_mrubis(self, message):
-        """Send a message to mRUBiS and return the response as a dictionary"""
-        self.communicator.println("message")
-        logger.debug(f'Waiting for mRUBIS to answer to message {message}')
-        return self.communicator.read_json()
-
-    def _send_rule_to_execute(self, issue, rule):
-        '''Send a rule to apply to an issue to mRUBiS'''
-        shop_name, component_name, _, issue_name, _, _ = self._get_info_from_issue(
-            issue)
-        picked_rule_message = {shop_name: {issue_name: {component_name: rule}}}
-        logger.info(
-            f"{shop_name}: Handling {issue_name} on {component_name} with {rule}")
-        logger.debug('Sending selected rule to mRUBIS...')
-        self.communicator.println(json.dumps(picked_rule_message))
-        logger.debug("Waiting for mRUBIS to answer with 'rule_received'...")
-        data = self.communicator.readln()
-        if data == 'rule_received':
-            logger.debug('Rule transmitted successfully.')
-        # Remember components that have been fixed in this run
-        if self.components_fixed_in_this_run.get(shop_name) is None:
-            self.components_fixed_in_this_run[shop_name] = []
-        self.components_fixed_in_this_run[shop_name].append(
-            (issue_name, component_name))
-
-    def _send_order_in_which_to_apply_fixes(self, order_tuples):
-        '''Send the order in which to apply the fixes to mRUBiS'''
-        logger.debug('Sending order in which to apply fixes to mRUBIS...')
-        order_dict = {idx: {
-            'shop': fix_tuple[0],
-            'issue': fix_tuple[1],
-            'component': fix_tuple[2]
-        } for idx, fix_tuple in enumerate(order_tuples)}
-        '''
-        for issueComponent in order_dict:
-            self.socket.send(json.dumps(issueComponent))
-            data = self.socket.recv(64000)
-        '''
-        self.communicator.println(json.dumps(order_dict))
-        logger.debug(
-            "Waiting for mRUBIS to answer with 'fix_order_received'...")
-        data = self.communicator.readln()
-        if data == 'fix_order_received':
-            logger.debug('Order transmitted successfully.')
-
-    def _send_exit_message(self):
-        '''Tell mRUBiS to stop its main loop'''
-        self.communicator.println("exit")
-        _ = self.communicator.readln()

@@ -39,6 +39,7 @@ class MultiAgentController:
         for index, agent in enumerate(self.agents):
             # calc threshold
             # if threshold > defined_:
+            print(f"Learning for agent {index}.")
             agent.learn(self._build_observations(index, states),
                         self._build_actions(index, actions),
                         self._build_rewards(index, rewards),

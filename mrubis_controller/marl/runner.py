@@ -1,4 +1,5 @@
 from mrubis_env import MrubisEnv
+from mrubis_mock_env import MrubisMockEnv
 from multi_agent_controller import MultiAgentController
 import logging
 import matplotlib.pyplot as plt
@@ -37,7 +38,13 @@ class Runner:
                 actions = self.mac.select_actions(observations)
 
                 reward, observations_, terminated, env_info = self.env.step(actions)
+                print(reward)
+                print(observations_)
+                print(terminated)
+                print(env_info)
                 rewards.append(reward)
+
+                print("Now beginning MAC learn")
 
                 self.mac.learn(observations, actions, reward, observations_, terminated)
                 observations = observations_
@@ -79,7 +86,7 @@ logging.basicConfig()
 logger = logging.getLogger('controller')
 logger.setLevel(logging.INFO)
 # shop_distribution_example = [{'mRUBiS #1', 'mRUBiS #2'}, {'mRUBiS #3'}]
-shop_distribution_example = [{'mRUBiS #1', 'mRUBiS #2', 'mRUBiS #3', 'mRUBiS #4', 'mRUBiS #5'}, {'mRUBiS #6', 'mRUBiS #7', 'mRUBiS #8', 'mRUBiS #9', 'mRUBiS #10'}]
+shop_distribution_example = [{'mRUBiS #1', 'mRUBiS #2', 'mRUBiS #3', 'mRUBiS #4', 'mRUBiS #5', 'mRUBiS #6', 'mRUBiS #7', 'mRUBiS #8', 'mRUBiS #9', 'mRUBiS #10'}]
 # load_model = {"start_time": "2022_01_19_12_37", "episode": 1}
 load_model = None
 Runner(None, logger, shop_distribution_example, save_model=True, load_models_data=load_model).run(100)
