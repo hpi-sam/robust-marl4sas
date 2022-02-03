@@ -1,6 +1,7 @@
+import numpy as np
+
 from mrubis_controller.marl.agent import encode_observations
 from mrubis_controller.marl.mrubis_mock_env import MrubisMockEnv
-import numpy as np
 
 
 def test_reset():
@@ -41,3 +42,24 @@ def test_wrong_action_for_5_episodes():
         assert len(env_info['stats'].keys()) == 0
         assert sum(encode_observations(observations_[shop])[np.newaxis, :][0]) == 1
         observation = observations_
+
+
+def test_correct_action_with_different_shop_configs():
+    mock_env = MrubisMockEnv(number_of_shops=2, shop_config=[[1, 0, False], [2, 17, False]])
+    shop1 = 'mRUBiS #1'
+    shop2 = 'mRUBiS #2'
+    observation = mock_env.reset()
+    one_hot_state1 = encode_observations(observation[shop1])[np.newaxis, :][0]
+    assert sum(one_hot_state1) == 1
+    one_hot_state2 = encode_observations(observation[shop2])[np.newaxis, :][0]
+    assert sum(one_hot_state2) == 2
+    failing_component_from_action_space1 = list(mock_env.action_space)[np.where(one_hot_state1 == 1)[0][0]]
+    failing_component_from_action_space2 = list(mock_env.action_space)[np.where(one_hot_state2 == 1)[0][0] - 17]
+    action = {0: {'shop': shop1, 'component': failing_component_from_action_space1},
+              1: {'shop': shop2, 'component': failing_component_from_action_space2}}
+    reward, observations_, terminated, env_info = mock_env.step(action)
+    assert reward[0][shop1] == 17
+    assert reward[0][shop2] == 17
+    assert terminated is True
+    assert sum(encode_observations(observations_[shop1])[np.newaxis, :][0]) == 0
+    assert sum(encode_observations(observations_[shop2])[np.newaxis, :][0]) == 0
