@@ -1,14 +1,21 @@
-from agent import Agent
-from rank_learner import RankLearner
+from pathlib import Path
+
+from mrubis_controller.marl.agent import Agent as Agent
+from mrubis_controller.marl.mrubis_data_helper import build_observations, build_rewards, build_actions
+from mrubis_controller.marl.rank_learner import RankLearner
+from mrubis_controller.marl.robustness_component import RobustnessComponent
 
 
 class MultiAgentController:
-    def __init__(self, shop_distribution, load_models_data):
+    def __init__(self, shop_distribution, load_models_data, robustness_activated):
         # list of named shops per agent identified by the index
         self.shop_distribution = shop_distribution
         self.load_models_data = load_models_data
-        self.rank_learner = RankLearner(0, None)
+        self.rank_learner = RankLearner(1, None)
         self.agents = None
+        self.ridge_regression_train_data_path = Path('./data/TrainingmRUBiS_Theta0.05_NonStationary.csv')
+        self.robustness = RobustnessComponent(len(self.shop_distribution))
+        self.robustness_activated = robustness_activated
 
     def select_actions(self, observations):
         """ based on observations select actions
@@ -16,9 +23,15 @@ class MultiAgentController:
             the rank learner has to be called to sort those actions
             returns a sorted list of actions
         """
+        if self.robustness_activated:
+            self.robustness.plan(self.agents)
+
         actions = []
         for index, agent in enumerate(self.agents):
-            actions.append(agent.choose_action(self._build_observations(index, observations)))
+            if self.robustness_activated and self.robustness.skip_agent(index):
+                continue
+            challenged_shops = self.robustness.get_execution_plan(index) if self.robustness_activated else None
+            actions.append(agent.choose_action(build_observations(self.agents, index, observations, challenged_shops)))
 
         return self.rank_learner.sort_actions(actions)
 
@@ -26,50 +39,49 @@ class MultiAgentController:
         """ save models of agents and rank learner """
         for agent in self.agents:
             agent.save(episode)
-        self.rank_learner.save(episode)
 
-    def load_models(self):
-        """ init models of agents and rank learner
-            is loaded when creating the agent and the correct parameters are set
-        """
-        raise NotImplementedError
-
-    def learn(self, states, actions, rewards, states_, dones):
+    def learn(self, observations, actions, rewards, observations_, dones):
         """ start learning for Agents and RankLearner """
+        metrics = {}
         for index, agent in enumerate(self.agents):
-            # calc threshold
-            # if threshold > defined_:
-            print(f"Learning for agent {index}.")
-            agent.learn(self._build_observations(index, states),
-                        self._build_actions(index, actions),
-                        self._build_rewards(index, rewards),
-                        self._build_observations(index, states_),
-                        dones)
+            if self.robustness_activated and self.robustness.skip_agent(index):
+                continue
+
+            if self.robustness_activated:
+                self.robustness.validate_execution(self.agents, index, observations_)
+
+            metrics[index] = agent.learn(build_observations(self.agents, index, observations),
+                                         build_actions(self.agents, index, actions),
+                                         build_rewards(self.agents, index, rewards),
+                                         build_observations(self.agents, index, observations_),
+                                         dones)
+
+        history = {
+            'observations': observations,
+            'actions': actions,
+            'rewards': rewards,
+            'observations_': observations_,
+            'dones': dones
+        }
+        self.robustness.monitor(metrics, history)
+
+        if self.robustness_activated:
+            self.robustness.analyze(self.agents)
+
+        return metrics
 
     def init(self, action_space):
-        self.agents = self._build_agents(action_space)
+        self._build_agents(action_space)
 
     def _build_agents(self, action_space):
         """ based on shop distribution the agents will be initialized """
-        agents = []
-        for index, shops in enumerate(self.shop_distribution):
-            agents.append(Agent(index, shops, action_space, self.load_models_data))
-        return agents
-
-    def _build_observations(self, agent_index, observation):
-        """ extracts the relevant observations of the env per agent """
-        return {shop: observation[shop] for shop in self.agents[agent_index].shops}
-
-    def _build_rewards(self, agent_index, rewards):
-        """ extracts the relevant rewards per agent
-            probably not needed as mRubis is returning reward per shop already
-        """
-        return {shop: rewards[0][shop] for shop in self.agents[agent_index].shops}, rewards[1]
-
-    def _build_actions(self, agent_index, actions):
-        """ extracts the relevant actions taken per agent
-        """
-        return {index: action
-                for shop in self.agents[agent_index].shops
-                for index, action in enumerate(actions.values())
-                if action['shop'] == shop}
+        self.agents = [
+            Agent(
+                index,
+                shops,
+                action_space,
+                self.load_models_data[index],
+                self.ridge_regression_train_data_path,
+            )
+            for index, shops in enumerate(self.shop_distribution)
+        ]

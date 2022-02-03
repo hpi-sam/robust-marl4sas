@@ -221,3 +221,4 @@ cython_debug/
 /mRUBiS/ML_based_Control/issueToRulesMap.json
 /mrubis_controller/marl/data/models/
 /mrubis_controller/marl/logs/
+/mrubis_controller/marl/data/logs/

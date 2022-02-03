@@ -278,6 +278,7 @@ public class Task_1 {
 					System.out.printf("\n>> Analyze Compelete\n\n");
 					ArchitectureUtilCal.computeOverallUtility(architecture);	
 					
+<<<<<<< HEAD
 					/*
 					 * Plan
 					 */
@@ -310,6 +311,16 @@ public class Task_1 {
 					
 					HashMap<String, HashMap<String, String>> fixOrder = ChunkedSocketCommunicator.parseJSON(new HashMap<String, HashMap<String, String>>(), fromPython);
 					ChunkedSocketCommunicator.println("received");
+=======
+					System.out.println("Sending fail probability to Python...");
+					RuleSelector.sendFailProbabilityToPython();
+
+					// Get custom fix ordering from the controller
+					System.out.println("Waiting for Python to send order in which to apply fixes...");
+					HashMap<String, HashMap<String, String>> fixOrder = ChunkedSocketCommunicator.readJSON(new HashMap<String, HashMap<String, String>>());
+					ChunkedSocketCommunicator.println("fix_order_received");
+					// reorder the issues according to the order sent by the controller
+>>>>>>> 6b9009b7c421eeb918dd6b7ec75e20e3a29c5cab
 					
 					
 					// Sorting the failures to address first
@@ -498,6 +509,7 @@ public class Task_1 {
 						allIssues = orderedIssues;
 	
 					}
+<<<<<<< HEAD
 					
 					// TODO: get actions from python
 					// TODO: filter proposed fixes
@@ -539,6 +551,23 @@ public class Task_1 {
 							}
 						} catch (IOException e) {
 							e.printStackTrace();
+=======
+
+
+					System.out.println("Waiting for Python to send fixed components JSON...");
+					HashMap<String, List<String>> fixedComponents = ChunkedSocketCommunicator.readJSON(new HashMap<String, List<String>>());
+					String state = "not_available";
+					state = Observations.getFixedComponentStatus(architecture, fixedComponents);
+					ChunkedSocketCommunicator.println(state);
+
+
+					annotations.getIssues().clear();
+					annotations.getRules().clear();
+
+					try {
+						if (Files.exists(issueToRulesPath)) {
+							Files.delete(issueToRulesPath);
+>>>>>>> 6b9009b7c421eeb918dd6b7ec75e20e3a29c5cab
 						}
 	
 					}
