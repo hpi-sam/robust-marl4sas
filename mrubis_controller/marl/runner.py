@@ -1,11 +1,12 @@
 from mrubis_controller.marl.helper import build_reward_plot, build_count_plot, build_loss_plot, get_current_time
 from mrubis_controller.marl.mrubis_mock_env import MrubisMockEnv
+from mrubis_controller.marl.mrubis_env import MrubisEnv
 from multi_agent_controller import MultiAgentController
 import os
 
 
 class Runner:
-    def __init__(self, args, env, shop_distribution, shop_config, save_model=False, load_models_data=None,
+    def __init__(self, args, env, shop_distribution, save_model=False, load_models_data=None,
                  robustness_activated=False):
         self.args = args
         self.shop_distribution = shop_distribution
@@ -17,8 +18,6 @@ class Runner:
         self.save_model_interval = 100  # interval of saving models
         self.save_model = save_model
         self.base_dir = f"./mrubis_controller/marl/data/logs/{get_current_time()}"
-
-        self.env.set_shop_config(shop_config)
 
     def reset(self):
         """ reset all variables and init env """
@@ -76,12 +75,14 @@ class Runner:
 
 
 mock_env = MrubisMockEnv(number_of_shops=2)
+env = MrubisEnv()
 # shop_distribution_example = [{'mRUBiS #1', 'mRUBiS #2'}, {'mRUBiS #3'}]
 # shop_distribution_example = [{'mRUBiS #1'}, {'mRUBiS #2'}, {'mRUBiS #3'}]
-shop_distribution_example = [{'mRUBiS #1'}, {'mRUBiS #2'}]
+# shop_distribution_example = [{'mRUBiS #1'}, {'mRUBiS #2'}]
+shop_distribution_example = [{'mRUBiS #1', 'mRUBiS #2', 'mRUBiS #3', 'mRUBiS #4', 'mRUBiS #5', 'mRUBiS #6', 'mRUBiS #7', 'mRUBiS #8', 'mRUBiS #9', 'mRUBiS #10'}]
 shop_config_example = [[1, 0, False], [2, 2, False]]
-load_model = {0: {'start_time': '2022_02_02_13_13', 'episode': 1300}, 1: {'start_time': '2022_02_02_13_13', 'episode': 1300}}
+# load_model = {0: {'start_time': '2022_02_02_13_13', 'episode': 1300}, 1: {'start_time': '2022_02_02_13_13', 'episode': 1300}}
 # load_model = {0: None, 1: None, 2: None}
-# load_model = {0: None, 1: None}
-Runner(None, mock_env, shop_distribution_example, shop_config_example, save_model=True, load_models_data=load_model,
-       robustness_activated=True).run(15000, switch=[[2, 2, False], [2, 2, False]])
+load_model = {0: None, 1: None}
+Runner(None, env, shop_distribution_example, save_model=True, load_models_data=load_model,
+       robustness_activated=False).run(15000, switch=None)
