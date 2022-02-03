@@ -1,4 +1,5 @@
 import datetime
+
 import matplotlib.pyplot as plt
 
 
@@ -22,7 +23,7 @@ def build_count_plot(base_dir, count_data, episode, shop_distribution):
         for shop in agent:
             data[shop] = count_data[shop]
     build_plot(data, f"Tries till {episode}", f"{base_dir}/tries")
-    write_data(len(count_data), data, 'tries', base_dir)
+    write_data(len(list(count_data.values())[0]), data, 'tries', base_dir)
 
 
 def build_loss_plot(base_dir, loss_data, episode, shop_distribution):
@@ -47,9 +48,7 @@ def build_plot(data, title, path):
 
 
 def write_data(count, data, title, base_dir):
-    with open(f"{base_dir}/{title}.txt", "a+") as file:
+    with open(f"{base_dir}/{title}.txt", "w+") as file:
         for i in range(count):
-            data_string = ''
-            for shop in data:
-                data_string += str(data[shop][i]) + ','
+            data_string = ''.join(str(data[shop][i]) + ',' for shop in data)
             file.write(data_string + '\n')
