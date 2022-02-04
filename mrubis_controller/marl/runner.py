@@ -1,7 +1,8 @@
+import os
+
 from mrubis_controller.marl.helper import build_reward_plot, build_count_plot, build_loss_plot, get_current_time
 from mrubis_controller.marl.mrubis_mock_env import MrubisMockEnv
 from multi_agent_controller import MultiAgentController
-import os
 
 
 class Runner:
@@ -76,8 +77,9 @@ mock_env = MrubisMockEnv(number_of_shops=2)
 # shop_distribution_example = [{'mRUBiS #1'}, {'mRUBiS #2'}, {'mRUBiS #3'}]
 shop_distribution_example = [{'mRUBiS #1'}, {'mRUBiS #2'}]
 shop_config_example = [[1, 0, False], [2, 2, False]]
-load_model = {0: {'start_time': '2022_02_02_13_13', 'episode': 1300}, 1: {'start_time': '2022_02_02_13_13', 'episode': 1300}}
+load_model = {0: {'start_time': '2022_02_04_10_44', 'episode': 10000, 'index': 0},
+              1: {'start_time': '2022_02_04_06_51', 'episode': 10000, 'index': 0}}
 # load_model = {0: None, 1: None, 2: None}
 # load_model = {0: None, 1: None}
 Runner(None, mock_env, shop_distribution_example, shop_config_example, save_model=True, load_models_data=load_model,
-       robustness_activated=True).run(15000, switch=[[2, 2, False], [2, 2, False]])
+       robustness_activated=False).run(500, switch=[[1, 0, False], [1, 0, False]])
