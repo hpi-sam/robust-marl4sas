@@ -27,6 +27,7 @@ def build_count_plot(base_dir, count_data, episode, shop_distribution):
 
 
 def build_loss_plot(base_dir, loss_data, episode, shop_distribution):
+    # TODO dont create plots based on shob_distribution but also on real number of items in loss_data
     for index, agent in enumerate(shop_distribution):
         title = f"Loss for agent #{index} (episode {episode})"
         agents_loss = [actor_critic for d in loss_data for actor_critic in d[index]]

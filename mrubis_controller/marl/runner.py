@@ -82,4 +82,4 @@ load_model = {0: {'start_time': '2022_02_04_10_44', 'episode': 10000, 'index': 0
 # load_model = {0: None, 1: None, 2: None}
 # load_model = {0: None, 1: None}
 Runner(None, mock_env, shop_distribution_example, shop_config_example, save_model=True, load_models_data=load_model,
-       robustness_activated=False).run(500, switch=[[1, 0, False], [1, 0, False]])
+       robustness_activated=True).run(2000, switch=[[1, 2, False], [1, 2, False]])

@@ -31,6 +31,7 @@ class Agent:
         self.base_model_dir = './mrubis_controller/marl/data/models'
         self.start_time = get_current_time()
         self.load_models_data = load_models_data
+        self.ridge_regression_train_data_path = ridge_regression_train_data_path
 
         self.action_space_inverted = list(action_space_inverted)
         self.gamma = 0.99
@@ -50,7 +51,7 @@ class Agent:
         # stage 1 = sorting of actions
         self.stage = 1
 
-        self.agent_action_sorter = AgentActionSorter(ridge_regression_train_data_path)
+        self.agent_action_sorter = AgentActionSorter(self.ridge_regression_train_data_path)
 
     def choose_action(self, observations):
         """ chooses actions based on observations
