@@ -88,7 +88,7 @@ class Agent:
 
             # TODO: How important is the length of an episode? Is there a future reward of a solved state?
             shop_reward = reward[0][shop_name]
-            target = shop_reward + self.gamma * critic_value_ * (1 - int(dones))
+            target = np.reshape(shop_reward, (1, 1))
             delta = target - critic_value
 
             _actions = np.zeros([1, self.n_actions])
