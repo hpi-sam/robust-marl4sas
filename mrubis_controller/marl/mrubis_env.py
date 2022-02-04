@@ -28,9 +28,10 @@ class MrubisEnv(gym.Env):
         self.external_start = external_start
 
         # Put your command line here (In Eclipse: Run -> Run Configurations... -> Show Command Line)
-        with open(json_path, 'r') as f:
-            variable_paths = json.load(f)
+        # with open(json_path, 'r') as f:
+        #     variable_paths = json.load(f)
 
+        '''
         self.launch_args = [
             variable_paths['java_path'],
             '-DFile.encoding=UTF-8',
@@ -39,6 +40,7 @@ class MrubisEnv(gym.Env):
             '-XX:+ShowCodeDetailsInExceptionMessages',
             'mRUBiS_Tasks.Task_1',
         ]
+        '''
 
         self.run_counter = 0
         self.number_of_shops = 0
