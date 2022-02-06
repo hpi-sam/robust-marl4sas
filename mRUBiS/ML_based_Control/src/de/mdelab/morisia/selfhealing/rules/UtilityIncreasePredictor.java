@@ -48,8 +48,8 @@ public class UtilityIncreasePredictor {
 	 * @param issue
 	 *            the given issue.
 	 */
-	public static HashMap<String, HashMap<String, HashMap<String, HashMap<String, Double>>>> calculateCombinedUtilityIncrease(Issue issue) {
-
+	//public static HashMap<String, HashMap<String, HashMap<String, HashMap<String, Double>>>> calculateCombinedUtilityIncrease(Issue issue) {
+	public static void calculateCombinedUtilityIncrease(Issue issue) {
 		LOGGER.info("\n --->Predicting utility increase for the " + issue.getHandledBy().size()
 				+ " rules attached to the issue " + issue);
 		//System.out.print("\n Predicting utility increase for the " + issue.getHandledBy().size()
@@ -272,7 +272,7 @@ public class UtilityIncreasePredictor {
 //			e.printStackTrace();
 //		}
 		
-		return shopToissueToCompToRulesMap;
+		// return shopToissueToCompToRulesMap;
 	}
 
 	

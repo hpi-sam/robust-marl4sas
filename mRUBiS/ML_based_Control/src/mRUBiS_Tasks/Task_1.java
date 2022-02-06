@@ -258,11 +258,14 @@ public class Task_1 {
 				run++;
 	
 				// call the simulator to inject issues only if there are no current issues
-				if (simulator.validate() == 0) {
+				/*if (simulator.validate() == 0) {
 					simulator.injectIssues();
-				}
+				}*/
+				System.out.println("issueCount prior to injection is " + simulator.validate());
+				simulator.injectIssues();
 				
 				issueCount = simulator.validate();
+				System.out.println("issueCount is " + issueCount);
 	
 	
 				// if run <= RUNS then the simulator injects issues. As soon as
@@ -298,6 +301,7 @@ public class Task_1 {
 						break;
 						// reset execution
 					}
+					RuleSelector.setGlobalState(architecture);
 					RuleSelector.sendGlobalState();
 					
 					// Get custom fix ordering from the controller
@@ -483,6 +487,32 @@ public class Task_1 {
 							ChunkedSocketCommunicator.println("received");
 						}
 						
+						fromPython = "";
+						while(true) { 
+							fromPython = ChunkedSocketCommunicator.readln();
+							if (fromPython.equals("reset") || fromPython.equals("get_state")) {
+								break;
+							}
+						}
+						if (fromPython.equals("reset")) {
+							ChunkedSocketCommunicator.println("resetting");
+							reset = true;
+							break;
+							// reset execution
+						}
+						
+						RuleSelector.sendGlobalState();
+						
+						fromPython = ChunkedSocketCommunicator.readln();					
+						if (fromPython.equals("reset")) {
+							ChunkedSocketCommunicator.println("resetting");
+							reset = true;
+							break;
+						}
+						
+						fixOrder = ChunkedSocketCommunicator.parseJSON(new HashMap<String, HashMap<String, String>>(), fromPython);
+						ChunkedSocketCommunicator.println("received");
+						
 						List<Issue> issueDiff = new ArrayList(allIssues);
 						issueDiff.removeAll(orderedIssues);
 						
@@ -510,7 +540,7 @@ public class Task_1 {
 	
 					issueCount = simulator.validate();
 					execute(interpreter, allIssues, E_CF1, E_CF2, E_CF3, E_CF5);
-					issueCount = simulator.validate();					
+					issueCount = simulator.validate();
 	
 					if (CURRENT_APPROACH == Approaches.Learning) {
 	

@@ -45,9 +45,9 @@ class Runner:
                 actions = self.mac.select_actions(observations)
 
                 reward, observations_, terminated, env_info = self.env.step(actions)
-                print(reward)
-                print(terminated)
-                print(env_info)
+                # print(reward)
+                # print(terminated)
+                # print(env_info)
                 rewards.append(reward)
 
                 metrics.append(self.mac.learn(observations, actions, reward, observations_, terminated))

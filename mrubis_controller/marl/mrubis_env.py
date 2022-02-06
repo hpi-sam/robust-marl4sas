@@ -85,8 +85,10 @@ class MrubisEnv(gym.Env):
         if actions is None or self._is_fixed():
             self.t += 1
             self.inner_t = 0
+            self.terminated = True
+            self.stats = {}
 
-        return _reward, self.observation, self._terminated(), self._info()
+        return _reward, self.observation, self.terminated, self._info()
 
     def reset(self):
         """ Returns initial observations and states """
@@ -115,6 +117,7 @@ class MrubisEnv(gym.Env):
         self.observation = self._get_state()
         self.prior_utility = self._get_current_utility()
         self.action_space = [components for shops, components in self.observation.items()][0].keys()
+        self.terminated = False
         return self.observation
 
     def render(self):
@@ -135,7 +138,8 @@ class MrubisEnv(gym.Env):
 
     def last(self):
         """ returns last state, reward, terminated, info """
-        raise NotImplementedError
+        self.observation = self._get_state()
+        return self.observation, self._get_reward(self.observation), self.terminated, self._info()
 
     def _is_fixed(self):
         for shop in self.observation:
@@ -148,6 +152,7 @@ class MrubisEnv(gym.Env):
         """ returns the extracted reward per shop
         """
         current_utility = self._get_current_utility()
+        # print(current_utility)
         diff_utility = {shop: current_utility[shop] - utility for shop, utility in self.prior_utility.items()}
         self.prior_utility = current_utility
         system_utility = sum(diff_utility.values())

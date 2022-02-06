@@ -111,9 +111,9 @@ public class RuleSelector {
 		
 		
 		// read utility increase (make sure that rules are available)
-		HashMap<String, HashMap<String, HashMap<String, HashMap<String, Double>>>> shopToIssueMap;
-		shopToIssueMap = UtilityIncreasePredictor.calculateCombinedUtilityIncrease(issue);
-		updateGlobalState(shopToIssueMap, issue.getUtilityDrop());
+		UtilityIncreasePredictor.calculateCombinedUtilityIncrease(issue);
+		selectMinimumCostRule(issue);
+		//updateGlobalState(shopToIssueMap, issue.getUtilityDrop());
 		// TODO: We can really solve this a lot easier by just outputting a shop-component-issue triple, right? Or can this contain multiple shops' issues?
 		
 		// Architecture architecture = issue.getAnnotations().getArchitecture();
@@ -127,35 +127,28 @@ public class RuleSelector {
 		
 	}
 	
-	
-	private static void updateGlobalState(HashMap<String, HashMap<String, HashMap<String, HashMap<String, Double>>>> shopToIssueMap, double utilityDrop) {
-		for (HashMap.Entry<String, HashMap<String, HashMap<String, HashMap<String, Double>>>> shop : shopToIssueMap.entrySet()) {
-			String shopName = shop.getKey();
-			HashMap<String, HashMap<String, HashMap<String, Double>>> issues = shop.getValue();
-			for (HashMap.Entry<String, HashMap<String, HashMap<String, Double>>> issue: issues.entrySet()) {
-				String issueName = issue.getKey();
-				HashMap<String, HashMap<String, Double>> components = issue.getValue();
-				for (HashMap.Entry<String, HashMap<String, Double>> component: components.entrySet()) {
-					String componentName = component.getKey();
-					HashMap<String, Double> rules = component.getValue();
-					Double maxUtilityIncrease = 0.0;
-					for (HashMap.Entry<String, Double> rule: rules.entrySet()) {
-						maxUtilityIncrease = Math.max(maxUtilityIncrease, rule.getValue());
-					}
-					double oldUtility = Double.parseDouble(globalState.get(shopName).get(componentName).get("component_utility"));
-					globalState.get(shopName).get(componentName).put("component_utility", Double.toString(oldUtility - utilityDrop));
-					globalState.get(shopName).get(componentName).put("failure_name", issueName);
-					
-					for (HashMap.Entry<String, HashMap<String, String>> shopComponent : globalState.get(shopName).entrySet()) {
-						double old_utility = Double.parseDouble(shopComponent.getValue().get("shop_utility"));
-						shopComponent.getValue().put("shop_utility", Double.toString(old_utility - utilityDrop));
-					}
-					
-					
-					// TODO: update utility?
-					// Although updating utility would likely need to be done after fixes are sent
-				}
+	private static void selectMinimumCostRule(Issue issue) {
+		Double minimumCost = Double.POSITIVE_INFINITY;
+		Rule minimumRule = issue.getHandledBy().get(0);
+		for (Rule rule : issue.getHandledBy()) {
+			Double cost = rule.getCosts();
+			if (cost < minimumCost) {
+				minimumCost = cost;
+				minimumRule = rule;
 			}
+		}
+		
+		LinkedList<Rule> rulesToRemove = new LinkedList<Rule>();
+		
+		for (Rule rule: issue.getHandledBy()) {
+			if (rule != minimumRule) {
+				rulesToRemove.add(rule);
+			}
+		}
+		
+		for (Rule rule: rulesToRemove) {
+			rule.setAnnotations(null);
+			rule.setHandles(null);
 		}
 	}
 	
