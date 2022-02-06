@@ -67,6 +67,7 @@ class MrubisEnv(gym.Env):
         # TODO: Get observation from mRUBiS
         # TODO: Determine reward (calculate from observation)
         # TODO: What to do once failure propagation is implemented?
+        self.inner_t += 1
         if actions is not None:
             self.communicator.println(json.dumps(actions))
         else:
@@ -76,8 +77,6 @@ class MrubisEnv(gym.Env):
         self.observation = self._get_state()
 
         _reward = self._get_reward()
-
-        print(_reward)
 
         for shop in _reward[0]:
             if _reward[0][shop] > 0:

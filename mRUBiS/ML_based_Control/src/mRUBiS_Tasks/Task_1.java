@@ -261,6 +261,8 @@ public class Task_1 {
 				if (simulator.validate() == 0) {
 					simulator.injectIssues();
 				}
+				
+				issueCount = simulator.validate();
 	
 	
 				// if run <= RUNS then the simulator injects issues. As soon as
@@ -506,7 +508,9 @@ public class Task_1 {
 					// TODO: This has to be done here as Python sends proposed fixes before we send them back
 					// TODO: In the first loop: Python sends an empty list, as the initial state is all-functioning
 	
+					issueCount = simulator.validate();
 					execute(interpreter, allIssues, E_CF1, E_CF2, E_CF3, E_CF5);
+					issueCount = simulator.validate();					
 	
 					if (CURRENT_APPROACH == Approaches.Learning) {
 	
@@ -529,6 +533,8 @@ public class Task_1 {
 	
 						annotations.getIssues().clear();
 						annotations.getRules().clear();
+						
+						issueCount = simulator.validate();
 	
 						try {
 							if (Files.exists(issueToRulesPath)) {

@@ -46,7 +46,6 @@ class Runner:
 
                 reward, observations_, terminated, env_info = self.env.step(actions)
                 print(reward)
-                print(observations_)
                 print(terminated)
                 print(env_info)
                 rewards.append(reward)
