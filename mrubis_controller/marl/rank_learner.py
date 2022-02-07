@@ -7,6 +7,8 @@ def prepare_step(inputs):
 
 def _rank_actions(inputs):
     filtered_inputs = [i for i in inputs if i]  # remove empty arrays
+    if len(filtered_inputs) == 0:
+        return None
     sorted_inputs = sorted(np.hstack(filtered_inputs), key=lambda d: d['predicted_utility'], reverse=True)
     return prepare_step(sorted_inputs)
 

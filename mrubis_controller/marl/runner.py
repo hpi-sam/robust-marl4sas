@@ -48,9 +48,10 @@ class Runner:
                 # print(reward)
                 # print(terminated)
                 # print(env_info)
-                rewards.append(reward)
+                if actions is not None:
+                    rewards.append(reward)
 
-                metrics.append(self.mac.learn(observations, actions, reward, observations_, terminated))
+                    metrics.append(self.mac.learn(observations, actions, reward, observations_, terminated))
                 observations = observations_
 
                 if self.inner_t > 200:

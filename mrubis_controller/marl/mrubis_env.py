@@ -85,7 +85,6 @@ class MrubisEnv(gym.Env):
         if actions is None or self._is_fixed():
             self.t += 1
             self.inner_t = 0
-            self.terminated = True
             self.stats = {}
 
         return _reward, self.observation, self.terminated, self._info()

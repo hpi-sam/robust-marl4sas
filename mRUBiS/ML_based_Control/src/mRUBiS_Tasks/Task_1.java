@@ -174,7 +174,7 @@ public class Task_1 {
 		
 		while (reset) {
 			
-			reset = false;
+			reset = true;
 			
 			if (Log) {
 
@@ -600,6 +600,8 @@ public class Task_1 {
 	
 					}*/
 				System.out.println("\n Overall Utility After Execution: " + ArchitectureUtilCal.computeOverallUtility(architecture));
+			
+				break;
 			} // next simulation run
 	
 	
