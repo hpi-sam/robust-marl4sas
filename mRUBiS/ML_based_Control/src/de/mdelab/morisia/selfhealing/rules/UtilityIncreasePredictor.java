@@ -240,39 +240,6 @@ public class UtilityIncreasePredictor {
 			
 			
 		}
-		
-//		Path jsonFile = Paths.get("issueToRulesMap.json");
-		String affectedComponent = issue.getAffectedComponent().getType().getName();
-		String issueName = issue.getClass().getSimpleName().replaceAll("Impl", "");
-		String shopName = issue.getAffectedComponent().getTenant().getName();
-		List<Rule> availableRules = issue.getHandledBy();
-		
-		// store rules in the following way: shop -> issue -> component type -> rules, costs 
-
-		HashMap<String, HashMap<String, HashMap<String, HashMap<String, Double>>>> shopToissueToCompToRulesMap = new HashMap<String, HashMap<String, HashMap<String, HashMap<String, Double>>>>();
-		HashMap<String, HashMap<String, HashMap<String, Double>>> issueToCompToRulesMap = new HashMap<String, HashMap<String, HashMap<String, Double>>>();  
-		HashMap<String, HashMap<String, Double>> compToRulesMap = new HashMap<String, HashMap<String, Double>>();
-		HashMap<String, Double> ruleToCostsMap = new HashMap<String, Double>();
-		
-		for ( Rule rule : availableRules) {
-			String ruleName = rule.getClass().getSimpleName().replaceAll("Impl", "");
-			ruleToCostsMap.put(ruleName, rule.getCosts());
-		}
-		
-		compToRulesMap.put(affectedComponent, ruleToCostsMap);
-		issueToCompToRulesMap.put(issueName, compToRulesMap);
-		shopToissueToCompToRulesMap.put(shopName, issueToCompToRulesMap);
-		
-//		try {
-//			ObjectMapper mapper = new ObjectMapper();
-////			mapper.writeValue(jsonFile.toFile(), shopToissueToCompToRulesMap);
-//		} catch (JsonProcessingException e) {
-//			e.printStackTrace();
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-		
-		// return shopToissueToCompToRulesMap;
 	}
 
 	

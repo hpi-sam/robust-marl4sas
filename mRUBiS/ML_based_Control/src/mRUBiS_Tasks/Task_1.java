@@ -171,10 +171,9 @@ public class Task_1 {
 		MLSDMInterpreter interpreter = EnvSetUp.getStoryDiagramInterpreter(stdout, useOptimization);		
 		
 		boolean reset = true;
+		int run = 0;
 		
 		while (reset) {
-			
-			reset = true;
 			
 			if (Log) {
 
@@ -194,8 +193,6 @@ public class Task_1 {
 			/*
 			 * Load model
 			 */
-			// TODO: use init_data from python, send "received"
-			// TODO: Set static state JSON for RuleSelector to initial state on first run
 		
 			Resource architectureResource = EnvSetUp.loadFreshInstance("model/enriched/mRUBiS-10shop_enriched.comparch");	
 	
@@ -246,7 +243,6 @@ public class Task_1 {
 			// call the simulator for the initial validation
 			int issueCount = simulator.validate();
 			double	OveralU=ArchitectureUtilCal.computeOverallUtility(architecture);
-			int run = 0;
 			if (issueCount > 0) {
 				System.out.println("\n\nInitial validaton. There are already issues in the model.");
 	
@@ -254,237 +250,192 @@ public class Task_1 {
 			else {System.out.println("\n\nInitial validaton. There are no issues in the model.\n \n \nCurrent Overal Utility is: "+ OveralU);}
 	
 	
-			while (!simulator.isSimulationCompleted()) { // = number of RUNS
-				run++;
-	
-				// call the simulator to inject issues only if there are no current issues
-				/*if (simulator.validate() == 0) {
-					simulator.injectIssues();
-				}*/
-				System.out.println("issueCount prior to injection is " + simulator.validate());
+			// call the simulator to inject issues only if there are no current issues
+			/*if (simulator.validate() == 0) {
 				simulator.injectIssues();
-				
-				issueCount = simulator.validate();
-				System.out.println("issueCount is " + issueCount);
-	
-	
-				// if run <= RUNS then the simulator injects issues. As soon as
-				// run > RUNS, the simulator is triggered only once to analyze
-				// the model and the last adaptation.
+			}*/
+			System.out.println("issueCount prior to injection is " + simulator.validate());
+			simulator.injectIssues();
 			
-				if (run <= RUNS) {
-					System.out.print("\n Run : " + run);
-					System.out.print("\n . \n .");	
-	
-					/*
-					 * Analyze
-					 */
-					analyze(interpreter, annotations, A_CF1, A_CF2, A_CF3, A_CF5);
-					System.out.printf("\n>> Analyze Compelete\n\n");
-					ArchitectureUtilCal.computeOverallUtility(architecture);	
-					
-					/*
-					 * Plan
-					 */
-					
-					plan(interpreter, annotations, P_CF1, P_CF2, P_CF3, P_CF5);
-					String fromPython = "";
-					while(true) { 
-						fromPython = ChunkedSocketCommunicator.readln();
-						if (fromPython.equals("reset") || fromPython.equals("get_state")) {
-							break;
-						}
-					}
-					if (fromPython.equals("reset")) {
-						ChunkedSocketCommunicator.println("resetting");
-						reset = true;
-						break;
-						// reset execution
-					}
-					RuleSelector.setGlobalState(architecture);
-					RuleSelector.sendGlobalState();
-					
-					// Get custom fix ordering from the controller
-					System.out.println("Waiting for Python to send order in which to apply fixes...");		
+			issueCount = simulator.validate();
+			System.out.println("issueCount is " + issueCount);
 
-					fromPython = ChunkedSocketCommunicator.readln();					
-					if (fromPython.equals("reset")) {
-						ChunkedSocketCommunicator.println("resetting");
-						reset = true;
-						break;
-					}
-					
-					HashMap<String, HashMap<String, String>> fixOrder = ChunkedSocketCommunicator.parseJSON(new HashMap<String, HashMap<String, String>>(), fromPython);
-					ChunkedSocketCommunicator.println("received");
-					
-					
-					// Sorting the failures to address first
-					List<Issue> allIssues = new LinkedList<>();
-					allIssues.addAll(annotations.getIssues());
-	
-	
-	
-					//					if (CURRENT_APPROACH == Approaches.RANDOM) 
-					//						{shuffle(allIssues);}
-					//					
-					//						
-					//						else //Udriven and Learning
-					//							{
-					//							allIssues.sort(issueComparator);
-					//						}
-	
-	
-	
-	
-					// add Real Utility Values : Ground Truth
-					if (CURRENT_APPROACH == Approaches.Learning)
-					{for (Issue issue : allIssues)
-						RuleSelector.addActualUtilityIncreaseToRule( issue, UTILITY_FUNCTION);
-					}
-	
-	
-	
-	
-	
-					if (Log) {
-						//System.out.print("\n Run : " + run);
-						for (Issue issue : allIssues) {
-							Rule r = issue.getHandledBy().get(0);
-							// ** Compute the Connectivity
-							// first, init with number outgoing connectors
-							int numberOfConnectors = issue.getAffectedComponent().getRequiredInterfaces().size();
-							int numberOfProvided = 0;
-							// second, add number of incoming connectors
-							for (ProvidedInterface pi : issue.getAffectedComponent().getProvidedInterfaces()) {
-								numberOfProvided = numberOfProvided + pi.getConnectors().size();
-							}
-							numberOfConnectors = numberOfConnectors + numberOfProvided;
-	
-							double reliability = 1;
-							if (r instanceof ReplaceComponent) {
-	
-								ComponentType altComponentType = UtilityIncreasePredictor
-										.selectAlternativeComponentType(issue.getAffectedComponent());
-	
-								if (altComponentType != null) {
-									reliability = altComponentType.getReliability();
-	
-								}
-	
-							} else {
-								reliability = issue.getAffectedComponent().getType().getReliability();
-							}
-	
-	
-							Training.append( issue.getAffectedComponent().getTenant().getName()+SEP
-									+ issue.getAffectedComponent().getType().getName() + SEP
-									+ issue.eClass().getName() + SEP 
-									+  ArchitectureUtilCal.computeComponentUtility(issue.getAffectedComponent())+SEP
-									+ (ArchitectureUtilCal.computeComponentUtility(issue.getAffectedComponent())+r.getUtilityIncrease() )+ SEP 
-									+ issue.getAffectedComponent().getType().getCriticality() + SEP
-									+ r.getCosts() + SEP
-									+ numberOfConnectors + SEP
-									+ reliability + SEP 
-									+ issue.getAffectedComponent().getTenant().getImportance() + SEP
-									+ numberOfProvided + SEP
-									+ issue.getAffectedComponent().getRequiredInterfaces().size() + SEP
-									+ issue.getAffectedComponent().getADT() + SEP 
-									+ r.eClass().getName() + SEP
-									+ issue.getAffectedComponent().getType().getPerformanceMax() + SEP
-									+ (4 / issue.getAffectedComponent().getType().getSatPoint()) + SEP
-									+ issue.getAffectedComponent().getInUseReplica() + SEP
-									+ issue.getAffectedComponent().getRequest() + SEP 
-									+ "\n"
-	
-									);
-	
-	
-	
-						}
-	
-						Training.append("\n");
-					}
-	
-	
-					/*
-					 * Retrieve the predicted costs of the last remaining rule
-					 * for each issue. The rules in the model are those that are
-					 * executed next.
-					 */
-	
-	
-					/*
-					 * Execute
-					 */
-					List<Component> BACKUPcomp = new LinkedList<>();
-					for (Issue issue : allIssues) {
-						// System.out.print("\n here
-						// "+issue.getAffectedComponent().getType());
-						BACKUPcomp.add(issue.getAffectedComponent());
-					}
-					// for (Component component : BACKUPcomp)
-					// {component.}
-	
-	
-					if (CURRENT_APPROACH == Approaches.Learning) {
-						
-						//System.out.println("Sending fail probability to Python...");
-						//RuleSelector.sendFailProbabilityToPython();
-						
-						System.out.println("org: " + allIssues);
-						
-						// TODO: Change this to handle Python not fixing all issues / fixing components that do not have issues
-						
-						List<Issue> orderedIssues = new LinkedList<>();
-						
-						while(true) {
-						
-							for (String priority: fixOrder.keySet()) {
-								String shopName = fixOrder.get(priority).get("shop");
-								String componentName = fixOrder.get(priority).get("component");
-								
-								Component component = componentDict.get(shopName).get(componentName);							
-								List<Issue> issues = component.getIssues();
-								
-								
-								if (RuleSelector.applyActionUpdate(component)) {
-									orderedIssues.add(issues.get(0));
-								};
-							}
+
+			// if run <= RUNS then the simulator injects issues. As soon as
+			// run > RUNS, the simulator is triggered only once to analyze
+			// the model and the last adaptation.
 		
-							System.out.println("ord: " + orderedIssues);
-							
-							if (allIssues.size() == orderedIssues.size()) {
-								break;
-							}
-							
-							fromPython = "";
-							while(true) { 
-								fromPython = ChunkedSocketCommunicator.readln();
-								if (fromPython.equals("reset") || fromPython.equals("get_state")) {
-									break;
-								}
-							}
-							if (fromPython.equals("reset")) {
-								ChunkedSocketCommunicator.println("resetting");
-								reset = true;
-								break;
-								// reset execution
-							}
-							RuleSelector.sendGlobalState();
-							
-							// Get custom fix ordering from the controller
-							System.out.println("Waiting for Python to send order in which to apply fixes...");		
+			if (run <= RUNS) {
+				System.out.print("\n Run : " + run);
+				System.out.print("\n . \n .");	
 
-							fromPython = ChunkedSocketCommunicator.readln();					
-							if (fromPython.equals("reset")) {
-								ChunkedSocketCommunicator.println("resetting");
-								reset = true;
-								break;
+				/*
+				 * Analyze
+				 */
+				analyze(interpreter, annotations, A_CF1, A_CF2, A_CF3, A_CF5);
+				System.out.printf("\n>> Analyze Compelete\n\n");
+				ArchitectureUtilCal.computeOverallUtility(architecture);	
+				
+				/*
+				 * Plan
+				 */
+				
+				plan(interpreter, annotations, P_CF1, P_CF2, P_CF3, P_CF5);
+				String fromPython = "";
+				while(true) { 
+					fromPython = ChunkedSocketCommunicator.readln();
+					if (fromPython.equals("reset") || fromPython.equals("get_state")) {
+						break;
+					}
+				}
+				if (fromPython.equals("reset")) {
+					ChunkedSocketCommunicator.println("resetting");
+					reset = true;
+					continue;
+					// reset execution
+				}
+				RuleSelector.setGlobalState(architecture);
+				RuleSelector.sendGlobalState();
+				
+				// Get custom fix ordering from the controller
+				System.out.println("Waiting for Python to send order in which to apply fixes...");		
+
+				fromPython = ChunkedSocketCommunicator.readln();					
+				if (fromPython.equals("reset")) {
+					ChunkedSocketCommunicator.println("resetting");
+					reset = true;
+					continue;
+				}
+				
+				HashMap<String, HashMap<String, String>> fixOrder = ChunkedSocketCommunicator.parseJSON(new HashMap<String, HashMap<String, String>>(), fromPython);
+				ChunkedSocketCommunicator.println("received");
+				
+				
+				// Sorting the failures to address first
+				List<Issue> allIssues = new LinkedList<>();
+				allIssues.addAll(annotations.getIssues());
+
+
+
+				//					if (CURRENT_APPROACH == Approaches.RANDOM) 
+				//						{shuffle(allIssues);}
+				//					
+				//						
+				//						else //Udriven and Learning
+				//							{
+				//							allIssues.sort(issueComparator);
+				//						}
+
+
+
+
+				// add Real Utility Values : Ground Truth
+				if (CURRENT_APPROACH == Approaches.Learning)
+				{for (Issue issue : allIssues)
+					RuleSelector.addActualUtilityIncreaseToRule( issue, UTILITY_FUNCTION);
+				}
+
+
+
+
+
+				if (Log) {
+					//System.out.print("\n Run : " + run);
+					for (Issue issue : allIssues) {
+						Rule r = issue.getHandledBy().get(0);
+						// ** Compute the Connectivity
+						// first, init with number outgoing connectors
+						int numberOfConnectors = issue.getAffectedComponent().getRequiredInterfaces().size();
+						int numberOfProvided = 0;
+						// second, add number of incoming connectors
+						for (ProvidedInterface pi : issue.getAffectedComponent().getProvidedInterfaces()) {
+							numberOfProvided = numberOfProvided + pi.getConnectors().size();
+						}
+						numberOfConnectors = numberOfConnectors + numberOfProvided;
+
+						double reliability = 1;
+						if (r instanceof ReplaceComponent) {
+
+							ComponentType altComponentType = UtilityIncreasePredictor
+									.selectAlternativeComponentType(issue.getAffectedComponent());
+
+							if (altComponentType != null) {
+								reliability = altComponentType.getReliability();
+
 							}
+
+						} else {
+							reliability = issue.getAffectedComponent().getType().getReliability();
+						}
+
+
+						Training.append( issue.getAffectedComponent().getTenant().getName()+SEP
+								+ issue.getAffectedComponent().getType().getName() + SEP
+								+ issue.eClass().getName() + SEP 
+								+  ArchitectureUtilCal.computeComponentUtility(issue.getAffectedComponent())+SEP
+								+ (ArchitectureUtilCal.computeComponentUtility(issue.getAffectedComponent())+r.getUtilityIncrease() )+ SEP 
+								+ issue.getAffectedComponent().getType().getCriticality() + SEP
+								+ r.getCosts() + SEP
+								+ numberOfConnectors + SEP
+								+ reliability + SEP 
+								+ issue.getAffectedComponent().getTenant().getImportance() + SEP
+								+ numberOfProvided + SEP
+								+ issue.getAffectedComponent().getRequiredInterfaces().size() + SEP
+								+ issue.getAffectedComponent().getADT() + SEP 
+								+ r.eClass().getName() + SEP
+								+ issue.getAffectedComponent().getType().getPerformanceMax() + SEP
+								+ (4 / issue.getAffectedComponent().getType().getSatPoint()) + SEP
+								+ issue.getAffectedComponent().getInUseReplica() + SEP
+								+ issue.getAffectedComponent().getRequest() + SEP 
+								+ "\n"
+
+								);
+
+
+
+					}
+
+					Training.append("\n");
+				}
+
+
+				/*
+				 * Retrieve the predicted costs of the last remaining rule
+				 * for each issue. The rules in the model are those that are
+				 * executed next.
+				 */
+
+
+				/*
+				 * Execute
+				 */
+
+
+				if (CURRENT_APPROACH == Approaches.Learning) {					
+					System.out.println("org: " + allIssues);
+					
+					List<Issue> orderedIssues = new LinkedList<>();
+					
+					while(true) {
+						run++;
+					
+						for (String priority: fixOrder.keySet()) {
+							String shopName = fixOrder.get(priority).get("shop");
+							String componentName = fixOrder.get(priority).get("component");
 							
-							fixOrder = ChunkedSocketCommunicator.parseJSON(new HashMap<String, HashMap<String, String>>(), fromPython);
-							ChunkedSocketCommunicator.println("received");
+							Component component = componentDict.get(shopName).get(componentName);							
+							List<Issue> issues = component.getIssues();
+							
+							
+							if (RuleSelector.applyActionUpdate(component)) {
+								orderedIssues.add(issues.get(0));
+							};
+						}
+	
+						System.out.println("ord: " + orderedIssues);
+						
+						if (allIssues.size() == orderedIssues.size()) {
+							break;
 						}
 						
 						fromPython = "";
@@ -500,9 +451,11 @@ public class Task_1 {
 							break;
 							// reset execution
 						}
-						
 						RuleSelector.sendGlobalState();
 						
+						// Get custom fix ordering from the controller
+						System.out.println("Waiting for Python to send fix order...");		
+
 						fromPython = ChunkedSocketCommunicator.readln();					
 						if (fromPython.equals("reset")) {
 							ChunkedSocketCommunicator.println("resetting");
@@ -512,74 +465,76 @@ public class Task_1 {
 						
 						fixOrder = ChunkedSocketCommunicator.parseJSON(new HashMap<String, HashMap<String, String>>(), fromPython);
 						ChunkedSocketCommunicator.println("received");
-						
-						List<Issue> issueDiff = new ArrayList(allIssues);
-						issueDiff.removeAll(orderedIssues);
-						
-						if (issueDiff.size() > 0) {
-							System.out.println("!!!Found unmatched issue: " + issueDiff.get(0).getClass().getSimpleName());
-							System.out.println("Unmatched issue comp: " + issueDiff.get(0).getAffectedComponent().getType().getName());
-							System.out.println("Unmatched issue shop: " + issueDiff.get(0).getAffectedComponent().getTenant().getName());
-							System.out.println("Unmatched issue order: " + fixOrder);
-						}
-						
-						System.out.println("Org and ord issues diff: " + issueDiff);
-	
-						assert orderedIssues.size() == allIssues.size();
-	
-						allIssues = orderedIssues;
-	
 					}
 					
-					// TODO: get actions from python
-					// TODO: filter proposed fixes
-					// TODO: update observation JSON accordingly (how? -> reset fixed components, decrease utility on wrongly fixed components)
-					// TODO: figure out when issues are actually fixed?
-					// TODO: This has to be done here as Python sends proposed fixes before we send them back
-					// TODO: In the first loop: Python sends an empty list, as the initial state is all-functioning
-	
-					issueCount = simulator.validate();
-					execute(interpreter, allIssues, E_CF1, E_CF2, E_CF3, E_CF5);
-					issueCount = simulator.validate();
-	
-					if (CURRENT_APPROACH == Approaches.Learning) {
-	
-						// sample affected components one more time (get all params sampled in getComponentsUtility)
-//						ObjectMapper mapper = new ObjectMapper();
-//						HashMap<String, HashMap<String, HashMap<String, Double>>> issueToRulesMapFromFile = null;
-//						try {
-//							issueToRulesMapFromFile = mapper.readValue(issueToRulesPath.toFile(), HashMap.class);
-//						} catch (IOException e2) {
-//							e2.printStackTrace();
-//						}
-						
-//						System.out.println("Waiting for Python to send fixed components JSON...");
-//						HashMap<String, List<String>> fixedComponents = ChunkedSocketCommunicator.readJSON(new HashMap<String, List<String>>());
-//						String state = "not_available";
-						// TODO: use getFixedComponentStatus to update observation JSON
-//						state = Observations.getFixedComponentStatus(architecture, fixedComponents);
-//						ChunkedSocketCommunicator.println(state);
-	
-	
-						annotations.getIssues().clear();
-						annotations.getRules().clear();
-						
-						issueCount = simulator.validate();
-	
-						try {
-							if (Files.exists(issueToRulesPath)) {
-								Files.delete(issueToRulesPath);
-							}
-							if (Files.exists(rulesToExecutePath)) {
-								Files.delete(rulesToExecutePath);
-							}
-						} catch (IOException e) {
-							e.printStackTrace();
+					fromPython = "";
+					while(true) { 
+						fromPython = ChunkedSocketCommunicator.readln();
+						if (fromPython.equals("reset") || fromPython.equals("get_state")) {
+							break;
 						}
-	
 					}
-	
-				}//nex Run
+					if (fromPython.equals("reset")) {
+						ChunkedSocketCommunicator.println("resetting");
+						reset = true;
+						continue;
+						// reset execution
+					}
+					
+					RuleSelector.sendGlobalState();
+					
+					fromPython = ChunkedSocketCommunicator.readln();					
+					if (fromPython.equals("reset")) {
+						ChunkedSocketCommunicator.println("resetting");
+						reset = true;
+						break;
+					}
+					
+					System.out.println("Waiting for Python to send empty list");	
+					
+					fixOrder = ChunkedSocketCommunicator.parseJSON(new HashMap<String, HashMap<String, String>>(), fromPython);
+					ChunkedSocketCommunicator.println("received");
+					
+					List<Issue> issueDiff = new ArrayList(allIssues);
+					issueDiff.removeAll(orderedIssues);
+					
+					if (issueDiff.size() > 0) {
+						System.out.println("!!!Found unmatched issue: " + issueDiff.get(0).getClass().getSimpleName());
+						System.out.println("Unmatched issue comp: " + issueDiff.get(0).getAffectedComponent().getType().getName());
+						System.out.println("Unmatched issue shop: " + issueDiff.get(0).getAffectedComponent().getTenant().getName());
+						System.out.println("Unmatched issue order: " + fixOrder);
+					}
+					
+					System.out.println("Org and ord issues diff: " + issueDiff);
+
+					assert orderedIssues.size() == allIssues.size();
+
+					allIssues = orderedIssues;
+
+				}
+
+				issueCount = simulator.validate();
+				execute(interpreter, allIssues, E_CF1, E_CF2, E_CF3, E_CF5);
+				issueCount = simulator.validate();
+
+				if (CURRENT_APPROACH == Approaches.Learning) {
+					annotations.getIssues().clear();
+					annotations.getRules().clear();
+					
+					issueCount = simulator.validate();
+
+					try {
+						if (Files.exists(issueToRulesPath)) {
+							Files.delete(issueToRulesPath);
+						}
+						if (Files.exists(rulesToExecutePath)) {
+							Files.delete(rulesToExecutePath);
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+
+				}
 	
 				// call the simulator to validate the model.
 				issueCount = simulator.validate();
@@ -600,8 +555,6 @@ public class Task_1 {
 	
 					}*/
 				System.out.println("\n Overall Utility After Execution: " + ArchitectureUtilCal.computeOverallUtility(architecture));
-			
-				break;
 			} // next simulation run
 	
 	

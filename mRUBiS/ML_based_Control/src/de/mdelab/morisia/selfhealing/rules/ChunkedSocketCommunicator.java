@@ -128,7 +128,7 @@ public class ChunkedSocketCommunicator {
     
     public static void waitForMessage(String message) {
     	String fromPython = "";
-		System.out.println("Waiting for Python to send '" + message + "'...");
+		// System.out.println("Waiting for Python to send '" + message + "'...");
 		while(true) { 
 			fromPython = readln();
 			if (fromPython.equals(message)) {
