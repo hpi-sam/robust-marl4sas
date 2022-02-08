@@ -89,9 +89,6 @@ public class Task_1 {
 	public static FileWriter Training = null;
 	public static FileWriter MLValidation = null;
 
-	private static Path issueToRulesPath = Paths.get("issueToRulesMap.json");
-	private static Path rulesToExecutePath= Paths.get("rulesToExecute.json");
-
 
 	private final static int RUNS = 10000; 
 
@@ -101,18 +98,6 @@ public class Task_1 {
 
 
 	public static void main(String[] args) throws SDMException, IOException, InterruptedException {
-
-		try {
-			if (Files.exists(issueToRulesPath)) {
-				Files.delete(issueToRulesPath);
-			}
-			if (Files.exists(rulesToExecutePath)) {
-				Files.delete(rulesToExecutePath);
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
 
 		boolean enableLogging = false;
 		configLogging(enableLogging);
@@ -483,17 +468,16 @@ public class Task_1 {
 					
 					RuleSelector.sendGlobalState();
 					
+					/*System.out.println("Waiting for Python to send empty list");	
+					
 					fromPython = ChunkedSocketCommunicator.readln();					
 					if (fromPython.equals("reset")) {
 						ChunkedSocketCommunicator.println("resetting");
 						reset = true;
-						break;
 					}
 					
-					System.out.println("Waiting for Python to send empty list");	
-					
 					fixOrder = ChunkedSocketCommunicator.parseJSON(new HashMap<String, HashMap<String, String>>(), fromPython);
-					ChunkedSocketCommunicator.println("received");
+					ChunkedSocketCommunicator.println("received");*/
 					
 					List<Issue> issueDiff = new ArrayList(allIssues);
 					issueDiff.removeAll(orderedIssues);
@@ -523,17 +507,6 @@ public class Task_1 {
 					
 					issueCount = simulator.validate();
 
-					try {
-						if (Files.exists(issueToRulesPath)) {
-							Files.delete(issueToRulesPath);
-						}
-						if (Files.exists(rulesToExecutePath)) {
-							Files.delete(rulesToExecutePath);
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-
 				}
 	
 				// call the simulator to validate the model.
@@ -555,6 +528,11 @@ public class Task_1 {
 	
 					}*/
 				System.out.println("\n Overall Utility After Execution: " + ArchitectureUtilCal.computeOverallUtility(architecture));
+						
+				System.out.println("Waiting for Python to send 'reset'");	
+				
+				ChunkedSocketCommunicator.waitForMessage("reset");					
+				ChunkedSocketCommunicator.println("resetting");
 			} // next simulation run
 	
 	

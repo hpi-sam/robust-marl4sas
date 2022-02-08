@@ -71,7 +71,7 @@ class MrubisEnv(gym.Env):
         if actions is not None:
             self.communicator.println(json.dumps(actions))
         else:
-            self.communicator.println(json.dumps([[]]))
+            self.communicator.println(json.dumps({}))
         message = self.communicator.readln()
         assert message == "received"
         self.observation = self._get_state()
@@ -86,6 +86,7 @@ class MrubisEnv(gym.Env):
             self.t += 1
             self.inner_t = 0
             self.stats = {}
+            self.terminated = True
 
         return _reward, self.observation, self.terminated, self._info()
 
