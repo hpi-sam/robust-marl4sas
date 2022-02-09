@@ -54,7 +54,7 @@ class Runner:
                     metrics.append(self.mac.learn(observations, actions, reward, observations_, terminated))
                 observations = observations_
 
-                if self.inner_t > 200:
+                if self.inner_t > 500:
                     terminated = True
                     print("Forced termination")
 
