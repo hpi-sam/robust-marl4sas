@@ -127,6 +127,37 @@ public class RuleSelector {
 		
 	}
 	
+	
+	public static void insertTrace(Issue issue) {
+		
+		
+		String componentName = issue.getAffectedComponent().getType().getName();
+		String shopName = issue.getAffectedComponent().getTenant().getName();
+		String issueName = issue.getClass().getInterfaces()[0].getSimpleName();
+		List<String> traceOfFailingComponentNames = FailurePropagationTraceCreator.createTrace(componentName);
+		for (String currentComponent : traceOfFailingComponentNames) {
+			globalState.get(shopName).get(currentComponent).put("failure_name", issueName);
+			globalState.get(shopName).get(currentComponent).put("component_utility", Double.toString(0.));
+		}
+		
+	}
+	
+	public static void updateShopUtilities(Architecture architecture) {
+		for (Tenant tenant : architecture.getTenants()) {
+			String shopName = tenant.getName();
+			Double overallUtility = 0.;
+			for (Component component : tenant.getComponents()) {
+				String componentName = component.getType().getName();
+				overallUtility += Double.parseDouble(globalState.get(shopName).get(componentName).get("component_utility"));
+			}
+			for (Component component : tenant.getComponents()) {
+				String componentName = component.getType().getName();
+				globalState.get(shopName).get(componentName).put("shop_utility", Double.toString(overallUtility));
+			}
+		}
+		
+	}
+	
 	private static void selectMinimumCostRule(Issue issue) {
 		Double minimumCost = Double.POSITIVE_INFINITY;
 		Rule minimumRule = issue.getHandledBy().get(0);
@@ -175,7 +206,6 @@ public class RuleSelector {
 			updateUtility = component.getIssues().get(0).getUtilityDrop();
 			
 			Double originalShopUtility = ArchitectureUtilCal.computeShopUtility(component.getTenant());
-			globalState.get(shopName).get(componentName).put("failure_name", "None");
 			
 			for (Component relatedComponent : component.getTenant().getComponents()) { 
 				// TODO: Think about how we want traces to behave and when to clear issues coming with the trace
@@ -190,7 +220,8 @@ public class RuleSelector {
 					globalState.get(shopName).get(relatedComponentName).put("component_utility", Double.toString(originalComponentUtility));
 				}
 				
-				globalState.get(shopName).get(relatedComponentName).put("shop_utility", Double.toString(originalShopUtility + updateUtility));		
+				globalState.get(shopName).get(relatedComponentName).put("shop_utility", Double.toString(originalShopUtility + updateUtility));
+				globalState.get(shopName).get(relatedComponentName).put("failure_name", "None");
 			}		
 			return true;
 		}

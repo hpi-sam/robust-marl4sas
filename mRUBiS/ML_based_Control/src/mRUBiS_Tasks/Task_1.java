@@ -68,6 +68,7 @@ import de.mdelab.morisia.selfhealing.rules.IssueComparator;
 import de.mdelab.morisia.selfhealing.rules.PerformanceEfficiencyManager;
 import de.mdelab.morisia.selfhealing.rules.RuleSelector;
 import de.mdelab.morisia.selfhealing.rules.UtilityIncreasePredictor;
+import de.mdelab.morisia.selfhealing.rules.FailurePropagationTraceCreator;
 import de.mdelab.sdm.interpreter.core.SDMException;
 import de.mdelab.expressions.interpreter.core.variables.Variable;
 import de.mdelab.mlsdm.interpreter.facade.OptimizedMSLDMInstanceFacade;
@@ -279,7 +280,18 @@ public class Task_1 {
 					continue;
 					// reset execution
 				}
+				
+				// Sorting the failures to address first
+				List<Issue> allIssues = new LinkedList<>();
+				allIssues.addAll(annotations.getIssues());
+				
 				RuleSelector.setGlobalState(architecture);
+				
+				
+				for (Issue issue : allIssues) {
+					RuleSelector.insertTrace(issue);
+				}
+				RuleSelector.updateShopUtilities(architecture);
 				RuleSelector.sendGlobalState();
 				
 				// Get custom fix ordering from the controller
@@ -296,9 +308,6 @@ public class Task_1 {
 				ChunkedSocketCommunicator.println("received");
 				
 				
-				// Sorting the failures to address first
-				List<Issue> allIssues = new LinkedList<>();
-				allIssues.addAll(annotations.getIssues());
 
 
 
