@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -325,6 +326,7 @@ public class RuleSelector {
 			e.printStackTrace();
 		}
 		try {
+			Files.copy(Paths.get("globalState.json"), Paths.get("globalState_old.json"), StandardCopyOption.REPLACE_EXISTING);
 			ObjectMapper globalStateMapper = new ObjectMapper();
 			globalStateMapper.writeValue(Paths.get("globalState.json").toFile(), globalState);
 		} catch (IOException e) {

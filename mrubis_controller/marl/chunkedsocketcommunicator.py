@@ -31,7 +31,7 @@ class ChunkedSocketCommunicator(object):
 
     def readln(self):
         data = self.socket.recv(64000)
-        message = data.decode('utf-8').strip()
+        message = data.decode('utf-8').strip("\n\r")
 
         try:
             json_message = json.loads(message)
@@ -44,6 +44,8 @@ class ChunkedSocketCommunicator(object):
 
     def read_json(self):
         message = self.readln()
+        '''with open('mrubis_content.json', 'w') as file:
+            file.write(message)'''
         try:
             json_message = json.loads(message)
         except JSONDecodeError:

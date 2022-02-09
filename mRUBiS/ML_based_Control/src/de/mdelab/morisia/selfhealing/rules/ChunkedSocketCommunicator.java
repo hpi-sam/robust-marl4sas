@@ -73,7 +73,8 @@ public class ChunkedSocketCommunicator {
     		printChunked(message);
     	}
     	else {        	
-        	out.println(message);
+        	out.write(message);
+        	out.println();
     	}
     	logger.println(message);
     }

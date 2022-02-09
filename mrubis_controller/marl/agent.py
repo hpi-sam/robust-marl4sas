@@ -6,6 +6,7 @@ from keras import backend as K
 from keras.layers import Dense, Input
 from keras.models import Model
 from keras.optimizers import Adam
+import json
 
 from mrubis_controller.marl.helper import get_current_time
 from mrubis_controller.marl.sorting.agent_action_sorter import AgentActionSorter
@@ -65,6 +66,8 @@ class Agent:
                 probabilities = self.policy.predict(state)[0]
                 action = np.random.choice(self.action_space, p=probabilities)
                 decoded_action = _decoded_action(action, observations)
+                '''with open('observations.json', 'w') as file:
+                    file.write(json.dumps(observations))'''
                 step = {'shop': shop_name, 'component': decoded_action}
                 if self.stage >= 1:
                     step['predicted_utility'] = self.agent_action_sorter.predict_optimal_utility_of_fixed_components(
