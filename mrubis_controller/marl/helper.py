@@ -1,5 +1,5 @@
 import datetime
-
+import numpy
 import matplotlib.pyplot as plt
 
 
@@ -40,9 +40,14 @@ def build_loss_plot(base_dir, loss_data, episode, shop_distribution):
 
 
 def build_plot(data, title, path):
-    plt.title(title, fontsize=12)
+    colors = ['#009e61', '#5a6065', '#00799e', '#f6ba00', '#b10639', '#dd6108']
+    plt.figure(figsize=(4,3))
+    plt.title(title, fontsize=16)
+    # axes = plt.gca()
+    # axes.set_ylim([0, 20])
     for label, d in data.items():
-        plt.plot(d, label=label)
+        x = numpy.array([i for i in range(len(d))])
+        plt.plot(x, [float(value) for value in d], colors.pop(), label=label)
     plt.legend()
     plt.savefig(path)
     plt.clf()
@@ -53,3 +58,16 @@ def write_data(count, data, title, base_dir):
         for i in range(count):
             data_string = ''.join(str(data[shop][i]) + ',' for shop in data)
             file.write(data_string + '\n')
+
+
+def build_plot_from_file(titles, path, output_path, base_dir='./mrubis_controller/marl/data/logs'):
+    data = {}
+    with open(f'{base_dir}/{path}.txt') as file:
+        lines = file.readlines()
+        for index, title in enumerate(titles, start=1):
+            data[title] = [line.split(',')[index] for line in lines]
+    build_plot(data, 'Number of tries', f'{base_dir}/{output_path}.png')
+
+
+if __name__ == "__main__":
+    build_plot_from_file(['mrubis #1'], '2022_02_04_13_33/tries', 'robustness_shop')
