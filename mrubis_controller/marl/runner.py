@@ -68,7 +68,7 @@ class Runner:
                 self.mac.save_models(self.t)
                 build_reward_plot(self.base_dir, rewards, self.t, self.shop_distribution)
                 build_count_plot(self.base_dir, count_till_fixed, self.t, self.shop_distribution)
-                build_loss_plot(self.base_dir, metrics, self.t, self.shop_distribution)
+                build_loss_plot(self.base_dir, metrics, self.t)
             print(f"episode {self.t} done")
 
 

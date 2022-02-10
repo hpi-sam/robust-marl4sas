@@ -1,6 +1,7 @@
 import datetime
-import numpy
+
 import matplotlib.pyplot as plt
+import numpy
 
 
 def get_current_time():
@@ -26,16 +27,22 @@ def build_count_plot(base_dir, count_data, episode, shop_distribution):
     write_data(len(list(count_data.values())[0]), data, 'tries', base_dir)
 
 
-def build_loss_plot(base_dir, loss_data, episode, shop_distribution):
-    # TODO dont create plots based on shob_distribution but also on real number of items in loss_data
-    for index, agent in enumerate(shop_distribution):
-        title = f"Loss for agent #{index} (episode {episode})"
-        agents_loss = [actor_critic for d in loss_data for actor_critic in d[index]]
+def build_loss_plot(base_dir, loss_data, episode):
+    prepared_data = {}
+    for loss in loss_data:
+        for key, value in loss.items():
+            if key not in prepared_data:
+                prepared_data[key] = []
+            if value:
+                prepared_data[key].append(value[0])
+
+    for agent in prepared_data.keys():
+        title = f"Loss for agent #{agent} (episode {episode})"
         for network in ['actor', 'critic']:
             data = {
-                network: [loss[network] for loss in agents_loss]
+                network: [loss[network] for loss in prepared_data[agent]]
             }
-            path = f"{base_dir}/{network}loss_agent_{index}"
+            path = f"{base_dir}/{network}loss_agent_{agent}"
             build_plot(data, title, path)
 
 
