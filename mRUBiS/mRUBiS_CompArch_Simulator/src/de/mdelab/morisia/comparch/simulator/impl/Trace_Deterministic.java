@@ -40,7 +40,7 @@ public class Trace_Deterministic implements InjectionStrategy {
 		//if (runCount%3==0) 
 		if (runCount%10==0) 
 			//6 CF
-			{ System.out.print("\n 10");
+			{ //System.out.print("\n 10");
 				injections.add(new Injection<Component>(IssueType.CF1, this
 						.getComponent(0, 1)));
 				injections.add(new Injection<Component>(IssueType.CF3, this
@@ -59,7 +59,7 @@ public class Trace_Deterministic implements InjectionStrategy {
 				
 			} else if (runCount%10 ==1) 
 			// 4 CF
-			{System.out.print("\n 1");
+			{//System.out.print("\n 1");
 				// Google is best as defined in the model
 			injections.add(new Injection<Component>(IssueType.CF3, this
 					.getComponent(0, 4)));
@@ -78,7 +78,7 @@ public class Trace_Deterministic implements InjectionStrategy {
 				
 			} else if (runCount%10==2) 
 				// 7 CF
-			{System.out.print("\n 2");
+			{//System.out.print("\n 2");
 				Component component = this.getComponent(6, 3);
 				injections.add(new Injection<ProvidedInterface>(IssueType.CF2,
 						component.getProvidedInterfaces().get(0)));
@@ -98,7 +98,7 @@ public class Trace_Deterministic implements InjectionStrategy {
 				
 			} else if (runCount%10 == 3)
 			//5 CF
-				{System.out.print("\n 3");
+				{//System.out.print("\n 3");
 				injections.add(new Injection<ProvidedInterface>(IssueType.CF2, this
 						.findMostCriticalComponent(8).getProvidedInterfaces()
 						.get(0)));
@@ -117,7 +117,7 @@ public class Trace_Deterministic implements InjectionStrategy {
 			
 			} else if (runCount%10 == 4)
 			// 10 CF
-				{System.out.print("\n 4");
+				{//System.out.print("\n 4");
 				injections.add(new Injection<Component>(IssueType.CF1, this
 						.getComponent(5, 3)));
 				injections.add(new Injection<Component>(IssueType.CF1, this
@@ -150,7 +150,7 @@ public class Trace_Deterministic implements InjectionStrategy {
 			}
 			
 		else if (runCount%10 == 6) {
-			System.out.print("\n 6");
+			//System.out.print("\n 6");
 				injections.add(new Injection<Component>(IssueType.CF1, this
 						.getComponent(4, 4)));
 				injections.add(new Injection<ProvidedInterface>(IssueType.CF2, this
@@ -159,7 +159,7 @@ public class Trace_Deterministic implements InjectionStrategy {
 						.getComponent(6, 4)));
 			
 		} else if (runCount%10 == 7) {
-			System.out.print("\n 7");
+			//System.out.print("\n 7");
 			injections.add(new Injection<Component>(IssueType.CF3, this
 					.getComponent(2, 10)));
 				injections.add(new Injection<Component>(IssueType.CF3, this
@@ -172,14 +172,14 @@ public class Trace_Deterministic implements InjectionStrategy {
 						.getComponent(8, 7).getProvidedInterfaces().get(0)));
 			
 			} else if (runCount%10 == 8) {
-				System.out.print("\n 8");
+				//System.out.print("\n 8");
 				injections.add(new Injection<Component>(IssueType.CF1, this
 						.getComponent(6, 6)));
 				injections.add(new Injection<ProvidedInterface>(IssueType.CF2, this
 						.getComponent(5, 6).getProvidedInterfaces().get(0)));
 				
 			} else if (runCount%10 == 9) {
-				System.out.print("\n 9");
+				//System.out.print("\n 9");
 				injections.add(new Injection<ProvidedInterface>(IssueType.CF2, this
 						.findMostCriticalComponent(7).getProvidedInterfaces()
 						.get(0)));
