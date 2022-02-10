@@ -188,7 +188,6 @@ public class Task_1 {
 				architecture.setAnnotations(annotations);
 			}
 	
-	
 			// attach event listener
 			architecture.eAdapters().add(new EventListener());
 	
@@ -196,7 +195,7 @@ public class Task_1 {
 			String logFile = null;
 			boolean logToConsole = false;
 			ComparchSimulator simulator = ComparchSimulator.FACTORY.createSimulator(Capability.SELF_REPAIR,
-					architecture, RUNS, Level.CONFIG, logFile, logToConsole);
+					architecture, RUNS, run, Level.CONFIG, logFile, logToConsole);
 			//InjectionStrategy strategy = new testTrace
 			InjectionStrategy strategy = new Trace_Deterministic
 					(simulator.getSupportedIssueTypes(), architecture);

@@ -57,7 +57,7 @@ public class ComparchSimulatorImpl implements ComparchSimulator {
 	 * @param logFile
 	 * @param logToConsole
 	 */
-	ComparchSimulatorImpl(Architecture eArchitecture, int runs,Level logLevel,
+	ComparchSimulatorImpl(Architecture eArchitecture, int runs, int runCount, Level logLevel,
 			String logFile, boolean logToConsole) {
 
 		this.configLogging(logLevel, logFile, logToConsole);
@@ -71,7 +71,7 @@ public class ComparchSimulatorImpl implements ComparchSimulator {
 		this.modelAnalyzers = new LinkedList<ModelAnalyzer>();
 		this.adaptationAnalyzers = new LinkedList<AdaptationAnalyzer>();
 
-		this.runCount = 0;
+		this.runCount = runCount;
 		
 
 		this.injectionController = new InjectionController(this.injectors);
@@ -83,11 +83,11 @@ public class ComparchSimulatorImpl implements ComparchSimulator {
 	 */
 	@Override
 	public void setInjectionStrategy(InjectionStrategy strategy) {
-		if (this.runCount == 0) {
-			this.injectionController.setInjectionStrategy(strategy);
-		} else {
-			LOGGER.warning("Simulation is alredy running. The injection strategy cannot be changed any more.");
-		}
+//		if (this.runCount == 0) {
+		this.injectionController.setInjectionStrategy(strategy);
+//		} else {
+//			LOGGER.warning("Simulation is alredy running. The injection strategy cannot be changed any more.");
+//		}
 	}
 
 	/**
@@ -125,11 +125,11 @@ public class ComparchSimulatorImpl implements ComparchSimulator {
 	 */
 	@Override
 	public void addInjector(Injector<? extends ArchitecturalElement> injector) {
-		if (this.runCount == 0) {
-			this.injectors.add(injector);
-		} else {
-			LOGGER.warning("Simulation is alredy running. Injectors cannot be added any more.");
-		}
+//		if (this.runCount == 0) {
+		this.injectors.add(injector);
+//		} else {
+//			LOGGER.warning("Simulation is alredy running. Injectors cannot be added any more.");
+//		}
 	}
 
 	/**
@@ -137,15 +137,15 @@ public class ComparchSimulatorImpl implements ComparchSimulator {
 	 */
 	@Override
 	public void addAnalyzer(Analyzer analyzer) {
-		if (this.runCount == 0) {
-			if (analyzer instanceof ModelAnalyzer) {
-				this.modelAnalyzers.add((ModelAnalyzer) analyzer);
-			} else if (analyzer instanceof AdaptationAnalyzer) {
-				this.adaptationAnalyzers.add((AdaptationAnalyzer) analyzer);
-			}
-		} else {
-			LOGGER.warning("Simulation is alredy running. Analyzers cannot be added any more.");
+//		if (this.runCount == 0) {
+		if (analyzer instanceof ModelAnalyzer) {
+			this.modelAnalyzers.add((ModelAnalyzer) analyzer);
+		} else if (analyzer instanceof AdaptationAnalyzer) {
+			this.adaptationAnalyzers.add((AdaptationAnalyzer) analyzer);
 		}
+//		} else {
+//			LOGGER.warning("Simulation is alredy running. Analyzers cannot be added any more.");
+//		}
 	}
 
 	/**
