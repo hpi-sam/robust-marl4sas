@@ -67,6 +67,9 @@ class ChunkedSocketCommunicator(object):
                     break
             self.println("received")
 
+        from_mrubis = self.readln()
+        assert from_mrubis == "finished_sending"
+
         return message
 
     def println(self, message):
