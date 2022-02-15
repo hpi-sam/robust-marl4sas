@@ -67,7 +67,7 @@ public class ComparchSimulatorFactory {
 			Architecture eArchitecture, int runs, int runCount, Level logLevel,
 			String logFile, boolean logToConsole) {
 		ComparchSimulator simulator = new ComparchSimulatorImpl(eArchitecture,
-				runs,runCount, logLevel, logFile, logToConsole);
+				runs, runCount, logLevel, logFile, logToConsole);
 
 		switch (capability) {
 		case SELF_REPAIR:

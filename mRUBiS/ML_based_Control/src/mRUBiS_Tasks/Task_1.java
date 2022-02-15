@@ -142,8 +142,11 @@ public class Task_1 {
 		MLSDMInterpreter interpreter = EnvSetUp.getStoryDiagramInterpreter(stdout, useOptimization);		
 		
 		int run = 0;
+		int episode = 0;
 		
-		while (run <= RUNS) {
+		while (episode < 15000) {
+			
+			episode++;
 			
 			AtomicBoolean reset = new AtomicBoolean(false);
 			

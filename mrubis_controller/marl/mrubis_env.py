@@ -63,10 +63,6 @@ class MrubisEnv(gym.Env):
 
     def step(self, actions):
         """ Returns observation, reward, terminated, info """
-        # TODO: Send actions to mRUBiS
-        # TODO: Get observation from mRUBiS
-        # TODO: Determine reward (calculate from observation)
-        # TODO: What to do once failure propagation is implemented?
         self.inner_t += 1
         if actions is not None:
             self.communicator.println(json.dumps(actions))
@@ -92,17 +88,8 @@ class MrubisEnv(gym.Env):
 
     def reset(self):
         """ Returns initial observations and states """
-        # TODO: send initiation data to mRUBiS (# shops, etc.) (for later!)
-        # TODO: add additional argument for that
-        # TODO: get initial observation from mRUBiS
         if self.communicator is None:
             self.communicator = ChunkedSocketCommunicator()
-        # self.current_state = 0
-        # self.current_state_name = list(self.observation_space_names[self.current_state])
-        # self.last_action = None
-        # self.last_action_name = None
-        # self.successful_action = None
-        # self.steps = 0
 
         if not self.external_start:
             self._start_mrubis()

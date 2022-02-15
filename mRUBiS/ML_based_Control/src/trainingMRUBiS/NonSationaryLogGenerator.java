@@ -195,7 +195,7 @@ public class NonSationaryLogGenerator {
 			String logFile = null;
 			boolean logToConsole = false;
 			ComparchSimulator simulator = ComparchSimulator.FACTORY.createSimulator(Capability.SELF_REPAIR,
-					architecture, RUNS, Level.CONFIG, logFile, logToConsole);
+					architecture, RUNS, 0, Level.CONFIG, logFile, logToConsole);
 					//InjectionStrategy strategy = new testTrace
 			InjectionStrategy strategy = new Trace_1
 					(simulator.getSupportedIssueTypes(), architecture);

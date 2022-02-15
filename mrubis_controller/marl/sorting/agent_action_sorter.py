@@ -12,7 +12,4 @@ class AgentActionSorter:
 
     def predict_optimal_utility_of_fixed_components(self, action, observation):
         """Predict the optimal utility of a component which should be fixed"""
-        '''print(action)
-        with open('local_observation.json', 'w') as file:
-            file.write(json.dumps(observation))'''
         return self.utility_model.predict_on_mrubis_output(pd.DataFrame(observation[action['component']], index=[0]))[0]
