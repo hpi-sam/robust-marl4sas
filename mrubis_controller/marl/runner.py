@@ -76,7 +76,8 @@ env = MrubisEnv()
 # shop_distribution_example = [{'mRUBiS #1', 'mRUBiS #2'}, {'mRUBiS #3'}]
 # shop_distribution_example = [{'mRUBiS #1'}, {'mRUBiS #2'}, {'mRUBiS #3'}]
 # shop_distribution_example = [{'mRUBiS #1'}, {'mRUBiS #2'}]
-shop_distribution_example = [{'mRUBiS #1', 'mRUBiS #2', 'mRUBiS #3', 'mRUBiS #4', 'mRUBiS #5', 'mRUBiS #6', 'mRUBiS #7', 'mRUBiS #8', 'mRUBiS #9', 'mRUBiS #10'}]
+shop_distribution_example = [
+    {'mRUBiS #1', 'mRUBiS #2', 'mRUBiS #3', 'mRUBiS #4', 'mRUBiS #5', 'mRUBiS #6', 'mRUBiS #7', 'mRUBiS #8', 'mRUBiS #9', 'mRUBiS #10'}]
 shop_config_example = [[1, 0, False], [2, 2, False]]
 # load_model = {0: {'start_time': '2022_02_02_13_13', 'episode': 1300}, 1: {'start_time': '2022_02_02_13_13', 'episode': 1300}}
 # load_model = {0: None, 1: None, 2: None}

@@ -6,7 +6,6 @@ from keras import backend as K
 from keras.layers import Dense, Input
 from keras.models import Model
 from keras.optimizers import Adam
-import json
 
 from mrubis_controller.marl.helper import get_current_time
 from mrubis_controller.marl.sorting.agent_action_sorter import AgentActionSorter

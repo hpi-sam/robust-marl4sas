@@ -169,7 +169,7 @@ class MrubisEnv(gym.Env):
     def _stop_mrubis(self):
         '''Terminate the mRUBiS process'''
         self.mrubis_process.terminate()
-        
+
     def _info(self):
         return {'t': self.t, 'stats': self.stats}
 

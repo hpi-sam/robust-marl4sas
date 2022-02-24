@@ -76,7 +76,7 @@ class ChunkedSocketCommunicator(object):
     def close_socket(self):
         self.socket.close()
 
-    def send_exit_message(self):        
+    def send_exit_message(self):
         '''Tell mRUBiS to stop its main loop'''
         self.println("exit")
         _ = self.readln()

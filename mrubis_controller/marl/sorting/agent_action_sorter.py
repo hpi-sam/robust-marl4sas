@@ -1,6 +1,5 @@
 from mrubis_controller.jakobs_model.component_utility_predictor import RidgeUtilityPredictor
 import pandas as pd
-import json
 
 
 class AgentActionSorter:
