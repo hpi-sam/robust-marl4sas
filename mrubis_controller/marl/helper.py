@@ -1,6 +1,7 @@
 import datetime
 
 import matplotlib.pyplot as plt
+import numpy
 
 
 def get_current_time():
@@ -26,22 +27,34 @@ def build_count_plot(base_dir, count_data, episode, shop_distribution):
     write_data(len(list(count_data.values())[0]), data, 'tries', base_dir)
 
 
-def build_loss_plot(base_dir, loss_data, episode, shop_distribution):
-    for index, agent in enumerate(shop_distribution):
-        title = f"Loss for agent #{index} (episode {episode})"
-        agents_loss = [actor_critic for d in loss_data for actor_critic in d[index]]
+def build_loss_plot(base_dir, loss_data, episode):
+    prepared_data = {}
+    for loss in loss_data:
+        for key, value in loss.items():
+            if key not in prepared_data:
+                prepared_data[key] = []
+            if value:
+                prepared_data[key].append(value[0])
+
+    for agent in prepared_data.keys():
+        title = f"Loss for agent #{agent} (episode {episode})"
         for network in ['actor', 'critic']:
             data = {
-                network: [loss[network] for loss in agents_loss]
+                network: [loss[network] for loss in prepared_data[agent]]
             }
-            path = f"{base_dir}/{network}loss_agent_{index}"
+            path = f"{base_dir}/{network}loss_agent_{agent}"
             build_plot(data, title, path)
 
 
 def build_plot(data, title, path):
-    plt.title(title, fontsize=12)
+    colors = ['#009e61', '#5a6065', '#00799e', '#f6ba00', '#b10639', '#dd6108']
+    plt.figure(figsize=(4,3))
+    plt.title(title, fontsize=16)
+    # axes = plt.gca()
+    # axes.set_ylim([0, 20])
     for label, d in data.items():
-        plt.plot(d, label=label)
+        x = numpy.array([i for i in range(len(d))])
+        plt.plot(x, [float(value) for value in d], colors.pop(), label=label)
     plt.legend()
     plt.savefig(path)
     plt.clf()
@@ -52,3 +65,16 @@ def write_data(count, data, title, base_dir):
         for i in range(count):
             data_string = ''.join(str(data[shop][i]) + ',' for shop in data)
             file.write(data_string + '\n')
+
+
+def build_plot_from_file(titles, path, output_path, base_dir='./mrubis_controller/marl/data/logs'):
+    data = {}
+    with open(f'{base_dir}/{path}.txt') as file:
+        lines = file.readlines()
+        for index, title in enumerate(titles, start=1):
+            data[title] = [line.split(',')[index] for line in lines]
+    build_plot(data, 'Number of tries', f'{base_dir}/{output_path}.png')
+
+
+if __name__ == "__main__":
+    build_plot_from_file(['mrubis #1'], '2022_02_04_13_33/tries', 'robustness_shop')

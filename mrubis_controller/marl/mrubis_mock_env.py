@@ -1,7 +1,9 @@
-import gym
-from mrubis_controller.marl.mrubis_data_helper import get_failing_component, get_current_utility
-from mrubis_controller.marl.data.data_generator import DataGenerator
 import copy
+
+import gym
+
+from mrubis_controller.marl.data.data_generator import DataGenerator
+from mrubis_controller.marl.mrubis_data_helper import get_failing_component, get_current_utility
 
 
 class MrubisMockEnv(gym.Env):
@@ -17,7 +19,6 @@ class MrubisMockEnv(gym.Env):
         self.prior_utility = None  # used for calculation of diff as a reward
         self.t = 0
         self.termination_t = 3
-        self.inner_t = 0
         self.stats = {}
         self.terminated = False
 
@@ -40,10 +41,12 @@ class MrubisMockEnv(gym.Env):
             increases component_utility if fix is correct
             decreases component_utility if fix is wrong
         """
-        self.inner_t += 1
+        self.t += 1
         for action in actions.values():
             current_shop = self.observation[action['shop']]
             current_failing_component = self.failing_components[action['shop']]
+            # counter for how many attempts till fixed is outside the if since forced termination is possible
+            self.stats[action['shop']] = self.t
             if current_failing_component is None:
                 # action for a shop without any failure
                 raise NotImplementedError
@@ -56,7 +59,6 @@ class MrubisMockEnv(gym.Env):
                 # shop utility must be increased as well
                 current_shop['Availability Item Filter']['shop_utility'] = float(
                     current_shop['Availability Item Filter']['shop_utility']) + self.utility_increase_amount
-                self.stats[action['shop']] = self.inner_t
             else:
                 current_shop[current_failing_component]['component_utility'] = float(
                     current_shop[current_failing_component]['component_utility']) - self.utility_decrease_amount
@@ -67,8 +69,7 @@ class MrubisMockEnv(gym.Env):
         _reward = self._get_reward(self.observation)
         # check if all issues are fixed and load new observation if all are fixed
         if self.all_fixed(actions):
-            self.t += 1
-            self.inner_t = 0
+            self.t = 0
             self.terminated = True
             # # TODO: check with Ulrike whether we need this if check
             # self.observation, self.failing_components = self._get_observation(self.t)
@@ -82,6 +83,7 @@ class MrubisMockEnv(gym.Env):
     def reset(self):
         """ Returns initial observations and states """
         self.t = 0
+        self.stats = {}
         self.terminated = False
         self.observation, self.failing_components = self._get_observation(self.t)
         self.prior_utility = get_current_utility(self.observation)
