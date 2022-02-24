@@ -13,9 +13,10 @@ pytest = "*"
 mypy = "*"
 pandas = "*"
 sklearn = "*"
+requests = "*"
 
 [dev-packages]
-numpy.testing = "*"
+numpy = {testing = "*"}
 
 [requires]
 python_version = "3.8"

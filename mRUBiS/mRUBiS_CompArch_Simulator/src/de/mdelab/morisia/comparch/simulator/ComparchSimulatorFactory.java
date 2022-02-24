@@ -64,10 +64,10 @@ public class ComparchSimulatorFactory {
 	 *         given parameters.
 	 */
 	public ComparchSimulator createSimulator(Capability capability,
-			Architecture eArchitecture, int runs, Level logLevel,
+			Architecture eArchitecture, int runs, int runCount, Level logLevel,
 			String logFile, boolean logToConsole) {
 		ComparchSimulator simulator = new ComparchSimulatorImpl(eArchitecture,
-				runs, logLevel, logFile, logToConsole);
+				runs, runCount, logLevel, logFile, logToConsole);
 
 		switch (capability) {
 		case SELF_REPAIR:

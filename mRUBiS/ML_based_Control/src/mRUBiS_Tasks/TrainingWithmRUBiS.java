@@ -255,7 +255,7 @@ public class TrainingWithmRUBiS {
 			String logFile = null;
 			boolean logToConsole = false;
 			ComparchSimulator simulator = ComparchSimulator.FACTORY.createSimulator(Capability.SELF_REPAIR,
-					architecture, RUNS, Level.CONFIG, logFile, logToConsole);
+					architecture, RUNS, 0, Level.CONFIG, logFile, logToConsole);
 					InjectionStrategy strategy = new Trace_Deterministic
 					(simulator.getSupportedIssueTypes(), architecture);
 			simulator.setInjectionStrategy(strategy);

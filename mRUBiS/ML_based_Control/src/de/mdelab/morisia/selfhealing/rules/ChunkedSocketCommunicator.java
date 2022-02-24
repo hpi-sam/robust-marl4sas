@@ -99,6 +99,8 @@ public class ChunkedSocketCommunicator {
 			out.println(partMessage);
 			waitForMessage("received");
 		}
+		
+		out.println("finished_sending");
     }
     
     public static void log(String message) {
@@ -121,25 +123,31 @@ public class ChunkedSocketCommunicator {
     	String fromPython = "";
 		while(true) {
 			fromPython = readln();
-			try {
-				json = new ObjectMapper().readValue(fromPython, HashMap.class);
-				logger.println(json);	
-				return json;			
-			} catch (IOException e) {
-				System.out.println("Did not receive valid json from Python:");
-				System.out.println(fromPython);
-			}
+			json = parseJSON(json, fromPython);
+			return json;
 		}
     }
     
     public static void waitForMessage(String message) {
     	String fromPython = "";
-		System.out.println("Waiting for Python to send '" + message + "'...");
+		// System.out.println("Waiting for Python to send '" + message + "'...");
 		while(true) { 
 			fromPython = readln();
 			if (fromPython.equals(message)) {
 				return;
 			}
 		}
+    }
+    
+    public static <T> HashMap<String, T> parseJSON(HashMap<String, T> json, String message) {
+    	try {
+			json = new ObjectMapper().readValue(message, HashMap.class);
+			logger.println(json);	
+			return json;			
+		} catch (IOException e) {
+			System.out.println("Did not receive valid json from Python:");
+			System.out.println(message);
+		}
+		return null;
     }
 }

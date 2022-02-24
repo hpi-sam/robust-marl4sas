@@ -31,7 +31,7 @@ class ChunkedSocketCommunicator(object):
 
     def readln(self):
         data = self.socket.recv(64000)
-        message = data.decode('utf-8').strip()
+        message = data.decode('utf-8').strip("\n\r")
 
         try:
             json_message = json.loads(message)
@@ -65,6 +65,9 @@ class ChunkedSocketCommunicator(object):
                     break
             self.println("received")
 
+        from_mrubis = self.readln()
+        assert from_mrubis == "finished_sending"
+
         return message
 
     def println(self, message):
@@ -72,3 +75,8 @@ class ChunkedSocketCommunicator(object):
 
     def close_socket(self):
         self.socket.close()
+
+    def send_exit_message(self):
+        '''Tell mRUBiS to stop its main loop'''
+        self.println("exit")
+        _ = self.readln()

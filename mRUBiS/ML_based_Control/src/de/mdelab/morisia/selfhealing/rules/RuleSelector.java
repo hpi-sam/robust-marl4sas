@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -38,6 +39,7 @@ import de.mdelab.morisia.comparch.RestartComponent;
 import de.mdelab.morisia.comparch.Rule;
 import de.mdelab.morisia.comparch.Tenant;
 import de.mdelab.morisia.selfhealing.Approaches;
+import de.mdelab.morisia.selfhealing.ArchitectureUtilCal;
 import de.mdelab.morisia.selfhealing.Evaluation_ML;
 import de.mdelab.morisia.selfhealing.LearningModel;
 import de.mdelab.morisia.selfhealing.LearningQuality;
@@ -55,7 +57,8 @@ public class RuleSelector {
     private static Path issueToRulesPath = Paths.get("issueToRulesMap.json"); // issues, affected components and associated rules;
     private static Path rulesToExecutePath= Paths.get("rulesToExecute.json"); // rules to execute on this run
     private static int run = 1;
-    private static Boolean initialStateSent = false;
+    private static HashMap<String, HashMap<String, HashMap<String, String>>> globalState;
+//    private static Boolean initialStateSent = false;
 	
 
 	private final static Logger LOGGER = Logger.getLogger(RuleSelector.class
@@ -105,38 +108,160 @@ public class RuleSelector {
 
 
 	private static void learningApproach(Issue issue, Utilityfunction uTILITY_FUNCTION) {
+		// TODO: get issueToRulesMap from UtilityIncreasePredictor, use getAffectedComponentStatus with it, put state into JSON for all issues
+		
 		
 		// read utility increase (make sure that rules are available)
 		UtilityIncreasePredictor.calculateCombinedUtilityIncrease(issue);
+		selectMinimumCostRule(issue);
+		//updateGlobalState(shopToIssueMap, issue.getUtilityDrop());
+		// TODO: We can really solve this a lot easier by just outputting a shop-component-issue triple, right? Or can this contain multiple shops' issues?
 		
-		Architecture architecture = issue.getAnnotations().getArchitecture();
+		// Architecture architecture = issue.getAnnotations().getArchitecture();
+
+//		sendNumberOfIssuesPerShopToPython(architecture);
+//		sendCurrentIssueToPython(issue);
 		
-		if (!initialStateSent) {
-			
-			sendNumberOfShopsToPython(architecture);
-			
-			for (Tenant tenant: architecture.getTenants()) {
-				sendInitialStateToPython(tenant);
-			}
-			
-			initialStateSent = true;
-			
+		// getRuleFromPython(issue);
+		// Input.selectAction(issue);
+		// Pretty sure we can skip these methods, as selectAction merely removes the rules that were not chosen by the agent
+		
+	}
+	
+	
+	public static void insertTrace(Issue issue) {
+		
+		
+		String componentName = issue.getAffectedComponent().getType().getName();
+		String shopName = issue.getAffectedComponent().getTenant().getName();
+		String issueName = issue.getClass().getInterfaces()[0].getSimpleName();
+		List<String> traceOfFailingComponentNames = FailurePropagationTraceCreator.createTrace(componentName);
+		for (String currentComponent : traceOfFailingComponentNames) {
+			globalState.get(shopName).get(currentComponent).put("failure_name", issueName);
+			globalState.get(shopName).get(currentComponent).put("component_utility", Double.toString(0.));
 		}
 		
-		sendNumberOfIssuesPerShopToPython(architecture);
-		sendCurrentIssueToPython(issue);
-		getRuleFromPython(issue);
-		Input.selectAction(issue);
+	}
+	
+	public static void updateShopUtilities(Architecture architecture) {
+		for (Tenant tenant : architecture.getTenants()) {
+			String shopName = tenant.getName();
+			Double overallUtility = 0.;
+			for (Component component : tenant.getComponents()) {
+				String componentName = component.getType().getName();
+				overallUtility += Double.parseDouble(globalState.get(shopName).get(componentName).get("component_utility"));
+			}
+			for (Component component : tenant.getComponents()) {
+				String componentName = component.getType().getName();
+				globalState.get(shopName).get(componentName).put("shop_utility", Double.toString(overallUtility));
+			}
+		}
 		
 	}
 	
-	
-	private static void sendNumberOfShopsToPython(Architecture architecture) {
-		ChunkedSocketCommunicator.waitForMessage("get_number_of_shops");
-		String state = "not_available";
-		state = Observations.getNumberOfShops(architecture);
-		ChunkedSocketCommunicator.println(state);
+	private static void selectMinimumCostRule(Issue issue) {
+		Double minimumCost = Double.POSITIVE_INFINITY;
+		Rule minimumRule = issue.getHandledBy().get(0);
+		for (Rule rule : issue.getHandledBy()) {
+			Double cost = rule.getCosts();
+			if (cost < minimumCost) {
+				minimumCost = cost;
+				minimumRule = rule;
+			}
+		}
+		
+		LinkedList<Rule> rulesToRemove = new LinkedList<Rule>();
+		
+		for (Rule rule: issue.getHandledBy()) {
+			if (rule != minimumRule) {
+				rulesToRemove.add(rule);
+			}
+		}
+		
+		for (Rule rule: rulesToRemove) {
+			rule.setAnnotations(null);
+			rule.setHandles(null);
+		}
 	}
+	
+	public static boolean applyActionUpdate(Component component) {
+		
+		
+		String shopName = component.getTenant().getName();
+		String componentName = component.getType().getName();
+		double oldUtility =  Double.parseDouble(globalState.get(shopName).get(componentName).get("component_utility"));
+		double updateUtility;
+		
+		if (component.getIssues().size() == 0) {
+			updateUtility = - 1.0;
+			globalState.get(shopName).get(componentName).put("component_utility", Double.toString(oldUtility + updateUtility));
+			double oldShopUtility = Double.parseDouble(globalState.get(shopName).get(componentName).get("shop_utility"));
+			for (Component relatedComponent : component.getTenant().getComponents()) {
+				String relatedComponentName = relatedComponent.getType().getName();
+				globalState.get(shopName).get(relatedComponentName).put("shop_utility", Double.toString(oldShopUtility + updateUtility));
+			}
+			return false;
+		}
+		
+		else {
+			updateUtility = component.getIssues().get(0).getUtilityDrop();
+			
+			Double originalShopUtility = ArchitectureUtilCal.computeShopUtility(component.getTenant());
+			
+			for (Component relatedComponent : component.getTenant().getComponents()) { 
+				// TODO: Think about how we want traces to behave and when to clear issues coming with the trace
+				Double originalComponentUtility = ArchitectureUtilCal.computeComponentUtility(component);
+				String relatedComponentName = relatedComponent.getType().getName();
+				
+				if (relatedComponent == component) {
+					globalState.get(shopName).get(relatedComponentName).put("component_utility", Double.toString(originalComponentUtility + updateUtility));
+					
+				}
+				else {
+					globalState.get(shopName).get(relatedComponentName).put("component_utility", Double.toString(originalComponentUtility));
+				}
+				
+				globalState.get(shopName).get(relatedComponentName).put("shop_utility", Double.toString(originalShopUtility + updateUtility));
+				globalState.get(shopName).get(relatedComponentName).put("failure_name", "None");
+			}		
+			return true;
+		}
+	}
+			
+				
+		
+		
+		
+		
+			
+//			HashMap<String, HashMap<String, HashMap<String, Double>>> issues = shop.getValue();
+//			for (HashMap.Entry<String, HashMap<String, HashMap<String, Double>>> issue: issues.entrySet()) {
+//				String issueName = issue.getKey();
+//				HashMap<String, HashMap<String, Double>> components = issue.getValue();
+//				for (HashMap.Entry<String, HashMap<String, Double>> component: components.entrySet()) {
+//					String componentName = component.getKey();
+//					HashMap<String, Double> rules = component.getValue();
+//					Double maxUtilityIncrease = 0.0;
+//					for (HashMap.Entry<String, Double> rule: rules.entrySet()) {
+//						maxUtilityIncrease = Math.max(maxUtilityIncrease, rule.getValue());
+//					}
+//					double oldUtility = Double.parseDouble(globalState.get(shopName).get(componentName).get("component_utility"));
+//					globalState.get(shopName).get(componentName).put("component_utility", Double.toString(oldUtility - utilityDrop));
+//					globalState.get(shopName).get(componentName).put("failure_name", issueName);
+//					
+//					for (HashMap.Entry<String, HashMap<String, String>> shopComponent : globalState.get(shopName).entrySet()) {
+//						double old_utility = Double.parseDouble(shopComponent.getValue().get("shop_utility"));
+//						shopComponent.getValue().put("shop_utility", Double.toString(old_utility - utilityDrop));
+//					}
+					
+					
+					// TODO: update utility?
+					// Although updating utility would likely need to be done after fixes are sent
+//				}
+//			}
+//		}
+//	}
+	
 	
 	
 	public static void sendFailProbabilityToPython() {
@@ -178,39 +303,72 @@ public class RuleSelector {
 	}
 	
 	
-	private static void sendInitialStateToPython(Tenant shop) {
-		ChunkedSocketCommunicator.waitForMessage("get_initial_state");
-		String state = "not_available";
-		state = Observations.getInitialState(shop);
-		ChunkedSocketCommunicator.println(state);
-	}
-	
-	
-	private static void sendNumberOfIssuesPerShopToPython(Architecture architecture) {
-		ChunkedSocketCommunicator.waitForMessage("get_number_of_issues_in_run");
-		String state = "not_available";
-		state = Observations.getNumberOfIssuesPerShop(architecture);
-		ChunkedSocketCommunicator.println(state);		
-	}
-	
-	
-	private static void sendCurrentIssueToPython(Issue issue) {
-		// Read json file generated in UtilityIncreasePredictor
-		ObjectMapper mapper = new ObjectMapper();
-		HashMap<String, HashMap<String, HashMap<String, HashMap<String, Double>>>> issueToRulesMapFromFile = null;
+	public static void setGlobalState(Architecture MRUBIS) {
+		//ChunkedSocketCommunicator.waitForMessage("get_initial_state");
+		HashMap<String, HashMap<String, HashMap<String, String>>> state;
+		globalState = Observations.getCurrentStates(MRUBIS);
+		/*String json = "";
 		try {
-			issueToRulesMapFromFile = mapper.readValue(issueToRulesPath.toFile(), HashMap.class);
-		} catch (IOException e2) {
-			e2.printStackTrace();
-		}
-
-		// send current state to the python side
-		Architecture architecture = issue.getAnnotations().getArchitecture();
-		ChunkedSocketCommunicator.waitForMessage("get_issue");
-		String state = "not_available";
-		state = Observations.getAffectedComponentStatus(architecture, issueToRulesMapFromFile);
-		ChunkedSocketCommunicator.println(state);		
+			json = new ObjectMapper().writeValueAsString(globalState);
+			ChunkedSocketCommunicator.println(json);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}*/	
 	}
+	
+	public static void sendGlobalState() {
+		String json = "";
+		try {
+			json = new ObjectMapper().writeValueAsString(globalState);
+			ChunkedSocketCommunicator.println(json);
+			
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+		try {
+			Files.copy(Paths.get("globalState.json"), Paths.get("globalState_old.json"), StandardCopyOption.REPLACE_EXISTING);
+			ObjectMapper globalStateMapper = new ObjectMapper();
+			globalStateMapper.writeValue(Paths.get("globalState.json").toFile(), globalState);
+		} catch (IOException e) {
+			System.out.println("Failed to write JSON to file:");
+			System.out.println(globalState);
+			e.printStackTrace();
+		}
+	}
+	
+	
+//	private static void sendNumberOfIssuesPerShopToPython(Architecture architecture) {
+//		ChunkedSocketCommunicator.waitForMessage("get_number_of_issues_in_run");
+//		globalState = Observations.getNumberOfIssuesPerShop(architecture);
+//	
+//		String json = "";
+//		try {
+//			json = new ObjectMapper().writeValueAsString(globalState);
+//			ChunkedSocketCommunicator.println(json);
+//		} catch (JsonProcessingException e) {
+//			e.printStackTrace();
+//		}	
+//		ChunkedSocketCommunicator.println(json);		
+//	}
+	
+	
+//	private static void sendCurrentIssueToPython(Issue issue, shopToIssueMap) {
+//		// Read json file generated in UtilityIncreasePredictor
+//		ObjectMapper mapper = new ObjectMapper();
+//		HashMap<String, HashMap<String, HashMap<String, HashMap<String, Double>>>> issueToRulesMapFromFile = null;
+////		try {
+////			issueToRulesMapFromFile = mapper.readValue(issueToRulesPath.toFile(), HashMap.class);
+////		} catch (IOException e2) {
+////			e2.printStackTrace();
+////		}
+//
+//		// send current state to the python side
+//		Architecture architecture = issue.getAnnotations().getArchitecture();
+//		ChunkedSocketCommunicator.waitForMessage("get_issue");
+//		String state = "not_available";
+//		state = Observations.getAffectedComponentStatus(architecture, issueToRulesMapFromFile);
+//		ChunkedSocketCommunicator.println(state);		
+//	}
 		
 	private static void getRuleFromPython (Issue issue) {
 		// Get the rules to execute from the python side
@@ -234,7 +392,10 @@ public class RuleSelector {
 	
 
 
-
+	public static void addUtilityDecrease(Issue issue) {
+		
+		
+	}
 
 	public static void addActualUtilityIncreaseToRule(Issue issue, Utilityfunction UTILITY_FUNCTION) {
 	 if (UTILITY_FUNCTION==Utilityfunction.Combined)
