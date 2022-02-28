@@ -1,9 +1,10 @@
 import os
 
 from mrubis_controller.marl.helper import build_reward_plot, build_count_plot, build_loss_plot, get_current_time
-from mrubis_controller.marl.mrubis_mock_env import MrubisMockEnv
-from mrubis_controller.marl.mrubis_env import MrubisEnv
 from multi_agent_controller import MultiAgentController
+
+# from mrubis_controller.marl.mrubis_mock_env import MrubisMockEnv
+from mrubis_controller.marl.mrubis_env import MrubisEnv
 
 
 class Runner:
@@ -70,17 +71,12 @@ class Runner:
 
 
 if __name__ == "__main__":
-    mock_env = MrubisMockEnv(number_of_shops=5, shop_config=[1, 0, False])
-    # env = MrubisEnv()
-    # shop_distribution_example = [{'mRUBiS #1', 'mRUBiS #2'}, {'mRUBiS #3'}]
-    # shop_distribution_example = [{'mRUBiS #1'}, {'mRUBiS #2'}, {'mRUBiS #3'}]
-    # shop_distribution_example = [{'mRUBiS #1'}, {'mRUBiS #2'}]
+    # mock_env = MrubisMockEnv(number_of_shops=5, shop_config=[1, 0, False])
+    env = MrubisEnv()
     shop_distribution_example = [
-        {'mRUBiS #1', 'mRUBiS #2', 'mRUBiS #3', 'mRUBiS #4', 'mRUBiS #5'}]
-         #'mRUBiS #6', 'mRUBiS #7', 'mRUBiS #8', 'mRUBiS #9', 'mRUBiS #10'}]
-    # load_model = {0: {'start_time': '2022_02_02_13_13', 'episode': 1300},
-    #               1: {'start_time': '2022_02_02_13_13', 'episode': 1300}}
-    # load_model = {0: None, 1: None, 2: None}
-    load_model = {0: {'start_time': 'test_robustness', 'episode': 500}, 1: None}
-    Runner(None, mock_env, shop_distribution_example, save_model=True, load_models_data=load_model,
+        {'mRUBiS #1', 'mRUBiS #2', 'mRUBiS #3', 'mRUBiS #4', 'mRUBiS #5',
+         'mRUBiS #6', 'mRUBiS #7', 'mRUBiS #8', 'mRUBiS #9', 'mRUBiS #10'}]
+    load_model = {0: None, 1: None, 2: None}
+    # load_model = {0: {'start_time': 'test_robustness', 'episode': 500}, 1: None}
+    Runner(None, env, shop_distribution_example, save_model=True, load_models_data=load_model,
            robustness_activated=False).run(500)
