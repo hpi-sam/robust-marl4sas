@@ -80,9 +80,9 @@ class RobustnessComponent:
             return None
 
     def skip_agent(self, index):
-        """ skip agents that are in calibration and alarm and skip retired agents only if there are not challenged """
-        return self.agents_status[index] in ['CALIBRATION', 'ALARM'] or \
-               (self.agents_status[index] == 'RETIRED' and self._is_agent_in_charge_for_other_calibrating_agent(index))
+        """ skip agents that are in CALIBRATION or ALARM and skip retired agents only if there are not challenged """
+        return self.agents_status[index] in ['CALIBRATION', 'ALARM'] or (
+                self.agents_status[index] == 'RETIRED' and self._is_agent_in_charge_for_other_calibrating_agent(index))
 
     def monitor(self, metrics, history):
         """ this is the MONITOR stage that saves metrics and history """

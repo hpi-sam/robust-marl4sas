@@ -47,8 +47,9 @@ def build_loss_plot(base_dir, loss_data, episode):
 
 
 def build_plot(data, title, path):
-    colors = ['#009e61', '#5a6065', '#00799e', '#f6ba00', '#b10639', '#dd6108']
-    plt.figure(figsize=(4,3))
+    colors = ['#B1063A', '#134293', '#058B79', '#DD9108', '#009e61',
+              '#5a6065', '#00799e', '#f6ba00', '#b10639', '#dd6108']
+    plt.figure(figsize=(8, 6))
     plt.title(title, fontsize=16)
     # axes = plt.gca()
     # axes.set_ylim([0, 20])

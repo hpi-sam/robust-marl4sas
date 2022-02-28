@@ -39,7 +39,7 @@ def test_wrong_action_for_5_episodes():
         reward, observations_, terminated, env_info = mock_env.step(action)
         assert reward[0][shop] == -1
         assert terminated is False
-        assert len(env_info['stats'].keys()) == 0
+        assert len(env_info['stats'].keys()) != 0
         assert sum(encode_observations(observations_[shop])[np.newaxis, :][0]) == 1
         observation = observations_
 

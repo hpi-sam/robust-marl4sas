@@ -25,7 +25,8 @@ def encode_observations(observations):
 
 
 class Agent:
-    def __init__(self, index, shops, action_space_inverted, load_models_data, ridge_regression_train_data_path):
+    def __init__(self, shops, action_space_inverted, load_models_data, ridge_regression_train_data_path, index=0,
+                 layer_dims=None):
         self.index = index
         self.shops = shops
         self.base_model_dir = './mrubis_controller/marl/data/models'
@@ -39,9 +40,7 @@ class Agent:
         self.beta = 0.0005
         self.n_actions = len(action_space_inverted)
         self.input_dims = self.n_actions
-        self.fc1_dims = 36
-        self.fc2_dims = 72
-        # self.fc3_dims = 144
+        self.layer_dims = [36, 72] if layer_dims is None else layer_dims
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.alpha)
 
         self.actor, self.critic, self.policy = self._build_network()
@@ -82,10 +81,10 @@ class Agent:
         metrics = []
         for shop_name, action in actions.items():
             state = encode_observations(states[shop_name])[np.newaxis, :]
-            state_ = encode_observations(states_[shop_name])[np.newaxis, :]
+            # state_ = encode_observations(states_[shop_name])[np.newaxis, :]
 
             critic_value = self.critic.predict(state)
-            critic_value_ = self.critic.predict(state_)
+            # critic_value_ = self.critic.predict(state_)
 
             # TODO: How important is the length of an episode? Is there a future reward of a solved state?
             shop_reward = reward[0][shop_name]
@@ -115,21 +114,24 @@ class Agent:
     def _build_network(self):
         if self.load_models_data is not None:
             return self.load_models(self.load_models_data)
-        input = Input(shape=(self.input_dims,), name='input')
+        model_input = Input(shape=(self.input_dims,), name='input')
         delta = Input(shape=[1], name='delta')
-        dense1 = Dense(self.fc1_dims, activation='relu', name='dense1')(input)
-        dense2 = Dense(self.fc2_dims, activation='relu', name='last_layer')(dense1)
-        # dense3 = Dense(self.fc3_dims, activation='relu', name='dense3')(dense2)
 
-        probs = Dense(self.n_actions, activation='softmax', name='probs')(dense2)
-        values = Dense(1, activation='linear', name='values')(dense2)
+        dense_layer = model_input
+        for index, dims in enumerate(self.layer_dims):
+            name = 'layer_' + (str(index) if index != len(self.layer_dims) - 1 else 'last')
+            next_dense_layer = Dense(dims, activation='relu', name=name)(dense_layer)
+            dense_layer = next_dense_layer
 
-        actor = Model(inputs=[input, delta], outputs=[probs])
+        probs = Dense(self.n_actions, activation='softmax', name='probs')(dense_layer)
+        values = Dense(1, activation='linear', name='values')(dense_layer)
 
-        critic = Model(inputs=[input], outputs=[values])
+        actor = Model(inputs=[model_input, delta], outputs=[probs])
+
+        critic = Model(inputs=[model_input], outputs=[values])
         critic.compile(optimizer=Adam(lr=self.beta), loss='mean_squared_error')
 
-        policy = Model(inputs=[input], outputs=[probs])
+        policy = Model(inputs=[model_input], outputs=[probs])
 
         return actor, critic, policy
 
@@ -138,15 +140,14 @@ class Agent:
         self.critic.save(f"{self.base_model_dir}/{self.start_time}/agent_{self.index}/critic/episode_{episode}")
 
     def load_models(self, load_models_data):
-        index = self.index if load_models_data['index'] is None else load_models_data['index']
-        base_dir = f"{self.base_model_dir}/{load_models_data['start_time']}/agent_{index}"
+        base_dir = f"{self.base_model_dir}/{load_models_data['start_time']}/agent_{self.index}"
 
         # load critic
         critic = tf.keras.models.load_model(f"{base_dir}/critic/episode_{load_models_data['episode']}")
 
         # load actor and set layers
         actor_copy = tf.keras.models.load_model(f"{base_dir}/actor/episode_{load_models_data['episode']}")
-        probs = actor_copy.get_layer('probs')(critic.get_layer('last_layer').output)
+        probs = actor_copy.get_layer('probs')(critic.get_layer('layer_last').output)
         actor = Model(inputs=[critic.get_layer('input').input, actor_copy.get_layer('delta').input], outputs=[probs])
 
         # load policy
