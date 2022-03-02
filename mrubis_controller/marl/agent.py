@@ -26,17 +26,22 @@ def encode_observations(observations):
 
 class Agent:
     def __init__(self, shops, action_space_inverted, load_models_data, ridge_regression_train_data_path, index=0,
-                 layer_dims=None):
+                 lr=0.003, layer_dims=None):
         self.index = index
         self.shops = shops
         self.base_model_dir = './mrubis_controller/marl/data/models'
+        self.base_log_dir = './mrubis_controller/marl/data/logs/'
         self.start_time = get_current_time()
+        self.tb_callback = tf.keras.callbacks.TensorBoard(
+            log_dir=f"{self.base_log_dir}/{self.start_time}/agent_{self.index}_critic",
+            histogram_freq=1)
+
         self.load_models_data = load_models_data
         self.ridge_regression_train_data_path = ridge_regression_train_data_path
 
         self.action_space_inverted = list(action_space_inverted)
         self.gamma = 0.99
-        self.alpha = 0.0001
+        self.alpha = lr
         self.beta = 0.0005
         self.n_actions = len(action_space_inverted)
         self.input_dims = self.n_actions
@@ -94,7 +99,7 @@ class Agent:
             _actions = np.zeros([1, self.n_actions])
             _actions[np.arange(1), self.action_space_inverted.index(action)] = 1.0
 
-            critic_history = self.critic.fit(state, target, verbose=0)
+            critic_history = self.critic.fit(state, target, verbose=0)  # , callbacks=[self.tb_callback])
 
             with tf.GradientTape() as tape:
                 y_pred = self.actor(state)

@@ -6,6 +6,7 @@ from time import sleep
 from subprocess import PIPE, Popen
 
 from chunkedsocketcommunicator import ChunkedSocketCommunicator
+from mrubis_controller.marl.mrubis_data_helper import get_current_utility
 
 logging.basicConfig()
 logger = logging.getLogger('controller')
@@ -15,6 +16,7 @@ logger.setLevel(logging.INFO)
 class MrubisEnv(gym.Env):
     def __init__(self, json_path='path.json', external_start=True):
         super(MrubisEnv, self).__init__()
+        self.launch_args = None
         self.action_space = None
         self.observation_space = None
         self.communicator = None
@@ -23,6 +25,7 @@ class MrubisEnv(gym.Env):
         self.termination_t = 3
         self.inner_t = 0
         self.stats = {}
+        self.terminated = False
 
         '''Create a new instance of the mRUBiS environment class'''
         self.external_start = external_start
@@ -57,10 +60,6 @@ class MrubisEnv(gym.Env):
         # initial state and action
         self.reset()
 
-    def _get_current_utility(self):
-        return {shop: float(list(components.items())[0][1]['shop_utility']) for shop, components in
-                self.observation.items()}
-
     def step(self, actions):
         """ Returns observation, reward, terminated, info """
         self.inner_t += 1
@@ -72,19 +71,20 @@ class MrubisEnv(gym.Env):
         assert message == "received"
         self.observation = self._get_state()
 
-        _reward = self._get_reward()
+        _reward = self._get_reward(self.observation)
 
         for shop in _reward[0]:
             if _reward[0][shop] > 0:
                 self.stats[shop] = self.inner_t
 
+        info = self._info()
         if actions is None or self._is_fixed():
             self.t += 1
             self.inner_t = 0
             self.stats = {}
             self.terminated = True
 
-        return _reward, self.observation, self.terminated, self._info()
+        return _reward, self.observation, self.terminated, info
 
     def reset(self):
         """ Returns initial observations and states """
@@ -102,7 +102,7 @@ class MrubisEnv(gym.Env):
         self.t = 0
         self._reset_mrubis()
         self.observation = self._get_state()
-        self.prior_utility = self._get_current_utility()
+        self.prior_utility = get_current_utility(self.observation)
         self.action_space = [components for shops, components in self.observation.items()][0].keys()
         self.terminated = False
         return self.observation
@@ -135,10 +135,10 @@ class MrubisEnv(gym.Env):
                     return False
         return True
 
-    def _get_reward(self):
+    def _get_reward(self, observation):
         """ returns the extracted reward per shop
         """
-        current_utility = self._get_current_utility()
+        current_utility = get_current_utility(observation)
         # print(current_utility)
         diff_utility = {shop: current_utility[shop] - utility for shop, utility in self.prior_utility.items()}
         self.prior_utility = current_utility
@@ -149,7 +149,7 @@ class MrubisEnv(gym.Env):
         return self.t == self.termination_t
 
     def _start_mrubis(self):
-        '''Launch mRUBiS as a subprocess. NOTE: Unstable. Manual startup from Eclipse is more robust.'''
+        """Launch mRUBiS as a subprocess. NOTE: Unstable. Manual startup from Eclipse is more robust."""
         self.mrubis_process = Popen(
             self.launch_args,
             stdin=PIPE,
@@ -167,12 +167,12 @@ class MrubisEnv(gym.Env):
             return False
 
     def _stop_mrubis(self):
-        '''Terminate the mRUBiS process'''
+        """Terminate the mRUBiS process"""
         self.mrubis_process.terminate()
 
     def _info(self):
         return {'t': self.t, 'stats': self.stats}
 
     def _get_state(self):
-        '''Query mRUBiS for the state'''
+        """Query mRUBiS for the state"""
         return self.communicator.get_from_mrubis("get_state")
