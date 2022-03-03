@@ -184,7 +184,7 @@ public class RuleSelector {
 		}
 	}
 	
-	public static boolean applyActionUpdate(Component component) {
+	public static boolean applyActionUpdate(Component component, Double negativeReward) {
 		
 		
 		String shopName = component.getTenant().getName();
@@ -193,7 +193,7 @@ public class RuleSelector {
 		double updateUtility;
 		
 		if (component.getIssues().size() == 0) {
-			updateUtility = - 1.0;
+			updateUtility = negativeReward;
 			globalState.get(shopName).get(componentName).put("component_utility", Double.toString(oldUtility + updateUtility));
 			double oldShopUtility = Double.parseDouble(globalState.get(shopName).get(componentName).get("shop_utility"));
 			for (Component relatedComponent : component.getTenant().getComponents()) {

@@ -83,8 +83,7 @@ public class Task_1 {
 	private final static boolean Log = true;
 	
 	private static int numEpisodes = 1;
-
-
+	private static double negativeReward = -1.;
 
 	public static void main(String[] args) throws SDMException, IOException, InterruptedException {
 
@@ -379,7 +378,7 @@ public class Task_1 {
 						List<Issue> issues = component.getIssues();
 						
 						
-						if (RuleSelector.applyActionUpdate(component)) {
+						if (RuleSelector.applyActionUpdate(component, negativeReward)) {
 							orderedIssues.add(issues.get(0));
 						};
 					}
@@ -487,6 +486,9 @@ public class Task_1 {
 	private static void updateConfig(HashMap<String, String> configJSON) {
 		if (configJSON.containsKey("episodes")) {
 			numEpisodes = Integer.parseInt(configJSON.get("episodes"));
+		}
+		if (configJSON.containsKey("negative_reward")) {
+			negativeReward = Double.parseDouble(configJSON.get("negative_reward"));
 		}
 	}
 
