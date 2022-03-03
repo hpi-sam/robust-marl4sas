@@ -50,10 +50,6 @@ class Runner:
                     metrics.append(self.mac.learn(observations, actions, reward, observations_, terminated))
                 observations = observations_
 
-                if self.inner_t > 200:
-                    terminated = True
-                    print("Forced termination")
-
                 if terminated:
                     self.inner_t = 0
                     for shop, count in env_info['stats'].items():
@@ -71,13 +67,13 @@ class Runner:
 
 
 if __name__ == "__main__":
-    episodes = 500
+    episodes = 1000
     # mock_env = MrubisMockEnv(number_of_shops=5, shop_config=[1, 0, False])
     env = MrubisEnv(episodes=episodes)
     shop_distribution_example = [
-        {'mRUBiS #1', 'mRUBiS #2', 'mRUBiS #3', 'mRUBiS #4', 'mRUBiS #5',
-         'mRUBiS #6', 'mRUBiS #7', 'mRUBiS #8', 'mRUBiS #9', 'mRUBiS #10'}]
-    load_model = {0: None, 1: None, 2: None}
+        {'mRUBiS #1', 'mRUBiS #2', 'mRUBiS #3'}, {'mRUBiS #4', 'mRUBiS #5', 'mRUBiS #6'},
+        {'mRUBiS #7', 'mRUBiS #8', 'mRUBiS #9', 'mRUBiS #10'}]
+    load_model = {0: None, 1: None, 2: None, 3: None, 4: None, 5: None}
     # load_model = {0: {'start_time': 'test_robustness', 'episode': 500}, 1: None}
     Runner(None, env, shop_distribution_example, save_model=True, load_models_data=load_model,
            robustness_activated=False).run(episodes)
