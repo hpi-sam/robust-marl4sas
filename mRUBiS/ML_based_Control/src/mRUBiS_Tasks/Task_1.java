@@ -47,6 +47,7 @@ import de.mdelab.morisia.comparch.simulator.Capability;
 import de.mdelab.morisia.comparch.simulator.ComparchSimulator;
 import de.mdelab.morisia.comparch.simulator.InjectionStrategy;
 import de.mdelab.morisia.comparch.simulator.impl.Trace_Deterministic;
+import de.mdelab.morisia.comparch.simulator.impl.testTrace;
 import de.mdelab.morisia.selfhealing.incremental.EventListener;
 import de.mdelab.morisia.selfhealing.incremental.EventQueue;
 import de.mdelab.morisia.selfhealing.rules.AgentCommunicator;
@@ -80,6 +81,8 @@ public class Task_1 {
 
 	private final static String SEP = ",";
 	private final static boolean Log = true;
+	
+	private static int numEpisodes = 1;
 
 
 
@@ -144,7 +147,7 @@ public class Task_1 {
 		int run = 0;
 		int episode = 0;
 		
-		while (episode < 15000) {
+		while (episode < numEpisodes) {
 			
 			episode++;
 			
@@ -199,7 +202,7 @@ public class Task_1 {
 			boolean logToConsole = false;
 			ComparchSimulator simulator = ComparchSimulator.FACTORY.createSimulator(Capability.SELF_REPAIR,
 					architecture, RUNS, run, Level.CONFIG, logFile, logToConsole);
-			//InjectionStrategy strategy = new testTrace
+			//InjectionStrategy strategy = new testTrace(simulator.getSupportedIssueTypes(), architecture);
 			InjectionStrategy strategy = new Trace_Deterministic
 					(simulator.getSupportedIssueTypes(), architecture);
 			simulator.setInjectionStrategy(strategy);
@@ -257,10 +260,13 @@ public class Task_1 {
 			RuleSelector.updateShopUtilities(architecture);
 			
 			
-			AgentCommunicator.waitForAgentRequestingState(reset);				
-			if(reset.get()) {
+			HashMap<String, String> configJSON = AgentCommunicator.getPythonConfig();
+			if (Boolean.parseBoolean(configJSON.get("reset")) == true) {
+				updateConfig(configJSON);
+				ChunkedSocketCommunicator.println("resetting");
 				continue;
 			}
+			assert Boolean.parseBoolean(configJSON.get("get_state")) == true;
 			
 			RuleSelector.sendGlobalState();
 			
@@ -385,10 +391,13 @@ public class Task_1 {
 						break;
 					}
 					
-					AgentCommunicator.waitForAgentRequestingState(reset);				
-					if(reset.get()) {
+					configJSON = AgentCommunicator.getPythonConfig();
+					if (Boolean.parseBoolean(configJSON.get("reset")) == true) {
+						updateConfig(configJSON);
+						ChunkedSocketCommunicator.println("resetting");
 						break;
 					}
+					assert Boolean.parseBoolean(configJSON.get("get_state")) == true;
 					
 					RuleSelector.sendGlobalState();
 					
@@ -459,7 +468,9 @@ public class Task_1 {
 					
 			System.out.println("Waiting for Python to send 'reset'");
 			
-			AgentCommunicator.waitForReset();
+			configJSON = AgentCommunicator.waitForReset();
+			updateConfig(configJSON);
+			ChunkedSocketCommunicator.println("resetting");
 			
 			 // next simulation run
 	
@@ -470,6 +481,12 @@ public class Task_1 {
 				Training.close();
 	
 			}	
+		}
+	}
+	
+	private static void updateConfig(HashMap<String, String> configJSON) {
+		if (configJSON.containsKey("episodes")) {
+			numEpisodes = Integer.parseInt(configJSON.get("episodes"));
 		}
 	}
 

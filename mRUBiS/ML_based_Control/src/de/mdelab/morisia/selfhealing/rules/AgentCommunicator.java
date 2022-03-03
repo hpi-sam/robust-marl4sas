@@ -1,5 +1,6 @@
 package de.mdelab.morisia.selfhealing.rules;
 
+import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AgentCommunicator {
@@ -8,27 +9,33 @@ public class AgentCommunicator {
 	public static String getMessage(AtomicBoolean reset) {
 		
 		String fromPython = ChunkedSocketCommunicator.readln();
-		if (fromPython.equals("reset")) {
+		HashMap<String, String> json = ChunkedSocketCommunicator.parseJSON(new HashMap<String, String>(), fromPython);
+		if (json != null && Boolean.parseBoolean(json.get("reset")) == true) {
 			reset.set(true);
 			ChunkedSocketCommunicator.println("resetting");
-			return fromPython;
 		}
-		return fromPython;	
+		return fromPython;
 	}
 	
-	public static void waitForAgentRequestingState(AtomicBoolean reset) {
+	public static HashMap<String, String> getPythonConfig() {
 		String fromPython = "";
-		while (!fromPython.equals("get_state")) {
-			fromPython = getMessage(reset);
-			if (reset.get()) {
-				return;
-			}		
+		HashMap<String, String> json = new HashMap<String, String>();
+		while (true) {
+			fromPython = ChunkedSocketCommunicator.readln();
+			json = ChunkedSocketCommunicator.parseJSON(json, fromPython);
+			if (json != null) {
+				return json;
+			}
 		}
-		return;
 	}
 	
-	public static void waitForReset() {
-		ChunkedSocketCommunicator.waitForMessage("reset");					
-		ChunkedSocketCommunicator.println("resetting");
+	public static HashMap<String, String> waitForReset() {
+		while (true) {
+			String fromPython = ChunkedSocketCommunicator.readln();
+			HashMap<String, String> json = ChunkedSocketCommunicator.parseJSON(new HashMap<String, String>(), fromPython);
+			if (json != null && Boolean.parseBoolean(json.get("reset")) == true) {
+				return json;
+			}
+		}
 	}
 }
