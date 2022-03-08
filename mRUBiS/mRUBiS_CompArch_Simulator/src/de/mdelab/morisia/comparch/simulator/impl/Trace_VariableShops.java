@@ -37,7 +37,7 @@ public class Trace_VariableShops implements InjectionStrategy {
 		this.random = new Random(this.eArchitecture.getTenants().size() * 10 + (runCount % 10));
 		int numberOfShops = this.eArchitecture.getTenants().size();
 		int numberOfIssues = (int) Math.round(this.random.nextGaussian() * this.variance + this.mean);
-		numberOfIssues = Math.min(Math.max(1, numberOfIssues), numberOfShops - 1);
+		numberOfIssues = Math.min(Math.max(1, numberOfIssues), numberOfShops);
 		List<Integer> shopIDs = IntStream.range(0, numberOfShops).boxed().collect(Collectors.toList());
 		Collections.shuffle(shopIDs, this.random);
 		for (int i = 0; i < numberOfIssues; i++) {

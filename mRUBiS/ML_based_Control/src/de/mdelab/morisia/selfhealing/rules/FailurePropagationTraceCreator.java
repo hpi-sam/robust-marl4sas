@@ -19,6 +19,7 @@ public class FailurePropagationTraceCreator {
 		String currentComponent = failingComponent;
 
 		while (true) {
+			Boolean inserted = false;
 			double propagate = Math.random();
 			if (propagate > propagationProbability) {
 				break;
@@ -31,12 +32,21 @@ public class FailurePropagationTraceCreator {
 				if (possibleTransitions.get(component) > choice) {
 					trace.add(component);
 					currentComponent = component;
+					inserted = true;
 					break;
 				}
 				choice -= possibleTransitions.get(component);
 			}
+			if (!inserted) {
+				break;
+			}
+
 		}
 
 		return trace;
+	}
+	
+	public static void setPropagationProbability(double prob) {
+		propagationProbability = prob;
 	}
 }

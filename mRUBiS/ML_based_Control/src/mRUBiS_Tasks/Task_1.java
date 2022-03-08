@@ -54,6 +54,7 @@ import de.mdelab.morisia.selfhealing.incremental.EventListener;
 import de.mdelab.morisia.selfhealing.incremental.EventQueue;
 import de.mdelab.morisia.selfhealing.rules.AgentCommunicator;
 import de.mdelab.morisia.selfhealing.rules.ChunkedSocketCommunicator;
+import de.mdelab.morisia.selfhealing.rules.FailurePropagationTraceCreator;
 import de.mdelab.morisia.selfhealing.rules.IssueComparator;
 import de.mdelab.morisia.selfhealing.rules.RuleSelector;
 import de.mdelab.morisia.selfhealing.rules.UtilityIncreasePredictor;
@@ -88,6 +89,8 @@ public class Task_1 {
 	private static int numEpisodes = 1;
 	private static double negativeReward = -1.;
 	private static int numShops = 10;
+	private static double injectionMean = 6.;
+	private static double injectionVariance = 2.;
 
 	public static void main(String[] args) throws SDMException, IOException, InterruptedException {
 
@@ -217,7 +220,7 @@ public class Task_1 {
 					architecture, RUNS, run, Level.CONFIG, logFile, logToConsole);
 			//InjectionStrategy strategy = new testTrace(simulator.getSupportedIssueTypes(), architecture);
 			//InjectionStrategy strategy = new Trace_Deterministic(simulator.getSupportedIssueTypes(), architecture);
-			InjectionStrategy strategy = new Trace_VariableShops(simulator.getSupportedIssueTypes(), architecture, 6.0, 2.0);
+			InjectionStrategy strategy = new Trace_VariableShops(simulator.getSupportedIssueTypes(), architecture, injectionMean, injectionVariance);
 			simulator.setInjectionStrategy(strategy);
 			
 	
@@ -506,6 +509,16 @@ public class Task_1 {
 		}
 		if (configJSON.containsKey("shops")) {
 			numShops = Integer.parseInt(configJSON.get("shops"));
+		}
+		if (configJSON.containsKey("propagation_probability")) {
+			Double propagationProbability = Double.parseDouble(configJSON.get("propagation_probability"));
+			FailurePropagationTraceCreator.setPropagationProbability(propagationProbability);
+		}
+		if (configJSON.containsKey("injection_mean")) {
+			injectionMean = Double.parseDouble(configJSON.get("injection_mean"));
+		}
+		if (configJSON.containsKey("injection_variance")) {
+			injectionVariance = Double.parseDouble(configJSON.get("injection_variance"));
 		}
 	}
 
