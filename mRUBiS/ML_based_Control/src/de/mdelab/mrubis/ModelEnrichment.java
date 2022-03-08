@@ -83,7 +83,7 @@ public class ModelEnrichment {
 
 	}
 
-	private static void enrichShopReplicaFactor(Architecture eArchitecture) {
+	public static void enrichShopReplicaFactor(Architecture eArchitecture) {
 		double Minval=10;
 		double Maxval=30;
 		 
@@ -97,7 +97,7 @@ public class ModelEnrichment {
 		
 	}
 
-	private static void         enrichServervalues(Architecture eArchitecture) {
+	public static void         enrichServervalues(Architecture eArchitecture) {
 		int counter = 0;
 		int serverNumber=eArchitecture.getCloud().getServers().size();
 
@@ -157,7 +157,7 @@ counter ++;
 		}
 	}
 
-	private static void enrichReplicaComponent(Architecture eArchitecture) {
+	public static void enrichReplicaComponent(Architecture eArchitecture) {
 		for (Tenant shop : eArchitecture.getTenants()) {
 			for (Component component : shop.getComponents()) {
 				
@@ -195,7 +195,7 @@ counter ++;
 		
 	}
 
-	private static void enrichReplicaType(Architecture eArchitecture) {
+	public static void enrichReplicaType(Architecture eArchitecture) {
 		for (ComponentType componentType : eArchitecture
 				.getComponentTypes()) {
 			
@@ -254,7 +254,7 @@ counter ++;
 			
 	}
 
-	private static void enrichWithImportance(Architecture eArchitecture) {
+	public static void enrichWithImportance(Architecture eArchitecture) {
 		
 		//Normally set importance of Tenants
 		for (Tenant shop : eArchitecture.getTenants()) {
@@ -273,7 +273,7 @@ counter ++;
 		
 	}
 
-	private static void enrichWithReliability(Architecture eArchitecture,
+	public static void enrichWithReliability(Architecture eArchitecture,
 			boolean makeGoogleBest) {
 		if (makeGoogleBest) {
 			for (ComponentType componentType : eArchitecture
@@ -319,7 +319,7 @@ counter ++;
 
 	}
 
-	private static void enrichWithDifferentCriticality(
+	public static void enrichWithDifferentCriticality(
 			Architecture eArchitecture) {
 
 		// set criticality and importance of each component to 1
@@ -342,7 +342,7 @@ counter ++;
 
 	}
 
-	private static void enrichWithExteremeCriticality(
+	public static void enrichWithExteremeCriticality(
 			Architecture eArchitecture) {
 
 		// set criticality and importance of each component to 1
@@ -368,7 +368,7 @@ counter ++;
 		}
 
 	}
-	private static void enrichWithRandomCriticality(
+	public static void enrichWithRandomCriticality(
 			Architecture eArchitecture) {
 		
 
@@ -396,7 +396,7 @@ counter ++;
 		}
 
 	
-	private static void enrichWithADT(
+	public static void enrichWithADT(
 			Architecture eArchitecture) {
 
 		// set ADT of each component to Normally Distributed values between [1 , 1.5]
@@ -415,7 +415,7 @@ counter ++;
 		}
 
 	}
-	private static void checkZeroADT(
+	public static void checkZeroADT(
 			Architecture eArchitecture) {
 
 		
@@ -435,7 +435,7 @@ counter ++;
 		}
 
 	}
-	private static void enrichWithSameCriticality(Architecture eArchitecture) {
+	public static void enrichWithSameCriticality(Architecture eArchitecture) {
 		// set criticality and importance of each component to 1
 		for (Tenant shop : eArchitecture.getTenants()) {
 			for (Component component : shop.getComponents()) {
@@ -445,7 +445,7 @@ counter ++;
 		}
 	}
 
-	private static Resource loadInstance(URI uri) {
+	public static Resource loadInstance(URI uri) {
 		// ResourceSet rs = new ResourceSetImpl();
 		Resource resource = RS.getResource(uri, true);
 		return resource;

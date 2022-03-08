@@ -47,7 +47,9 @@ import de.mdelab.morisia.comparch.simulator.Capability;
 import de.mdelab.morisia.comparch.simulator.ComparchSimulator;
 import de.mdelab.morisia.comparch.simulator.InjectionStrategy;
 import de.mdelab.morisia.comparch.simulator.impl.Trace_Deterministic;
+import de.mdelab.morisia.comparch.simulator.impl.Trace_VariableShops;
 import de.mdelab.morisia.comparch.simulator.impl.testTrace;
+import de.mdelab.morisia.mrubis.CompArchModelCreator;
 import de.mdelab.morisia.selfhealing.incremental.EventListener;
 import de.mdelab.morisia.selfhealing.incremental.EventQueue;
 import de.mdelab.morisia.selfhealing.rules.AgentCommunicator;
@@ -55,6 +57,7 @@ import de.mdelab.morisia.selfhealing.rules.ChunkedSocketCommunicator;
 import de.mdelab.morisia.selfhealing.rules.IssueComparator;
 import de.mdelab.morisia.selfhealing.rules.RuleSelector;
 import de.mdelab.morisia.selfhealing.rules.UtilityIncreasePredictor;
+import de.mdelab.mrubis.ModelEnrichment;
 import de.mdelab.sdm.interpreter.core.SDMException;
 import de.mdelab.expressions.interpreter.core.variables.Variable;
 import de.mdelab.mlsdm.interpreter.facade.OptimizedMSLDMInstanceFacade;
@@ -84,6 +87,7 @@ public class Task_1 {
 	
 	private static int numEpisodes = 1;
 	private static double negativeReward = -1.;
+	private static int numShops = 10;
 
 	public static void main(String[] args) throws SDMException, IOException, InterruptedException {
 
@@ -173,7 +177,17 @@ public class Task_1 {
 		
 			Resource architectureResource = EnvSetUp.loadFreshInstance("model/enriched/mRUBiS-10shop_enriched.comparch");	
 	
-			Architecture architecture = (Architecture) architectureResource.getContents().get(0);	
+			//Architecture architecture = (Architecture) architectureResource.getContents().get(0);	
+			Architecture architecture = CompArchModelCreator.createModel(numShops, 0);
+			ModelEnrichment.enrichWithReliability(architecture, true);
+			ModelEnrichment.enrichWithRandomCriticality(architecture);
+			ModelEnrichment.enrichWithImportance(architecture);
+			ModelEnrichment.enrichWithADT(architecture);
+			ModelEnrichment.checkZeroADT(architecture);
+			ModelEnrichment.enrichShopReplicaFactor(architecture);
+			ModelEnrichment.enrichReplicaType(architecture);
+			ModelEnrichment.enrichReplicaComponent(architecture); // should be set after type
+			ModelEnrichment.enrichServervalues(architecture);
 	
 			RuleSelector.setGlobalState(architecture);
 			
@@ -202,8 +216,8 @@ public class Task_1 {
 			ComparchSimulator simulator = ComparchSimulator.FACTORY.createSimulator(Capability.SELF_REPAIR,
 					architecture, RUNS, run, Level.CONFIG, logFile, logToConsole);
 			//InjectionStrategy strategy = new testTrace(simulator.getSupportedIssueTypes(), architecture);
-			InjectionStrategy strategy = new Trace_Deterministic
-					(simulator.getSupportedIssueTypes(), architecture);
+			//InjectionStrategy strategy = new Trace_Deterministic(simulator.getSupportedIssueTypes(), architecture);
+			InjectionStrategy strategy = new Trace_VariableShops(simulator.getSupportedIssueTypes(), architecture, 6.0, 2.0);
 			simulator.setInjectionStrategy(strategy);
 			
 	
@@ -223,7 +237,7 @@ public class Task_1 {
 	
 	
 			System.out.println("issueCount prior to injection is " + issueCount);
-			
+			System.out.println(architecture.getTenants().size());
 			simulator.injectIssues();
 			issueCount = simulator.validate();
 			
@@ -489,6 +503,9 @@ public class Task_1 {
 		}
 		if (configJSON.containsKey("negative_reward")) {
 			negativeReward = Double.parseDouble(configJSON.get("negative_reward"));
+		}
+		if (configJSON.containsKey("shops")) {
+			numShops = Integer.parseInt(configJSON.get("shops"));
 		}
 	}
 

@@ -14,7 +14,7 @@ logger.setLevel(logging.INFO)
 
 
 class MrubisEnv(gym.Env):
-    def __init__(self, json_path='path.json', external_start=True, episodes=500, negative_reward=-1):
+    def __init__(self, json_path='path.json', external_start=True, episodes=500, negative_reward=-1, shops=10):
         super(MrubisEnv, self).__init__()
         self.launch_args = None
         self.action_space = None
@@ -28,6 +28,7 @@ class MrubisEnv(gym.Env):
         self.episodes = episodes
         self.terminated = False
         self.negative_reward = negative_reward
+        self.shops = shops
 
         '''Create a new instance of the mRUBiS environment class'''
         self.external_start = external_start
@@ -163,7 +164,7 @@ class MrubisEnv(gym.Env):
 
     def _reset_mrubis(self):
         # self.communicator.println("reset")
-        self.communicator.println(json.dumps({"reset": str(True), "episodes": str(self.episodes), "negative_reward": str(self.negative_reward)}))
+        self.communicator.println(json.dumps({"reset": str(True), "episodes": str(self.episodes), "negative_reward": str(self.negative_reward), "shops": str(self.shops)}))
         response = self.communicator.readln()
         if response == "resetting":
             return True
