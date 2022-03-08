@@ -52,6 +52,7 @@ import de.mdelab.morisia.selfhealing.incremental.EventListener;
 import de.mdelab.morisia.selfhealing.incremental.EventQueue;
 import de.mdelab.morisia.selfhealing.rules.AgentCommunicator;
 import de.mdelab.morisia.selfhealing.rules.ChunkedSocketCommunicator;
+import de.mdelab.morisia.selfhealing.rules.FailurePropagationTraceCreator;
 import de.mdelab.morisia.selfhealing.rules.IssueComparator;
 import de.mdelab.morisia.selfhealing.rules.RuleSelector;
 import de.mdelab.morisia.selfhealing.rules.UtilityIncreasePredictor;
@@ -490,6 +491,11 @@ public class Task_1 {
 		if (configJSON.containsKey("negative_reward")) {
 			negativeReward = Double.parseDouble(configJSON.get("negative_reward"));
 		}
+		if (configJSON.containsKey("propagation_probability")) {
+			Double propagationProbability = Double.parseDouble(configJSON.get("propagation_probability"));
+			FailurePropagationTraceCreator.setPropagationProbability(propagationProbability);
+		}
+		
 	}
 
 

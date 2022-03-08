@@ -69,7 +69,7 @@ class Runner:
 if __name__ == "__main__":
     episodes = 1000
     # mock_env = MrubisMockEnv(number_of_shops=5, shop_config=[1, 0, False])
-    env = MrubisEnv(episodes=episodes, negative_reward=-10)
+    env = MrubisEnv(episodes=episodes, negative_reward=-10, propagation_probability=0.5)
     shop_distribution_example = [
         {'mRUBiS #1', 'mRUBiS #2', 'mRUBiS #3'}, {'mRUBiS #4', 'mRUBiS #5', 'mRUBiS #6'},
         {'mRUBiS #7', 'mRUBiS #8', 'mRUBiS #9', 'mRUBiS #10'}]
