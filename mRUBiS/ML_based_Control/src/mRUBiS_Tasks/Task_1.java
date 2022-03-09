@@ -217,7 +217,7 @@ public class Task_1 {
 			String logFile = null;
 			boolean logToConsole = false;
 			ComparchSimulator simulator = ComparchSimulator.FACTORY.createSimulator(Capability.SELF_REPAIR,
-					architecture, RUNS, run, Level.CONFIG, logFile, logToConsole);
+					architecture, numEpisodes, episode, Level.CONFIG, logFile, logToConsole);
 			//InjectionStrategy strategy = new testTrace(simulator.getSupportedIssueTypes(), architecture);
 			//InjectionStrategy strategy = new Trace_Deterministic(simulator.getSupportedIssueTypes(), architecture);
 			InjectionStrategy strategy = new Trace_VariableShops(simulator.getSupportedIssueTypes(), architecture, injectionMean, injectionVariance);
