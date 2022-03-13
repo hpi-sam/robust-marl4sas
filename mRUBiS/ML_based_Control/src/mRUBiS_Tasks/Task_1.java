@@ -4,6 +4,7 @@ import java.io.FileWriter;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -48,6 +49,7 @@ import de.mdelab.morisia.comparch.simulator.ComparchSimulator;
 import de.mdelab.morisia.comparch.simulator.InjectionStrategy;
 import de.mdelab.morisia.comparch.simulator.impl.Trace_Deterministic;
 import de.mdelab.morisia.comparch.simulator.impl.Trace_VariableShops;
+import de.mdelab.morisia.comparch.simulator.impl.Trace_SpecificComponent;
 import de.mdelab.morisia.comparch.simulator.impl.testTrace;
 import de.mdelab.morisia.mrubis.CompArchModelCreator;
 import de.mdelab.morisia.selfhealing.incremental.EventListener;
@@ -91,6 +93,13 @@ public class Task_1 {
 	private static int numShops = 10;
 	private static double injectionMean = 6.;
 	private static double injectionVariance = 2.;
+	
+	private static boolean specificTrace = false;
+	private static String injectionComponentName = null;
+	private static List<String> propagatenTrace = null;
+	
+	
+	
 
 	public static void main(String[] args) throws SDMException, IOException, InterruptedException {
 
@@ -220,7 +229,13 @@ public class Task_1 {
 					architecture, numEpisodes, episode, Level.CONFIG, logFile, logToConsole);
 			//InjectionStrategy strategy = new testTrace(simulator.getSupportedIssueTypes(), architecture);
 			//InjectionStrategy strategy = new Trace_Deterministic(simulator.getSupportedIssueTypes(), architecture);
-			InjectionStrategy strategy = new Trace_VariableShops(simulator.getSupportedIssueTypes(), architecture, injectionMean, injectionVariance);
+			InjectionStrategy strategy;
+			if (specificTrace) {
+				strategy = new Trace_SpecificComponent(architecture, injectionComponentName);
+			}
+			else {
+				strategy = new Trace_VariableShops(simulator.getSupportedIssueTypes(), architecture, injectionMean, injectionVariance);
+			}
 			simulator.setInjectionStrategy(strategy);
 			
 	
@@ -271,7 +286,12 @@ public class Task_1 {
 			
 			
 			for (Issue issue : allIssues) {
-				RuleSelector.insertTrace(issue);
+				if (specificTrace) {
+					RuleSelector.insertSpecificTrace(issue,propagatenTrace);
+				}
+				else {
+					RuleSelector.insertRandomTrace(issue);
+				}
 			}
 			RuleSelector.updateShopUtilities(architecture);
 			
@@ -519,6 +539,12 @@ public class Task_1 {
 		}
 		if (configJSON.containsKey("injection_variance")) {
 			injectionVariance = Double.parseDouble(configJSON.get("injection_variance"));
+		}
+		if (configJSON.containsKey("trace") && configJSON.get("trace") != "") {
+			specificTrace = true;
+			propagatenTrace = new ArrayList<>(Arrays.asList(configJSON.get("trace").split(",")));
+			injectionComponentName = propagatenTrace.get(0);
+			propagatenTrace.remove(0);
 		}
 	}
 
