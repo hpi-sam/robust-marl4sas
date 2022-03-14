@@ -453,6 +453,13 @@ public class Task_1 {
 					continue;
 				}
 				
+				configJSON = AgentCommunicator.getPythonConfig();
+				if (Boolean.parseBoolean(configJSON.get("reset")) == true) {
+					updateConfig(configJSON);
+					ChunkedSocketCommunicator.println("resetting");
+					break;
+				}
+				assert Boolean.parseBoolean(configJSON.get("get_state")) == true;
 				RuleSelector.sendGlobalState();
 				
 				
