@@ -71,7 +71,7 @@ if __name__ == "__main__":
     # mock_env = MrubisMockEnv(number_of_shops=5, shop_config=[1, 0, False])
     env = MrubisEnv(
         episodes=episodes,
-        negative_reward=-10,
+        negative_reward=-1,
         propagation_probability=0.5,
         shops=10,
         injection_mean=5,

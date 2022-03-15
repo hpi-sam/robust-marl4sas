@@ -26,7 +26,7 @@ def encode_observations(observations):
 
 class Agent:
     def __init__(self, shops, action_space_inverted, load_models_data, ridge_regression_train_data_path, index=0,
-                 lr=0.005, layer_dims=None):
+                 lr=0.001, layer_dims=None):
         self.index = index
         self.shops = shops
         self.base_model_dir = './mrubis_controller/marl/data/models'
