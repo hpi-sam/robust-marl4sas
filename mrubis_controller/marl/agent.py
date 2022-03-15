@@ -26,9 +26,10 @@ def encode_observations(observations):
 
 class Agent:
     def __init__(self, shops, action_space_inverted, load_models_data, ridge_regression_train_data_path, index=0,
-                 lr=0.001, layer_dims=None):
+                 lr=0.001, layer_dims=None, training_activated=True):
         self.index = index
         self.shops = shops
+        self.train = training_activated
         self.base_model_dir = './mrubis_controller/marl/data/models'
         self.base_log_dir = './mrubis_controller/marl/data/logs/'
         self.start_time = get_current_time()
@@ -69,14 +70,12 @@ class Agent:
         for shop_name, components in observations.items():
             state = encode_observations(components)[np.newaxis, :]
             if state.sum() > 0:  # skip shops without any failure
-                if self.obs_in_memory(shop_name, components):
-                    action = numpy.argmax(self.previous_actions[shop_name])
-                    self.previous_actions[shop_name][action] = -1
+                if self.train:
+                    action, probability = self.choose_from_memory(state, shop_name, components)
                 else:
                     probabilities = self.policy.predict(state)[0]
-                    action = numpy.argmax(probabilities)
-                    probabilities[action] = 0
-                    self.previous_actions[shop_name] = probabilities
+                    action = np.random.choice(self.action_space, p=probabilities)
+                    probability = probabilities[action]
                 decoded_action = _decoded_action(action, observations)
                 step = {'shop': shop_name, 'component': decoded_action}
                 if self.stage >= 1:
@@ -84,9 +83,23 @@ class Agent:
                         step, components)
                 if self.stage == 2:
                     # reduce predicted utility by uncertainty
-                    step['predicted_utility'] *= probabilities[action]
+                    step['predicted_utility'] *= probability
                 actions.append(step)
         return actions
+
+    def choose_from_memory(self, state, shop_name, components):
+        if self.obs_in_memory(shop_name, components):
+            action = numpy.argmax(self.previous_actions[shop_name])
+            probability = self.previous_actions[shop_name][action]
+            self.previous_actions[shop_name][action] = -1
+        else:
+            probabilities = self.policy.predict(state)[0]
+            action = numpy.argmax(probabilities)
+            probability = probabilities[action]
+            probabilities[action] = 0
+            self.previous_actions[shop_name] = probabilities
+
+        return action, probability
 
     def learn(self, states, actions, reward, states_, dones):
         """ network learns to improve """

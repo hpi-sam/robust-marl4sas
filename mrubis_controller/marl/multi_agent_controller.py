@@ -18,8 +18,8 @@ class MultiAgentController:
         self.robustness = RobustnessComponent(len(self.shop_distribution))
         self.robustness_activated = robustness_activated
 
-    def init(self, action_space):
-        self._build_agents(action_space)
+    def init(self, action_space, training_activated):
+        self._build_agents(action_space, training_activated)
 
     def select_actions(self, observations):
         """ based on observations select actions
@@ -74,7 +74,7 @@ class MultiAgentController:
         for agent in self.agents:
             agent.save(episode)
 
-    def _build_agents(self, action_space):
+    def _build_agents(self, action_space, training_activated):
         """ based on shop distribution the agents will be initialized """
         self.agents = [
             Agent(
@@ -82,7 +82,8 @@ class MultiAgentController:
                 action_space_inverted=action_space,
                 load_models_data=self.load_models_data[index],
                 ridge_regression_train_data_path=self.ridge_regression_train_data_path,
-                index=index
+                index=index,
+                training_activated=training_activated
             )
             for index, shops in enumerate(self.shop_distribution)
         ]
