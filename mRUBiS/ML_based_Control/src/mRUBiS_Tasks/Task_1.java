@@ -162,7 +162,7 @@ public class Task_1 {
 		int run = 0;
 		int episode = 0;
 		
-		while (episode < numEpisodes) {
+		while (episode < numEpisodes + 3) {
 			
 			episode++;
 			
@@ -508,12 +508,15 @@ public class Task_1 {
 
 				}*/
 			System.out.println("\n Overall Utility After Execution: " + ArchitectureUtilCal.computeOverallUtility(architecture));
-					
-			System.out.println("Waiting for Python to send 'reset'");
 			
-			configJSON = AgentCommunicator.waitForReset();
-			updateConfig(configJSON);
-			ChunkedSocketCommunicator.println("resetting");
+			System.out.println(episode);
+			if (episode < numEpisodes + 3) {
+				System.out.println("Waiting for Python to send 'reset'");
+				
+				configJSON = AgentCommunicator.waitForReset();
+				updateConfig(configJSON);
+				ChunkedSocketCommunicator.println("resetting");
+			}
 			
 			 // next simulation run
 	
