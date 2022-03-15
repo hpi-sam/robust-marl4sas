@@ -20,9 +20,13 @@ def build_reward_plot(base_dir, reward_data, episode, shop_distribution):
 
 def build_count_plot(base_dir, count_data, episode, shop_distribution):
     data = {}
-    for agent in shop_distribution:
-        for shop in agent:
-            data[shop] = count_data[shop]
+    for index, agent in enumerate(shop_distribution):
+        avgs = []
+        for i in range(episode):
+            filter_counts = list((filter(lambda x: x != -1, [count_data[shop][i] for shop in agent])))
+            avg = -1 if len(filter_counts) == 0 else sum(filter_counts) / len(filter_counts)
+            avgs.append(avg)
+        data['Agent ' + str(index)] = avgs
     build_plot(data, f"Tries till {episode}", f"{base_dir}/tries")
     write_data(len(list(count_data.values())[0]), data, 'tries', base_dir)
 
@@ -55,16 +59,21 @@ def build_plot(data, title, path):
     # axes.set_ylim([0, 20])
     for label, d in data.items():
         x = numpy.array([i for i in range(len(d))])
+        d[0] = d[0] if d[0] > 0 else 0
+        for index, value in enumerate(d):
+            if value < 0:
+                d[index] = d[index - 1]
         plt.plot(x, [float(value) for value in d], colors.pop(), label=label)
     plt.legend()
     plt.savefig(path)
     plt.clf()
+    plt.close()
 
 
 def write_data(count, data, title, base_dir):
     with open(f"{base_dir}/{title}.txt", "w+") as file:
         for i in range(count):
-            data_string = ''.join(str(data[shop][i]) + ',' for shop in data)
+            data_string = ''.join((str(data[shop][i]) if data[shop][i] > 0 else '') + ',' for shop in data)
             file.write(data_string + '\n')
 
 

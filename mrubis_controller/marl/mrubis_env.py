@@ -82,15 +82,15 @@ class MrubisEnv(gym.Env):
         _reward = self._get_reward(self.observation)
 
         for shop in _reward[0]:
-            print(f'Run: {self.inner_t}, shop: {shop}, reward: {_reward[0][shop]}')
             if _reward[0][shop] > 0:
+                _reward[0][shop] = 17
                 self.stats[shop] = self.inner_t
 
         info = self._info()
         if actions is None or self._is_fixed():
             self.t += 1
             self.inner_t = 0
-            self.stats = {}
+            self.stats = self._init_stats()
             self.terminated = True
 
         return _reward, self.observation, self.terminated, info
@@ -113,6 +113,7 @@ class MrubisEnv(gym.Env):
         self.observation = self._get_state()
         self.prior_utility = get_current_utility(self.observation)
         self.action_space = [components for shops, components in self.observation.items()][0].keys()
+        self.stats = self._init_stats()
         self.terminated = False
         return self.observation
 
@@ -188,6 +189,12 @@ class MrubisEnv(gym.Env):
     def _stop_mrubis(self):
         """Terminate the mRUBiS process"""
         self.mrubis_process.terminate()
+
+    def _init_stats(self):
+        stats = {}
+        for shop in self.observation:
+            stats[shop] = -1
+        return stats
 
     def _info(self):
         return {'t': self.t, 'stats': self.stats}

@@ -1,5 +1,5 @@
 # follows https://dev.to/jemaloqiu/reinforcement-learning-with-tf2-and-gym-actor-critic-3go5
-
+import numpy
 import numpy as np
 import tensorflow as tf
 from keras import backend as K
@@ -26,7 +26,7 @@ def encode_observations(observations):
 
 class Agent:
     def __init__(self, shops, action_space_inverted, load_models_data, ridge_regression_train_data_path, index=0,
-                 lr=0.003, layer_dims=None):
+                 lr=0.005, layer_dims=None):
         self.index = index
         self.shops = shops
         self.base_model_dir = './mrubis_controller/marl/data/models'
@@ -56,6 +56,8 @@ class Agent:
         self.stage = 1
 
         self.agent_action_sorter = AgentActionSorter(self.ridge_regression_train_data_path)
+        self.memory = {}
+        self.previous_actions = {}
 
     def choose_action(self, observations):
         """ chooses actions based on observations
@@ -67,8 +69,14 @@ class Agent:
         for shop_name, components in observations.items():
             state = encode_observations(components)[np.newaxis, :]
             if state.sum() > 0:  # skip shops without any failure
-                probabilities = self.policy.predict(state)[0]
-                action = np.random.choice(self.action_space, p=probabilities)
+                if self.obs_in_memory(shop_name, components):
+                    action = numpy.argmax(self.previous_actions[shop_name])
+                    self.previous_actions[shop_name][action] = -1
+                else:
+                    probabilities = self.policy.predict(state)[0]
+                    action = numpy.argmax(probabilities)
+                    probabilities[action] = 0
+                    self.previous_actions[shop_name] = probabilities
                 decoded_action = _decoded_action(action, observations)
                 step = {'shop': shop_name, 'component': decoded_action}
                 if self.stage >= 1:
@@ -96,6 +104,10 @@ class Agent:
             target = np.reshape(shop_reward, (1, 1))
             delta = target - critic_value
 
+            # TODO reset in chosen_action
+            if shop_reward > 0:
+                del self.memory[shop_name]
+
             _actions = np.zeros([1, self.n_actions])
             _actions[np.arange(1), self.action_space_inverted.index(action)] = 1.0
 
@@ -115,6 +127,18 @@ class Agent:
 
     def get_probabilities_for_observations(self, observations):
         return self.policy.predict(encode_observations(observations)[np.newaxis, :])[0]
+
+    def obs_in_memory(self, shop_name, components):
+        failing_components = { component: components[component]['shop_utility']
+                               for component in components if components[component]['failure_name'] != 'None'}
+        same_obs = False
+        if shop_name not in self.memory:
+            same_obs = False
+        elif all(component in self.memory[shop_name] and utility < self.memory[shop_name][component]
+                 for component, utility in failing_components.items()):
+            same_obs = True
+        self.memory[shop_name] = failing_components
+        return same_obs
 
     def _build_network(self):
         if self.load_models_data is not None:
