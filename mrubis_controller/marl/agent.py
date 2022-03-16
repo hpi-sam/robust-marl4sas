@@ -24,6 +24,16 @@ def encode_observations(observations):
     return np.array(encoded_observations, dtype=float)
 
 
+def output_probabilities(probabilities):
+    output = []
+    for index, p in enumerate(probabilities):
+        if p >= 0.01:
+            output.append('\033[92m' + str(index) + ": " + "{:.2f}".format(p) + '\033[0m')
+        else:
+            output.append(str(index) + ": " + "{:.2f}".format(p))
+    print(' '.join(output))
+
+
 class Agent:
     def __init__(self, shops, action_space_inverted, load_models_data, ridge_regression_train_data_path, index=0,
                  lr=0.001, layer_dims=None, training_activated=True):
@@ -74,6 +84,7 @@ class Agent:
                     action, probability = self.choose_from_memory(state, shop_name, components)
                 else:
                     probabilities = self.policy.predict(state)[0]
+                    output_probabilities(probabilities)
                     action = np.random.choice(self.action_space, p=probabilities)
                     probability = probabilities[action]
                 decoded_action = _decoded_action(action, observations)
@@ -94,6 +105,8 @@ class Agent:
             self.previous_actions[shop_name][action] = -1
         else:
             probabilities = self.policy.predict(state)[0]
+            output_probabilities(probabilities)
+
             action = numpy.argmax(probabilities)
             probability = probabilities[action]
             probabilities[action] = 0

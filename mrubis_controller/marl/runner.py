@@ -30,11 +30,11 @@ class Runner:
     def close_env(self):
         self.env.close()
 
-    def run(self, episodes, train=True):
+    def run(self, episodes):
         """ runs the simulation """
         rewards = []
         metrics = []
-        self.reset(training_activated=train)
+        self.reset()
         count_till_fixed = {shop: [] for agent in self.shop_distribution for shop in agent}
         while self.t < episodes:
             terminated = False
@@ -47,8 +47,7 @@ class Runner:
                 if actions is not None:
                     rewards.append(reward)
 
-                    if train:
-                        metrics.append(self.mac.learn(observations, actions, reward, observations_, terminated))
+                    metrics.append(self.mac.learn(observations, actions, reward, observations_, terminated))
                 observations = observations_
 
                 if terminated:
@@ -58,15 +57,20 @@ class Runner:
 
             self.t += 1
             if self.t % self.save_model_interval == 0:
+                self.mac.save_models(self.t)
                 if not os.path.exists(self.base_dir):
                     os.makedirs(self.base_dir)
                 build_count_plot(self.base_dir, count_till_fixed, self.t, self.shop_distribution)
-                if train:
-                    self.mac.save_models(self.t)
-                    build_reward_plot(self.base_dir, rewards, self.t, self.shop_distribution)
-                    build_loss_plot(self.base_dir, metrics, self.t)
+                build_reward_plot(self.base_dir, rewards, self.t, self.shop_distribution)
+                build_loss_plot(self.base_dir, metrics, self.t)
             print(f"episode {self.t} done")
 
+    def create_prob_distribution(self):
+        self.reset(training_activated=False)
+        observations = self.env.reset()
+        actions = self.mac.select_actions(observations)
+        reward, observations_, terminated, env_info = self.env.step(actions)
+        # TODO build probability plot
 
 if __name__ == "__main__":
     episodes = 100
@@ -83,4 +87,4 @@ if __name__ == "__main__":
     load_model = {0: None, 1: None, 2: None, 3: None, 4: None, 5: None}
     # load_model = {0: {'start_time': 'test_robustness', 'episode': 500}, 1: None}
     Runner(None, env, shop_distribution_example, save_model=True, load_models_data=load_model,
-           robustness_activated=False).run(episodes, train=False)
+           robustness_activated=False).create_prob_distribution()
