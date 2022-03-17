@@ -15,7 +15,8 @@ logger.setLevel(logging.INFO)
 
 class MrubisEnv(gym.Env):
     def __init__(self, json_path='path.json', external_start=True, episodes=500, negative_reward=-1,
-                 propagation_probability=0.5, shops=10, injection_mean=6, injection_variance=2, trace=""):
+                 propagation_probability=0.5, shops=10, injection_mean=6, injection_variance=2, trace="",
+                 root_causes = "", trace_length = 0):
         super(MrubisEnv, self).__init__()
         self.launch_args = None
         self.action_space = None
@@ -34,6 +35,8 @@ class MrubisEnv(gym.Env):
         self.injection_mean = injection_mean
         self.injection_variance = injection_variance
         self.trace = trace
+        self.root_caues = root_causes
+        self.trace_length = trace_length
 
         '''Create a new instance of the mRUBiS environment class'''
         self.external_start = external_start
@@ -178,7 +181,9 @@ class MrubisEnv(gym.Env):
             "shops": str(self.shops),
             "injection_mean": str(self.injection_mean),
             "injection_variance": str(self.injection_variance),
-            "trace": self.trace
+            "trace": self.trace,
+            "root_causes": self.root_caues,
+            "trace_length": str(self.trace_length)
         }))
         response = self.communicator.readln()
         if response == "resetting":
