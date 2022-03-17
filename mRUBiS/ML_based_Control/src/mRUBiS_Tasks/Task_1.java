@@ -98,7 +98,9 @@ public class Task_1 {
 	private static String injectionComponentName = null;
 	private static List<String> propagatenTrace = null;
 	
-	
+	private static boolean multipleRootCauses = false;
+	private static List<String> injectionComponentNames = null;
+	private static int traceLength = 0;
 	
 
 	public static void main(String[] args) throws SDMException, IOException, InterruptedException {
@@ -230,7 +232,11 @@ public class Task_1 {
 			//InjectionStrategy strategy = new testTrace(simulator.getSupportedIssueTypes(), architecture);
 			//InjectionStrategy strategy = new Trace_Deterministic(simulator.getSupportedIssueTypes(), architecture);
 			InjectionStrategy strategy;
-			if (specificTrace) {
+			if (multipleRootCauses) {
+				injectionComponentName = injectionComponentNames.get( episode % injectionComponentNames.size());
+				strategy = new Trace_SpecificComponent(architecture, injectionComponentName);
+			}
+			else if (specificTrace) {
 				strategy = new Trace_SpecificComponent(architecture, injectionComponentName);
 			}
 			else {
@@ -286,7 +292,10 @@ public class Task_1 {
 			
 			
 			for (Issue issue : allIssues) {
-				if (specificTrace) {
+				if (multipleRootCauses) {
+					RuleSelector.insertTracewithLength(issue,traceLength);
+				}
+				else if (specificTrace) {
 					RuleSelector.insertSpecificTrace(issue,propagatenTrace);
 				}
 				else {
@@ -555,6 +564,12 @@ public class Task_1 {
 			propagatenTrace = new ArrayList<>(Arrays.asList(configJSON.get("trace").split(",")));
 			injectionComponentName = propagatenTrace.get(0);
 			propagatenTrace.remove(0);
+		}
+		
+		if (configJSON.containsKey("root_causes") && configJSON.get("root_causes") != "" && configJSON.containsKey("trace_length")  ) {
+			multipleRootCauses = true;
+			injectionComponentNames = new ArrayList<>(Arrays.asList(configJSON.get("root_causes").split(",")));
+			traceLength = Integer.parseInt(configJSON.get("trace_length"));
 		}
 	}
 

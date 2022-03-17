@@ -46,6 +46,34 @@ public class FailurePropagationTraceCreator {
 		return trace;
 	}
 	
+	public static List<String> createTrace(String failingComponent, int length) {
+		List<String> trace = new LinkedList<String>();
+		trace.add(failingComponent);
+
+		String currentComponent = failingComponent;
+
+		for (int i = 0; i < length; i++){
+			Boolean inserted = false;
+
+			double choice = Math.random();			
+			Hashtable<String, Double> possibleTransitions = TransitionMatrixHandler.getTransitionMatrix().get(currentComponent);
+
+			for (String component : possibleTransitions.keySet()) {
+				if (possibleTransitions.get(component) > choice) {
+					trace.add(component);
+					currentComponent = component;
+					inserted = true;
+					break;
+				}
+				choice -= possibleTransitions.get(component);
+			}
+			if (!inserted) {
+				break;
+			}
+		}
+		return trace;
+	}
+	
 	public static void setPropagationProbability(double prob) {
 		propagationProbability = prob;
 	}
