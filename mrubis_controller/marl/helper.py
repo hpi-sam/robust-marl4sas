@@ -1,7 +1,7 @@
 import datetime
 
 import matplotlib.pyplot as plt
-import numpy
+import numpy as np
 
 
 def get_current_time():
@@ -27,7 +27,7 @@ def build_count_plot(base_dir, count_data, episode, shop_distribution):
             avg = -1 if len(filter_counts) == 0 else sum(filter_counts) / len(filter_counts)
             avgs.append(avg)
         data['Agent ' + str(index)] = avgs
-    build_plot(data, f"Tries till {episode}", f"{base_dir}/tries")
+    build_plot(data, f"Tries to find correct issue", f"{base_dir}/tries", "Number of Tries")
     write_data(len(list(count_data.values())[0]), data, 'tries', base_dir)
 
 
@@ -58,9 +58,9 @@ def build_reward_plot(base_dir, reward_data, episode, shop_distribution):
     write_data(len(reward_data), data, 'reward', base_dir)
 
 
-def build_regret_plot(base_dir, regret_data):
+def build_regret_plot(base_dir, regret_data, train_mode=True):
 
-    title = f"Regret"
+    title = f"Regret per Episode"
     path = f"{base_dir}/regret"
     # write_data(len(regret_data), regret_data, 'regret', base_dir)
     print(regret_data)
@@ -68,21 +68,30 @@ def build_regret_plot(base_dir, regret_data):
         for i in regret_data:
             file.write(str(i) + '\n')
 
+    if not train_mode:
+        with open(f"{path}_total_average.txt", "w+") as file:
+                file.write(str(sum(regret_data) / len(regret_data)) + '\n')
+
     colors = ['#B1063A', '#134293', '#058B79', '#DD9108', '#009e61',
               '#5a6065', '#00799e', '#f6ba00', '#b10639', '#dd6108']
     plt.figure(figsize=(8, 6))
     plt.title(title, fontsize=16)
 
-    x = numpy.array([i for i in range(len(regret_data))])
+    x = np.array([i for i in range(len(regret_data))])
 
-    plt.plot(x, regret_data, colors.pop(), label="test")
+    smoothed = np.convolve(regret_data, np.ones(10) / 10, 'value')
+    x_new = x[5:-4]
+    plt.plot(x, regret_data, colors.pop(), label="exact regret")
+    plt.plot(x_new, smoothed, colors.pop(), label="moving average")
+    plt.xlabel('Episode')
+    plt.ylabel('Regret')
     plt.legend()
     plt.savefig(path)
     plt.clf()
     plt.close()
 
 
-def build_plot(data, title, path):
+def build_plot(data, title, path, ylabel=None):
     colors = ['#B1063A', '#134293', '#058B79', '#DD9108', '#009e61',
               '#5a6065', '#00799e', '#f6ba00', '#b10639', '#dd6108']
     plt.figure(figsize=(8, 6))
@@ -90,12 +99,15 @@ def build_plot(data, title, path):
     # axes = plt.gca()
     # axes.set_ylim([0, 20])
     for label, d in data.items():
-        x = numpy.array([i for i in range(len(d))])
+        x = np.array([i for i in range(len(d))])
         d[0] = d[0] if d[0] > 0 else 0
         for index, value in enumerate(d):
             if value < 0:
                 d[index] = d[index - 1]
         plt.plot(x, [float(value) for value in d], colors.pop(), label=label)
+    plt.xlabel('Episode')
+    if ylabel != None:
+        plt.ylabel(ylabel)
     plt.legend()
     plt.savefig(path)
     plt.clf()

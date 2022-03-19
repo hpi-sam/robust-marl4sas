@@ -91,11 +91,11 @@ class Agent:
             state = encode_observations(components)[np.newaxis, :]
             if state.sum() > 0:  # skip shops without any failure
                 probabilities = self.policy.predict(state)[0]
-                if self.train:
-                    action, probability = self.choose_from_memory(state, shop_name, components)
-                else:
-                    action = np.random.choice(self.action_space, p=probabilities)
-                    probability = probabilities[action]
+                # if self.train:
+                action, probability = self.choose_from_memory(state, shop_name, components)
+                # else:
+                #     action = np.random.choice(self.action_space, p=probabilities)
+                #     probability = probabilities[action]
                 output_probabilities(probabilities)
                 root_cause_index = get_root_cause(components)
                 regret = 1.0 - probabilities[root_cause_index]
@@ -155,8 +155,8 @@ class Agent:
                 log_lik = _actions * K.log(out)
                 actor_loss = K.sum(-log_lik * delta)
             grads = tape.gradient(actor_loss, self.actor.trainable_variables)
-
-            self.optimizer.apply_gradients(zip(grads, self.actor.trainable_variables))
+            if self.train:
+                self.optimizer.apply_gradients(zip(grads, self.actor.trainable_variables))
 
             metrics.append({"actor": float(actor_loss), "critic": critic_history.history['loss'][0]})
         return metrics
