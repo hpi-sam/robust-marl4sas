@@ -68,6 +68,7 @@ class Runner:
             print(f"episode {self.t} done")
 
 
+
 if __name__ == "__main__":
     episodes = 400
     # mock_env = MrubisMockEnv(number_of_shops=5, shop_config=[1, 0, False])
@@ -78,12 +79,11 @@ if __name__ == "__main__":
         shops=20,
         injection_mean=5,
         injection_variance=2,
-        trace="")
-    shop_distribution_example = [{'mRUBiS #1'}, {'mRUBiS #2'}, {'mRUBiS #3'}, {'mRUBiS #4'}, {'mRUBiS #5'},
-        {'mRUBiS #6'}, {'mRUBiS #7'}, {'mRUBiS #8'}, {'mRUBiS #9'}, {'mRUBiS #10'},
-        {'mRUBiS #11'}, {'mRUBiS #12'}, {'mRUBiS #13'}, {'mRUBiS #14'}, {'mRUBiS #15'},
-        {'mRUBiS #16'}, {'mRUBiS #17'}, {'mRUBiS #18'}, {'mRUBiS #19'}, {'mRUBiS #20'}]
-    load_model = {0: None, 1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None, 8: None, 9: None, 10: None, 11: None, 12: None, 13: None, 14: None, 15: None, 16: None, 17: None, 18: None, 19: None, 20: None}
+        trace="",
+        root_causes="",
+        trace_length=0)
+    shop_distribution_example = [{'mRUBiS #1'}]
+    load_model = {0: None, 1: None, 2: None, 3: None, 4: None, 5: None}
     # load_model = {0: {'start_time': 'test_robustness', 'episode': 500}, 1: None}
     Runner(None, env, shop_distribution_example, save_model=True, load_models_data=load_model,
            robustness_activated=False).run(episodes, train=True)
