@@ -1,6 +1,7 @@
 import os
 
-from mrubis_controller.marl.helper import build_reward_plot, build_count_plot, build_loss_plot, get_current_time
+from mrubis_controller.marl.helper import build_reward_plot, build_count_plot, build_loss_plot, get_current_time, \
+    build_regret_plot
 from multi_agent_controller import MultiAgentController
 
 # from mrubis_controller.marl.mrubis_mock_env import MrubisMockEnv
@@ -17,7 +18,7 @@ class Runner:
         self.mac = MultiAgentController(self.shop_distribution, self.load_models_data, robustness_activated)
         self.t = 0
         self.inner_t = 0
-        self.save_model_interval = 50  # interval of saving models
+        self.save_model_interval = 250  # interval of saving models
         self.save_model = save_model
         self.base_dir = f"./mrubis_controller/marl/data/logs/{get_current_time()}"
 
@@ -34,6 +35,7 @@ class Runner:
         """ runs the simulation """
         rewards = []
         metrics = []
+        regrets = []
         self.reset()
         count_till_fixed = {shop: [] for agent in self.shop_distribution for shop in agent}
         while self.t < episodes:
@@ -41,8 +43,9 @@ class Runner:
             observations = self.env.reset()
             while not terminated:
                 self.inner_t += 1
-                actions = self.mac.select_actions(observations)
-
+                actions, regret = self.mac.select_actions(observations)
+                if regret is not None:
+                    regrets.append(regret)
                 reward, observations_, terminated, env_info = self.env.step(actions)
                 if actions is not None:
                     rewards.append(reward)
@@ -63,6 +66,7 @@ class Runner:
                 build_count_plot(self.base_dir, count_till_fixed, self.t, self.shop_distribution)
                 build_reward_plot(self.base_dir, rewards, self.t, self.shop_distribution)
                 build_loss_plot(self.base_dir, metrics, self.t)
+                build_regret_plot(self.base_dir, regrets)
             print(f"episode {self.t} done")
 
     def create_prob_distribution(self):
@@ -73,7 +77,7 @@ class Runner:
         # TODO build probability plot
 
 if __name__ == "__main__":
-    episodes = 100
+    episodes = 500
     # mock_env = MrubisMockEnv(number_of_shops=5, shop_config=[1, 0, False])
     env = MrubisEnv(
         episodes=episodes,
@@ -82,9 +86,11 @@ if __name__ == "__main__":
         shops=1,
         injection_mean=5,
         injection_variance=2,
-        trace="")
+        trace="",
+        trace_length=0,
+        send_root_issue=True)
     shop_distribution_example = [{'mRUBiS #1'}]
     load_model = {0: None, 1: None, 2: None, 3: None, 4: None, 5: None}
     # load_model = {0: {'start_time': 'test_robustness', 'episode': 500}, 1: None}
     Runner(None, env, shop_distribution_example, save_model=True, load_models_data=load_model,
-           robustness_activated=False).create_prob_distribution()
+           robustness_activated=False).run(episodes)

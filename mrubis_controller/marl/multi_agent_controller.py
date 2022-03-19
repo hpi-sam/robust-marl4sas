@@ -35,9 +35,10 @@ class MultiAgentController:
             if self.robustness_activated and self.robustness.skip_agent(index):
                 continue
             challenged_shops = self.robustness.get_execution_plan(index) if self.robustness_activated else None
-            actions.append(agent.choose_action(build_observations(self.agents, index, observations, challenged_shops)))
+            action, regret = agent.choose_action(build_observations(self.agents, index, observations, challenged_shops))
+            actions.append(action)
 
-        return self.rank_learner.sort_actions(actions)
+        return self.rank_learner.sort_actions(actions), regret
 
     def learn(self, observations, actions, rewards, observations_, dones):
         """ start learning for Agents and RankLearner """

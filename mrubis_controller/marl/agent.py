@@ -24,6 +24,15 @@ def encode_observations(observations):
     return np.array(encoded_observations, dtype=float)
 
 
+def get_root_cause(observations):
+
+    for idx, component in enumerate(observations.values()):
+        if "root_issue" in component:
+            root_cause_index = idx
+            break
+    return root_cause_index
+
+
 def output_probabilities(probabilities):
     output = []
     for index, p in enumerate(probabilities):
@@ -78,15 +87,18 @@ class Agent:
         """
         actions = []
         for shop_name, components in observations.items():
+            regret = None
             state = encode_observations(components)[np.newaxis, :]
             if state.sum() > 0:  # skip shops without any failure
+                probabilities = self.policy.predict(state)[0]
                 if self.train:
                     action, probability = self.choose_from_memory(state, shop_name, components)
                 else:
-                    probabilities = self.policy.predict(state)[0]
-                    output_probabilities(probabilities)
                     action = np.random.choice(self.action_space, p=probabilities)
                     probability = probabilities[action]
+                output_probabilities(probabilities)
+                root_cause_index = get_root_cause(components)
+                regret = 1.0 - probabilities[root_cause_index]
                 decoded_action = _decoded_action(action, observations)
                 step = {'shop': shop_name, 'component': decoded_action}
                 if self.stage >= 1:
@@ -96,7 +108,7 @@ class Agent:
                     # reduce predicted utility by uncertainty
                     step['predicted_utility'] *= probability
                 actions.append(step)
-        return actions
+        return actions, regret
 
     def choose_from_memory(self, state, shop_name, components):
         if self.obs_in_memory(shop_name, components):
@@ -105,8 +117,6 @@ class Agent:
             self.previous_actions[shop_name][action] = -1
         else:
             probabilities = self.policy.predict(state)[0]
-            output_probabilities(probabilities)
-
             action = numpy.argmax(probabilities)
             probability = probabilities[action]
             probabilities[action] = 0

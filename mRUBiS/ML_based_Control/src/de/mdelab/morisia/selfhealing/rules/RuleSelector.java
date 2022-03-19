@@ -129,6 +129,12 @@ public class RuleSelector {
 	}
 	
 	
+	
+	public static void insertRootIssue(String RootIssueComponentName) {
+		globalState.get("mRUBiS #1").get(RootIssueComponentName).put("root_issue", "true");
+		int i = 1;
+	}
+	
 	public static void insertRandomTrace(Issue issue) {
 		
 		
@@ -163,7 +169,7 @@ public class RuleSelector {
 		String componentName = issue.getAffectedComponent().getType().getName();
 		String shopName = issue.getAffectedComponent().getTenant().getName();
 		String issueName = issue.getClass().getInterfaces()[0].getSimpleName();
-		List<String> traceOfFailingComponentNames = FailurePropagationTraceCreator.createTrace(componentName, length);
+		List<String> traceOfFailingComponentNames = FailurePropagationTraceCreator.createTrace(componentName, length - 1);
 		for (String currentComponent : traceOfFailingComponentNames) {
 			globalState.get(shopName).get(currentComponent).put("failure_name", issueName);
 			globalState.get(shopName).get(currentComponent).put("component_utility", Double.toString(0.));

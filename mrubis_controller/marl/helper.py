@@ -49,6 +49,38 @@ def build_loss_plot(base_dir, loss_data, episode):
             path = f"{base_dir}/{network}loss_agent_{agent}"
             build_plot(data, title, path)
 
+def build_reward_plot(base_dir, reward_data, episode, shop_distribution):
+    data = {}
+    for agent in shop_distribution:
+        for shop in agent:
+            data[shop] = [d[0][shop] for d in reward_data]
+    build_plot(data, f"Rewards till {episode}", f"{base_dir}/reward")
+    write_data(len(reward_data), data, 'reward', base_dir)
+
+
+def build_regret_plot(base_dir, regret_data):
+
+    title = f"Regret"
+    path = f"{base_dir}/regret"
+    # write_data(len(regret_data), regret_data, 'regret', base_dir)
+    print(regret_data)
+    with open(f"{path}.txt", "w+") as file:
+        for i in regret_data:
+            file.write(str(i) + '\n')
+
+    colors = ['#B1063A', '#134293', '#058B79', '#DD9108', '#009e61',
+              '#5a6065', '#00799e', '#f6ba00', '#b10639', '#dd6108']
+    plt.figure(figsize=(8, 6))
+    plt.title(title, fontsize=16)
+
+    x = numpy.array([i for i in range(len(regret_data))])
+
+    plt.plot(x, regret_data, colors.pop(), label="test")
+    plt.legend()
+    plt.savefig(path)
+    plt.clf()
+    plt.close()
+
 
 def build_plot(data, title, path):
     colors = ['#B1063A', '#134293', '#058B79', '#DD9108', '#009e61',
