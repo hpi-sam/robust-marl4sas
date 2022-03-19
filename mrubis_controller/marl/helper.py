@@ -57,13 +57,15 @@ def build_plot(data, title, path):
     plt.title(title, fontsize=16)
     # axes = plt.gca()
     # axes.set_ylim([0, 20])
+    i = 0
     for label, d in data.items():
         x = numpy.array([i for i in range(len(d))])
         d[0] = d[0] if d[0] > 0 else 0
         for index, value in enumerate(d):
             if value < 0:
                 d[index] = d[index - 1]
-        plt.plot(x, [float(value) for value in d], colors.pop(), label=label)
+        plt.plot(x, [float(value) for value in d], colors[i % 10], label=label)
+        i += 1
     plt.legend()
     plt.savefig(path)
     plt.clf()
