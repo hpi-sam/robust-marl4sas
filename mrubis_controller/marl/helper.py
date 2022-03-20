@@ -69,17 +69,31 @@ def build_regret_plot(base_dir, regret_data, episode, shop_distribution, train_m
             avgs.append(avg)
         data['Agent ' + str(index)] = avgs
 
-    title = f"Regret per Episode"
+    title = "Regret per Episode"
     path = f"{base_dir}/regret"
     # write_data(len(regret_data), regret_data, 'regret', base_dir)
     print(regret_data)
     with open(f"{path}.txt", "w+") as file:
         for i in regret_data:
             file.write(str(i) + '\n')
+        file.close()
 
     if not train_mode:
         with open(f"{path}_total_average.txt", "w+") as file:
-                file.write(str(sum(regret_data) / len(regret_data)) + '\n')
+            file.write(str(sum(regret_data) / len(regret_data)) + '\n')
+            file.close()
+
+    with open(f'{path}_average.txt', 'w+') as file:
+        for i in range(episode):
+            average = 0
+            count = 0
+            for regrets in regret_data[i].values():
+                for regret in regrets.values():
+                    average += regret
+                    count += 1
+            average /= count
+            file.write(f'{str(average)}\n')
+        file.close()
 
     colors = ['#B1063A', '#134293', '#058B79', '#DD9108', '#009e61',
               '#5a6065', '#00799e', '#f6ba00', '#b10639', '#dd6108']

@@ -78,20 +78,21 @@ class Runner:
         # TODO build probability plot
 
 if __name__ == "__main__":
-    episodes = 100
+    episodes = 400
     # mock_env = MrubisMockEnv(number_of_shops=5, shop_config=[1, 0, False])
     env = MrubisEnv(
         episodes=episodes,
         negative_reward=-1,
         propagation_probability=0.5,
-        shops=1,
+        shops=10,
         injection_mean=5,
         injection_variance=2,
         trace="",
-        trace_length=5,
+        trace_length=0,
         send_root_issue=True)
-    shop_distribution_example = [{'mRUBiS #1'}]
+    shop_distribution_example = [{'mRUBiS #1', 'mRUBiS #2', 'mRUBiS #3', 'mRUBiS #4', 'mRUBiS #5',
+                                  'mRUBiS #6', 'mRUBiS #7', 'mRUBiS #8', 'mRUBiS #9', 'mRUBiS #10'}]
     load_model = {0: None, 1: None, 2: None, 3: None, 4: None, 5: None}
-    load_model = {0: {'start_time': 'trace_experiments_length_5', 'episode': 300}}
+    # load_model = {0: {'start_time': 'trace_experiments_length_5', 'episode': 300}}
     Runner(None, env, shop_distribution_example, save_model=True, load_models_data=load_model,
-           robustness_activated=False, training_activated=False).run(episodes)
+           robustness_activated=False, training_activated=True).run(episodes)

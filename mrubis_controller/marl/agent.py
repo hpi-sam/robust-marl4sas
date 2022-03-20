@@ -25,7 +25,6 @@ def encode_observations(observations):
 
 
 def get_root_cause(observations):
-
     for idx, component in enumerate(observations.values()):
         if "root_issue" in component:
             root_cause_index = idx
