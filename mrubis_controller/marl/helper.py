@@ -49,6 +49,7 @@ def build_loss_plot(base_dir, loss_data, episode):
             path = f"{base_dir}/{network}loss_agent_{agent}"
             build_plot(data, title, path)
 
+
 def build_reward_plot(base_dir, reward_data, episode, shop_distribution):
     data = {}
     for agent in shop_distribution:
@@ -58,29 +59,41 @@ def build_reward_plot(base_dir, reward_data, episode, shop_distribution):
     write_data(len(reward_data), data, 'reward', base_dir)
 
 
-def build_regret_plot(base_dir, regret_data, episode, shop_distribution, train_mode=True):
+def build_regret_plot(base_dir, regret_data, episode, shop_distribution, train_mode=True, avg_over_agents=False):
     data = {}
-    for index, agent in enumerate(shop_distribution):
+    if not avg_over_agents:
+        for index, agent in enumerate(shop_distribution):
+            avgs = []
+            avg = 1
+            for i in range(episode):
+                counts = [regret_data[i][index][shop] for shop in regret_data[i][index]]
+                if len(counts) != 0:
+                    avg = sum(counts) / len(counts)
+                avgs.append(avg)
+            data['Agent ' + str(index)] = avgs
+    else:
         avgs = []
+        avg = 1
         for i in range(episode):
-            filter_counts = list(
-                (filter(lambda x: x != -1, [regret_data[i][index][shop] for shop in regret_data[i][index]])))
-            avg = -1 if len(filter_counts) == 0 else sum(filter_counts) / len(filter_counts)
+            counts = [regret_data[i][index][shop]
+                      for index, agent in enumerate(shop_distribution) for shop in regret_data[i][index]]
+            if len(counts) != 0:
+                avg = sum(counts) / len(counts)
             avgs.append(avg)
-        data['Agent ' + str(index)] = avgs
+        data['Shops '] = avgs
 
-    title = "Regret per Episode"
+    title = "Regret per Episode for "
     path = f"{base_dir}/regret"
     # write_data(len(regret_data), regret_data, 'regret', base_dir)
-    print(regret_data)
+    print(data)
     with open(f"{path}.txt", "w+") as file:
-        for i in regret_data:
+        for i in data:
             file.write(str(i) + '\n')
         file.close()
 
     if not train_mode:
         with open(f"{path}_total_average.txt", "w+") as file:
-            file.write(str(sum(regret_data) / len(regret_data)) + '\n')
+            file.write(str(sum(data) / len(data)) + '\n')
             file.close()
 
     with open(f'{path}_average.txt', 'w+') as file:
@@ -97,20 +110,23 @@ def build_regret_plot(base_dir, regret_data, episode, shop_distribution, train_m
 
     colors = ['#B1063A', '#134293', '#058B79', '#DD9108', '#009e61',
               '#5a6065', '#00799e', '#f6ba00', '#b10639', '#dd6108']
+
     plt.figure(figsize=(8, 6))
-    plt.title(title, fontsize=16)
+    for agent, agent_data in data.items():
+        plt.title(title + agent, fontsize=16)
 
-    x = np.array([i for i in range(len(regret_data))])
+        x = np.array([i for i in range(len(agent_data))])
 
-    smoothed = np.convolve(regret_data, np.ones(10) / 10, 'value')
-    x_new = x[5:-4]
-    plt.plot(x, regret_data, colors.pop(), label="exact regret")
-    plt.plot(x_new, smoothed, colors.pop(), label="moving average")
-    plt.xlabel('Episode')
-    plt.ylabel('Regret')
-    plt.legend()
-    plt.savefig(path)
-    plt.clf()
+        smoothed_wert = max(10, len(data))
+        smoothed = np.convolve(agent_data, np.ones(smoothed_wert) / smoothed_wert, 'value')
+        x_new = x[5:-4]
+        plt.plot(x, agent_data, colors.pop(), label="exact regret")
+        plt.plot(x_new, smoothed, colors.pop(), label="moving average")
+        plt.xlabel('Episode')
+        plt.ylabel('Regret')
+        plt.legend()
+        plt.savefig(path + agent)
+        plt.clf()
     plt.close()
 
 
