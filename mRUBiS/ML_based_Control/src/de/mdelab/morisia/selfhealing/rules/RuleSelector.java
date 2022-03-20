@@ -130,9 +130,8 @@ public class RuleSelector {
 	
 	
 	
-	public static void insertRootIssue(String RootIssueComponentName) {
-		globalState.get("mRUBiS #1").get(RootIssueComponentName).put("root_issue", "true");
-		int i = 1;
+	public static void insertRootIssue(Issue issue) {
+		globalState.get(issue.getAffectedComponent().getTenant().getName()).get(issue.getAffectedComponent().getType().getName()).put("root_issue", "true");
 	}
 	
 	public static void insertRandomTrace(Issue issue) {

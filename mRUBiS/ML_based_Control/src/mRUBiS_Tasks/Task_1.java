@@ -309,7 +309,7 @@ public class Task_1 {
 				
 				
 				if (sendrootIssue) {
-					RuleSelector.insertRootIssue(issue.getAffectedComponent().getType().getName());
+					RuleSelector.insertRootIssue(issue);
 				}
 			}
 			RuleSelector.updateShopUtilities(architecture);

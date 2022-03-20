@@ -95,4 +95,4 @@ if __name__ == "__main__":
     load_model = {0: None, 1: None, 2: None, 3: None, 4: None, 5: None}
     load_model = {0: {'start_time': 'trace_experiments_length_5', 'episode': 300}}
     Runner(None, env, shop_distribution_example, save_model=True, load_models_data=load_model,
-           robustness_activated=False,training_activated=False).run(episodes)
+           robustness_activated=False, training_activated=False).run(episodes)
