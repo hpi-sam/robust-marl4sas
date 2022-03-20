@@ -135,7 +135,7 @@ def find_outlier_values(data, convergence_values, name, flexible_c):
 def analyze(input_data, name, title, flexible_c=False):
     try:
         os.makedirs(f'{dir_path}/data_analysis/{name}/')
-    except FileExistsError as error:
+    except FileExistsError:
         print('Directory already exists.')
     data = build_data(input_data)
     path = f'{dir_path}/data_analysis/{name}/plot.png'
