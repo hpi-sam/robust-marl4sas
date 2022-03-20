@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from mrubis_controller.marl.agent import Agent
-from mrubis_controller.marl.random_agent import RandomAgent
 from mrubis_controller.marl.mrubis_data_helper import build_observations, build_rewards, build_actions
 from mrubis_controller.marl.rank_learner import RankLearner
 from mrubis_controller.marl.robustness_component import RobustnessComponent
@@ -31,14 +30,16 @@ class MultiAgentController:
             self.robustness.plan(self.agents)
 
         actions = []
+        regrets = {}
         for index, agent in enumerate(self.agents):
             if self.robustness_activated and self.robustness.skip_agent(index):
                 continue
             challenged_shops = self.robustness.get_execution_plan(index) if self.robustness_activated else None
             action, regret = agent.choose_action(build_observations(self.agents, index, observations, challenged_shops))
+            regrets[index] = regret
             actions.append(action)
 
-        return self.rank_learner.sort_actions(actions), regret
+        return self.rank_learner.sort_actions(actions), regrets
 
     def learn(self, observations, actions, rewards, observations_, dones):
         """ start learning for Agents and RankLearner """

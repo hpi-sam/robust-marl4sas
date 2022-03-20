@@ -58,7 +58,16 @@ def build_reward_plot(base_dir, reward_data, episode, shop_distribution):
     write_data(len(reward_data), data, 'reward', base_dir)
 
 
-def build_regret_plot(base_dir, regret_data, train_mode=True):
+def build_regret_plot(base_dir, regret_data, episode, shop_distribution, train_mode=True):
+    data = {}
+    for index, agent in enumerate(shop_distribution):
+        avgs = []
+        for i in range(episode):
+            filter_counts = list(
+                (filter(lambda x: x != -1, [regret_data[i][index][shop] for shop in regret_data[i][index]])))
+            avg = -1 if len(filter_counts) == 0 else sum(filter_counts) / len(filter_counts)
+            avgs.append(avg)
+        data['Agent ' + str(index)] = avgs
 
     title = f"Regret per Episode"
     path = f"{base_dir}/regret"

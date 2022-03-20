@@ -86,6 +86,7 @@ class Agent:
             returns sorted list
         """
         actions = []
+        regrets = {}
         for shop_name, components in observations.items():
             regret = None
             state = encode_observations(components)[np.newaxis, :]
@@ -108,7 +109,8 @@ class Agent:
                     # reduce predicted utility by uncertainty
                     step['predicted_utility'] *= probability
                 actions.append(step)
-        return actions, regret
+                regrets[shop_name] = regret
+        return actions, regrets
 
     def choose_from_memory(self, state, shop_name, components):
         if self.obs_in_memory(shop_name, components):
