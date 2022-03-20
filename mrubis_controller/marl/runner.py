@@ -41,6 +41,7 @@ class Runner:
         while self.t < episodes:
             terminated = False
             observations = self.env.reset()
+            regrets.append({})
             while not terminated:
                 self.inner_t += 1
                 actions, regret = self.mac.select_actions(observations)
@@ -49,12 +50,19 @@ class Runner:
                 reward, observations_, terminated, env_info = self.env.step(actions)
                 if actions is not None:
                     rewards.append(reward)
-
                     metrics.append(self.mac.learn(observations, actions, reward, observations_, terminated))
+
+                    for index in regret:
+                        if index not in regrets[self.t]:
+                            regrets[self.t][index] = {}
+                            for shop in regret[index]:
+                                regrets[self.t][index][shop] = {}
+                        for shop in regret[index]:
+                            regrets[self.t][index][shop] = regret[index][shop]
+
                 observations = observations_
 
                 if terminated:
-                    regrets.append(regret)
                     self.inner_t = 0
                     for shop, count in env_info['stats'].items():
                         count_till_fixed[shop].append(count)
@@ -67,7 +75,7 @@ class Runner:
                 build_count_plot(self.base_dir, count_till_fixed, self.t, self.shop_distribution)
                 build_reward_plot(self.base_dir, rewards, self.t, self.shop_distribution)
                 build_loss_plot(self.base_dir, metrics, self.t)
-                build_regret_plot(self.base_dir, regrets, self.t, self.shop_distribution, self.training_activated)
+                build_regret_plot(self.base_dir, regrets, self.t, self.shop_distribution, self.training_activated, avg_over_agents=True)
             print(f"episode {self.t} done")
 
     def create_prob_distribution(self):
@@ -77,16 +85,17 @@ class Runner:
         reward, observations_, terminated, env_info = self.env.step(actions)
         # TODO build probability plot
 
+
 if __name__ == "__main__":
-    episodes = 100
+    episodes = 1000
     # mock_env = MrubisMockEnv(number_of_shops=5, shop_config=[1, 0, False])
     env = MrubisEnv(
         episodes=episodes,
         negative_reward=-1,
         propagation_probability=0.5,
-        shops=1,
-        injection_mean=5,
-        injection_variance=2,
+        shops=10,
+        injection_mean=10,
+        injection_variance=0,
         trace="",
         trace_length=5,
         send_root_issue=True)
