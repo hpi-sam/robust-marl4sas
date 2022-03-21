@@ -93,15 +93,19 @@ if __name__ == "__main__":
         episodes=episodes,
         negative_reward=-1,
         propagation_probability=0.5,
-        shops=10,
+        shops=15,
         injection_mean=5,
         injection_variance=2,
         trace="",
         trace_length=0,
         send_root_issue=True)
-    shop_distribution_example = [{'mRUBiS #1', 'mRUBiS #2', 'mRUBiS #3', 'mRUBiS #4', 'mRUBiS #5',
-                                  'mRUBiS #6', 'mRUBiS #7', 'mRUBiS #8', 'mRUBiS #9', 'mRUBiS #10'}]
-    load_model = {0: None, 1: None, 2: None, 3: None, 4: None, 5: None}
+    shop_distribution_example = [{'mRUBiS #1'}, {'mRUBiS #2'}, {'mRUBiS #3'}, {'mRUBiS #4'}, {'mRUBiS #5'},
+                                 {'mRUBiS #6'}, {'mRUBiS #7'}, {'mRUBiS #8'}, {'mRUBiS #9'}, {'mRUBiS #10'},
+                                 {'mRUBiS #11'}, {'mRUBiS #12'}, {'mRUBiS #13'}, {'mRUBiS #14'}, {'mRUBiS #15'}]
+    load_model = {0: None, 1: None, 2: None, 3: None, 4: None,
+                  5: None, 6: None, 7: None, 8: None, 9: None,
+                  10: None, 11: None, 12: None, 13: None, 14: None,
+                  15: None, 16: None, 17: None, 18: None, 19: None}
     # load_model = {0: {'start_time': 'trace_experiments_length_5', 'episode': 300}}
     Runner(None, env, shop_distribution_example, save_model=True, load_models_data=load_model,
            robustness_activated=False, training_activated=True).run(episodes)

@@ -120,8 +120,8 @@ def build_regret_plot(base_dir, regret_data, episode, shop_distribution, train_m
         smoothed_wert = max(10, len(data))
         smoothed = np.convolve(agent_data, np.ones(smoothed_wert) / smoothed_wert, 'value')
         x_new = x[5:-4]
-        plt.plot(x, agent_data, colors.pop(), label="exact regret")
-        plt.plot(x_new, smoothed, colors.pop(), label="moving average")
+        plt.plot(x, agent_data, colors[9 - (i % 10)], label="exact regret")
+        plt.plot(x_new, smoothed, colors[9 - (i % 10)], label="moving average")
         plt.xlabel('Episode')
         plt.ylabel('Regret')
         plt.legend()
@@ -137,13 +137,15 @@ def build_plot(data, title, path, ylabel=None):
     plt.title(title, fontsize=16)
     # axes = plt.gca()
     # axes.set_ylim([0, 20])
+    i = 0
     for label, d in data.items():
         x = np.array([i for i in range(len(d))])
         d[0] = d[0] if d[0] > 0 else 0
         for index, value in enumerate(d):
             if value < 0:
                 d[index] = d[index - 1]
-        plt.plot(x, [float(value) for value in d], colors.pop(), label=label)
+        plt.plot(x, [float(value) for value in d], colors[9 - (i % 10)], label=label)
+        i += 1
     plt.xlabel('Episode')
     if ylabel != None:
         plt.ylabel(ylabel)
