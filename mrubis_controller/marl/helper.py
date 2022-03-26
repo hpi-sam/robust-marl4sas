@@ -111,7 +111,7 @@ def build_regret_plot(base_dir, regret_data, episode, shop_distribution, train_m
     colors = ['#B1063A', '#134293', '#058B79', '#DD9108', '#009e61',
               '#5a6065', '#00799e', '#f6ba00', '#b10639', '#dd6108']
 
-    '''plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(8, 6))
     for agent, agent_data in data.items():
         plt.title(title + agent, fontsize=16)
 
@@ -127,11 +127,11 @@ def build_regret_plot(base_dir, regret_data, episode, shop_distribution, train_m
         plt.legend()
         plt.savefig(path + agent)
         plt.clf()
-    plt.close()'''
+    plt.close()
 
 
 def build_plot(data, title, path, ylabel=None):
-    '''colors = ['#B1063A', '#134293', '#058B79', '#DD9108', '#009e61',
+    colors = ['#B1063A', '#134293', '#058B79', '#DD9108', '#009e61',
               '#5a6065', '#00799e', '#f6ba00', '#b10639', '#dd6108']
     plt.figure(figsize=(8, 6))
     plt.title(title, fontsize=16)
@@ -152,7 +152,7 @@ def build_plot(data, title, path, ylabel=None):
     plt.legend()
     plt.savefig(path)
     plt.clf()
-    plt.close()'''
+    plt.close()
 
 
 def write_data(count, data, title, base_dir):
