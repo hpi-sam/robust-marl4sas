@@ -39,7 +39,7 @@ def output_probabilities(probabilities):
             output.append('\033[92m' + str(index) + ": " + "{:.2f}".format(p) + '\033[0m')
         else:
             output.append(str(index) + ": " + "{:.2f}".format(p))
-    print(' '.join(output))
+    # print(' '.join(output))
 
 
 class Agent:
