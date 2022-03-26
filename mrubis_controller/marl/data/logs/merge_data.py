@@ -185,21 +185,26 @@ def smooth_regret_data(regret_data):
     return smoothed_data
 
 
-def analyze(input_data, name, title, flexible_c=False):
+def fit_tries(data, name, title, flexible_c):    
+    c_path = '_flexible_c' if flexible_c else ''
+    fitted_path = f'{dir_path}/data_analysis/{name}/plot_fitted{c_path}.png'
+    fitted_data, parameters = build_fitted_data(data, flexible_c)
+    c_title = ' (Flexible c)' if flexible_c else ''
+    build_plot(fitted_data, f'{title} (Fitted){c_title}', fitted_path, ylabel='Tries')
+    convergence_values = find_convergence(parameters, name, flexible_c)
+    find_outlier_values(data, convergence_values, name, flexible_c)
+
+
+def analyze(input_data, name, title):
     try:
         os.makedirs(f'{dir_path}/data_analysis/{name}/')
     except FileExistsError:
         print('Directory already exists.')
     data, regret_data = build_data(input_data)
     path = f'{dir_path}/data_analysis/{name}/plot.png'
-    c_path = '_flexible_c' if flexible_c else ''
-    fitted_path = f'{dir_path}/data_analysis/{name}/plot_fitted{c_path}.png'
-    fitted_data, parameters = build_fitted_data(data, flexible_c)
     build_plot(data, f'{title} (Tries)', path, ylabel='Tries')
-    c_title = ' (Flexible c)' if flexible_c else ''
-    build_plot(fitted_data, f'{title} (Fitted){c_title}', fitted_path, ylabel='Tries')
-    convergence_values = find_convergence(parameters, name, flexible_c)
-    find_outlier_values(data, convergence_values, name, flexible_c)
+    fit_tries(data, name, title, True)
+    fit_tries(data, name, title, False)
     smoothed_regret = smooth_regret_data(regret_data)
     path_regret = f'{dir_path}/data_analysis/{name}/plot_regret.png'
     path_regret_raw = f'{dir_path}/data_analysis/{name}/plot_regret_raw.png'
@@ -210,33 +215,34 @@ def analyze(input_data, name, title, flexible_c=False):
     build_plot(fitted_regret, f'{title} (Fitted regret)', fitted_regret_path, ylabel='Regret')
 
 
-flexible_c = False
-analyze(["old_architecture_r", "new_architecture_r", "new_architecture_mod_r"], 'comparison_architecture_regret',
-        'Architecture comparison', flexible_c=flexible_c)
+analyze(["old_architecture_r", "new_architecture_r", "new_architecture_mod_r"],
+         'comparison_architecture_regret', 'Architecture comparison')
 analyze(["1_agent_10_shops_r", "2_agents_5_shops_r", "3_agents_3.33_shops_r",
         "5_agents_2_shops_r", "10_agents_1_shop_r"],
-        'comparison_10_shops_regret', 'Setups for 10 shops', flexible_c=flexible_c)
+        'comparison_10_shops_regret', 'Setups for 10 shops')
 analyze(["1_agent_15_shops_r", "2_agents_7.5_shops_r", "3_agents_5_shops_r",
         "5_agents_3_shops_r", "15_agents_1_shop_r"],
-        'comparison_15_shops_regret', 'Setups for 15 shops', flexible_c=flexible_c)
+        'comparison_15_shops_regret', 'Setups for 15 shops')
 analyze(["1_agent_20_shops_r", "2_agents_10_shops_r", "4_agents_5_shops_r",
         "5_agents_4_shops_r", "10_agents_2_shops_r", "20_agents_1_shop_r"],
-        'comparison_20_shops_regret', 'Setups for 20 shops', flexible_c=flexible_c)
-analyze(["1_agent_40_shops_r", "2_agents_20_shops_r", "4_agents_10_shops_r", "5_agents_8_shops_r",
-        "8_agents_5_shops_r", "10_agents_4_shops_r", "20_agents_2_shops_r", "40_agents_1_shop_r"],
-        'comparison_40_shops_regret', 'Setups for 40 shops', flexible_c=flexible_c)
-analyze(["1_agent_10_shops_r", "1_agent_15_shops_r", "1_agent_20_shops_r", "1_agent_40_shops_r",
-        "1_agent_80_shops_r"],
-        'comparison_1_agent_regret', 'Setups for 1 agent', flexible_c=flexible_c)
-analyze(["2_agents_5_shops_r", "2_agents_7.5_shops_r", "2_agents_10_shops_r", "2_agents_20_shops_r",
-        "2_agents_40_shops_r"],
-        'comparison_2_agents_regret', 'Setups for 2 agents', flexible_c=flexible_c)
+        'comparison_20_shops_regret', 'Setups for 20 shops')
+analyze(["1_agent_40_shops_r", "2_agents_20_shops_r", "4_agents_10_shops_r",
+         "5_agents_8_shops_r", "8_agents_5_shops_r", "10_agents_4_shops_r",
+         "20_agents_2_shops_r", "40_agents_1_shop_r"],
+        'comparison_40_shops_regret', 'Setups for 40 shops')
+analyze(["1_agent_10_shops_r", "1_agent_15_shops_r", "1_agent_20_shops_r",
+         "1_agent_40_shops_r", "1_agent_80_shops_r"],
+        'comparison_1_agent_regret', 'Setups for 1 agent')
+analyze(["2_agents_5_shops_r", "2_agents_7.5_shops_r", "2_agents_10_shops_r",
+         "2_agents_20_shops_r", "2_agents_40_shops_r"],
+        'comparison_2_agents_regret', 'Setups for 2 agents')
 analyze(["4_agents_5_shops_r", "4_agents_10_shops_r"],
-        'comparison_4_agents_regret', 'Setups for 2 agents', flexible_c=flexible_c)
-analyze(["10_agents_1_shop_r", "15_agents_1_shop_r", "20_agents_1_shop_r", "40_agents_1_shop_r",
-        "80_agents_1_shop_r"],
-        'comparison_1_shop_per_agent_regret', 'Setups for 1 shop per agent', flexible_c=flexible_c)
-analyze(["5_agents_2_shops_r", "10_agents_2_shops_r", "20_agents_2_shops_r", "40_agents_2_shops_r"],
-        'comparison_2_shops_per_agent_regret', 'Setups for 2 shops per agent', flexible_c=flexible_c)
+        'comparison_4_agents_regret', 'Setups for 2 agents')
+analyze(["10_agents_1_shop_r", "15_agents_1_shop_r", "20_agents_1_shop_r",
+         "40_agents_1_shop_r", "80_agents_1_shop_r"],
+        'comparison_1_shop_per_agent_regret', 'Setups for 1 shop per agent')
+analyze(["5_agents_2_shops_r", "10_agents_2_shops_r", "20_agents_2_shops_r",
+         "40_agents_2_shops_r"],
+        'comparison_2_shops_per_agent_regret', 'Setups for 2 shops per agent')
 analyze(["5_agents_4_shops_r", "10_agents_4_shops_r", "20_agents_4_shops_r"],
-        'comparison_4_shops_per_agent_regret', 'Setups for 4 shops per agent', flexible_c=flexible_c)
+        'comparison_4_shops_per_agent_regret', 'Setups for 4 shops per agent')
