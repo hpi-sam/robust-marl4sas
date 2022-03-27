@@ -68,8 +68,8 @@ def func_c(x, a, b, c):
     return a * np.exp(-b * x) + c
 
 
-def sigmoid(x, a, b, k, m):
-    return a + (k - a)/(1 + np.exp(-b * (x - m)))
+def sigmoid(x, a, b, k, m, v):
+    return a + (k - a)/((1 + np.exp(-b * (x - m))) ** (1/v))
 
 
 def build_fitted_data(data, flexible_c):
@@ -84,8 +84,8 @@ def build_fitted_regret(data):
     for label, d in data.items():
         try:
             popt, pcov = curve_fit(sigmoid, x, d,
-                                   bounds=([0, 0, 0, -100], [np.inf, np.inf, np.inf, np.inf]),
-                                   p0 = [1, 0.5, 0, 100])
+                                   bounds=([0, -np.Inf, 0, -100, 0], [np.inf, np.inf, np.inf, np.inf, np.Inf]),
+                                   p0 = [1, 0.5, 0, 100, 1])
             # we assume b >= 0. A b < 0 effect can be gained by switching a and k
             # we assume a, k >= 0 since regret should be nonnegative
             # some setups that perform very poorly land at k = 0 and use this limit, but given that these setups don't have significant descent to begin with this is not critical
@@ -126,10 +126,10 @@ def value_for_derivative_c(d, a, b, c):
     return np.log(-a * b / d) / b
 
 
-def value_for_sigmoid(y, a, b, k, m):
-    if y >= a or y <= k:
+def value_for_sigmoid(y, a, b, k, m, v):
+    if y >= max(a, k) or y <= min(a, k):
         return nan
-    return -np.log((y - k)/(a - y))/b + m
+    return -np.log(((a - k)/(a - y)) ** v - 1)/b + m
 
 
 def find_convergence(parameters, name, flexible_c):
@@ -210,12 +210,13 @@ def analyze_regret_data(regret_parameters, name):
         best_lower_asymptote_label = ''
         for label, p in regret_parameters.items():
             f.write(f'Analysis for {label}\n')
-            a, b, k, m = p
+            a, b, k, m, v = p
+            f.write(f'a={a}, k={k}, b={b}, m={m}, v={v}\n')
             f.write(f'Turning point at m={m}\n')
             if m <= 300:
-                f.write(f'Lower asymptote is at k={k}\n')
-                if k <= best_lower_asymptote:
-                    best_lower_asymptote = k
+                f.write(f'Lower asymptote is at {min(a, k)}\n')
+                if min(a, k) <= best_lower_asymptote:
+                    best_lower_asymptote = min(a, k)
                     best_lower_asymptote_label = label
             else:
                 f.write('Cannot determine lower asymptote from data.\n')
@@ -273,13 +274,17 @@ analyze(["1_agent_40_shops_r", "2_agents_20_shops_r", "4_agents_10_shops_r",
          "5_agents_8_shops_r", "8_agents_5_shops_r", "10_agents_4_shops_r",
          "20_agents_2_shops_r", "40_agents_1_shop_r"],
         'comparison_40_shops_regret', 'Setups for 40 shops')
+analyze(["1_agent_80_shops_r", "2_agents_40_shops_r", "4_agents_20_shops_r",
+         "8_agents_10_shops_r", "16_agents_5_shops_r",
+         "20_agents_4_shops_r", "40_agents_2_shops_r", "80_agents_1_shop_r"],
+        'comparison_80_shops_regret', 'Setups for 80 shops')
 analyze(["1_agent_10_shops_r", "1_agent_15_shops_r", "1_agent_20_shops_r",
          "1_agent_40_shops_r", "1_agent_80_shops_r"],
         'comparison_1_agent_regret', 'Setups for 1 agent')
 analyze(["2_agents_5_shops_r", "2_agents_7.5_shops_r", "2_agents_10_shops_r",
          "2_agents_20_shops_r", "2_agents_40_shops_r"],
         'comparison_2_agents_regret', 'Setups for 2 agents')
-analyze(["4_agents_5_shops_r", "4_agents_10_shops_r"],
+analyze(["4_agents_5_shops_r", "4_agents_10_shops_r", "4_agents_20_shops_r"],
         'comparison_4_agents_regret', 'Setups for 2 agents')
 analyze(["10_agents_1_shop_r", "15_agents_1_shop_r", "20_agents_1_shop_r",
          "40_agents_1_shop_r", "80_agents_1_shop_r"],
