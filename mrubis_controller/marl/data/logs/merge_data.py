@@ -77,8 +77,8 @@ def build_fitted_data(data, flexible_c):
     return fit(data, func)
 
 
-def build_fitted_regret(data):
-    x = np.array([i for i in range(400)])#[5:-4]
+def build_fitted_regret(data, episodes):
+    x = np.array([i for i in range(episodes)])
     new_data = {}
     parameters = {}
     for label, d in data.items():
@@ -102,10 +102,11 @@ def build_fitted_regret(data):
     return new_data, parameters
 
 
-def fit(data, func, x=np.array([i for i in range(400)])):
+def fit(data, func):
     new_data = {}
     parameters = {}
     for label, d in data.items():
+        x = np.array([i for i in range(len(d))])
         popt, pcov = curve_fit(func, x, d)
         new_data[label] = func(x, *popt)
         parameters[label] = popt
@@ -202,7 +203,7 @@ def fit_tries(data, name, title, flexible_c):
     find_outlier_values(data, convergence_values, name, flexible_c)
 
 
-def analyze_regret_data(regret_parameters, name):
+def analyze_regret_data(regret_parameters, name, episodes):
     with open(f'{dir_path}/data_analysis/{name}/regret_analysis.txt', 'w') as f:
         best_values = np.full(10, np.Inf)
         best_labels = [None] * 10
@@ -213,7 +214,7 @@ def analyze_regret_data(regret_parameters, name):
             a, b, k, m, v = p
             f.write(f'a={a}, k={k}, b={b}, m={m}, v={v}\n')
             f.write(f'Turning point at m={m}\n')
-            if m <= 300:
+            if m <= 0.75 * episodes:
                 f.write(f'Lower asymptote is at {min(a, k)}\n')
                 if min(a, k) <= best_lower_asymptote:
                     best_lower_asymptote = min(a, k)
@@ -223,11 +224,11 @@ def analyze_regret_data(regret_parameters, name):
             for i in range(10):
                 y = i / 10
                 x = value_for_sigmoid(y, *p)
-                if x is nan:
+                if x is nan or x > episodes:
                     f.write(f'y={y}: Sigmoid for {label} never reaches it.\n')
                 else:
                     f.write(f'y={y}: Sigmoid for {label} reaches regret at x={x}\n')
-                    if x <= best_values[i] and x <= 400:
+                    if x <= best_values[i]:
                         best_values[i] = x
                         best_labels[i] = label
             f.write('\n')
@@ -238,59 +239,63 @@ def analyze_regret_data(regret_parameters, name):
         f.close()
 
 
-def analyze(input_data, name, title):
+def analyze(input_data, name, title, episodes):
     try:
         os.makedirs(f'{dir_path}/data_analysis/{name}/')
     except FileExistsError:
         print('Directory already exists.')
     data, regret_data = build_data(input_data)
     path = f'{dir_path}/data_analysis/{name}/plot.png'
-    build_plot(data, f'{title} (Tries)', path, ylabel='Tries')
+    build_plot(data, f'{title} (Tries)', path, ylabel='Tries', x=np.array([i for i in range(episodes)]))
     fit_tries(data, name, title, True)
     fit_tries(data, name, title, False)
     smoothed_regret = smooth_regret_data(regret_data)
     path_regret = f'{dir_path}/data_analysis/{name}/plot_regret.png'
     path_regret_raw = f'{dir_path}/data_analysis/{name}/plot_regret_raw.png'
-    build_plot(regret_data, f'{title} (Raw regret)', path_regret_raw, ylabel='Regret')
-    build_plot(smoothed_regret, f'{title} (Moving average regret)', path_regret, ylabel='Regret', x=np.array([i for i in range(400)])[5:-4])
-    fitted_regret, regret_parameters = build_fitted_regret(regret_data)
+    build_plot(regret_data, f'{title} (Raw regret)', path_regret_raw, ylabel='Regret', x=np.array([i for i in range(episodes)]))
+    build_plot(smoothed_regret, f'{title} (Moving average regret)', path_regret, ylabel='Regret', x=np.array([i for i in range(episodes)])[5:-4])
+    fitted_regret, regret_parameters = build_fitted_regret(regret_data, episodes)
     fitted_regret_path = f'{dir_path}/data_analysis/{name}/plot_regret_fitted.png'
-    build_plot(fitted_regret, f'{title} (Fitted regret)', fitted_regret_path, ylabel='Regret')
-    analyze_regret_data(regret_parameters, name)
+    build_plot(fitted_regret, f'{title} (Fitted regret)', fitted_regret_path, ylabel='Regret', x=np.array([i for i in range(episodes)]))
+    analyze_regret_data(regret_parameters, name, episodes)
 
 
+episodes = 400
 analyze(["old_architecture_r", "new_architecture_r", "new_architecture_mod_r"],
-         'comparison_architecture_regret', 'Architecture comparison')
+         'comparison_architecture_regret', 'Architecture comparison', episodes)
 analyze(["1_agent_10_shops_r", "2_agents_5_shops_r", "3_agents_3.33_shops_r",
         "5_agents_2_shops_r", "10_agents_1_shop_r"],
-        'comparison_10_shops_regret', 'Setups for 10 shops')
+        'comparison_10_shops_regret', 'Setups for 10 shops', episodes)
 analyze(["1_agent_15_shops_r", "2_agents_7.5_shops_r", "3_agents_5_shops_r",
         "5_agents_3_shops_r", "15_agents_1_shop_r"],
-        'comparison_15_shops_regret', 'Setups for 15 shops')
+        'comparison_15_shops_regret', 'Setups for 15 shops', episodes)
 analyze(["1_agent_20_shops_r", "2_agents_10_shops_r", "4_agents_5_shops_r",
         "5_agents_4_shops_r", "10_agents_2_shops_r", "20_agents_1_shop_r"],
-        'comparison_20_shops_regret', 'Setups for 20 shops')
+        'comparison_20_shops_regret', 'Setups for 20 shops', episodes)
 analyze(["1_agent_40_shops_r", "2_agents_20_shops_r", "4_agents_10_shops_r",
          "5_agents_8_shops_r", "8_agents_5_shops_r", "10_agents_4_shops_r",
          "20_agents_2_shops_r", "40_agents_1_shop_r"],
-        'comparison_40_shops_regret', 'Setups for 40 shops')
+        'comparison_40_shops_regret', 'Setups for 40 shops', episodes)
 analyze(["1_agent_80_shops_r", "2_agents_40_shops_r", "4_agents_20_shops_r",
          "8_agents_10_shops_r", "16_agents_5_shops_r",
          "20_agents_4_shops_r", "40_agents_2_shops_r", "80_agents_1_shop_r"],
-        'comparison_80_shops_regret', 'Setups for 80 shops')
+        'comparison_80_shops_regret', 'Setups for 80 shops', episodes)
 analyze(["1_agent_10_shops_r", "1_agent_15_shops_r", "1_agent_20_shops_r",
          "1_agent_40_shops_r", "1_agent_80_shops_r"],
-        'comparison_1_agent_regret', 'Setups for 1 agent')
+        'comparison_1_agent_regret', 'Setups for 1 agent', episodes)
 analyze(["2_agents_5_shops_r", "2_agents_7.5_shops_r", "2_agents_10_shops_r",
          "2_agents_20_shops_r", "2_agents_40_shops_r"],
-        'comparison_2_agents_regret', 'Setups for 2 agents')
+        'comparison_2_agents_regret', 'Setups for 2 agents', episodes)
 analyze(["4_agents_5_shops_r", "4_agents_10_shops_r", "4_agents_20_shops_r"],
-        'comparison_4_agents_regret', 'Setups for 2 agents')
+        'comparison_4_agents_regret', 'Setups for 2 agents', episodes)
 analyze(["10_agents_1_shop_r", "15_agents_1_shop_r", "20_agents_1_shop_r",
          "40_agents_1_shop_r", "80_agents_1_shop_r"],
-        'comparison_1_shop_per_agent_regret', 'Setups for 1 shop per agent')
+        'comparison_1_shop_per_agent_regret', 'Setups for 1 shop per agent',
+        episodes)
 analyze(["5_agents_2_shops_r", "10_agents_2_shops_r", "20_agents_2_shops_r",
          "40_agents_2_shops_r"],
-        'comparison_2_shops_per_agent_regret', 'Setups for 2 shops per agent')
+        'comparison_2_shops_per_agent_regret', 'Setups for 2 shops per agent',
+        episodes)
 analyze(["5_agents_4_shops_r", "10_agents_4_shops_r", "20_agents_4_shops_r"],
-        'comparison_4_shops_per_agent_regret', 'Setups for 4 shops per agent')
+        'comparison_4_shops_per_agent_regret', 'Setups for 4 shops per agent',
+        episodes)
