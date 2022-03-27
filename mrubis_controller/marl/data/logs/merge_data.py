@@ -1,3 +1,4 @@
+from cmath import nan
 import os
 from re import X
 import matplotlib.pyplot as plt
@@ -125,6 +126,12 @@ def value_for_derivative_c(d, a, b, c):
     return np.log(-a * b / d) / b
 
 
+def value_for_sigmoid(y, a, b, k, m):
+    if y >= a or y <= k:
+        return nan
+    return -np.log((y - k)/(a - y))/b + m
+
+
 def find_convergence(parameters, name, flexible_c):
     value_for_derivative = value_for_derivative_c if flexible_c else value_for_derivative_no_c
     c_path = '_flexible_c' if flexible_c else ''
@@ -195,6 +202,41 @@ def fit_tries(data, name, title, flexible_c):
     find_outlier_values(data, convergence_values, name, flexible_c)
 
 
+def analyze_regret_data(regret_parameters, name):
+    with open(f'{dir_path}/data_analysis/{name}/regret_analysis.txt', 'w') as f:
+        best_values = np.full(10, np.Inf)
+        best_labels = [None] * 10
+        best_lower_asymptote = np.Inf
+        best_lower_asymptote_label = ''
+        for label, p in regret_parameters.items():
+            f.write(f'Analysis for {label}\n')
+            a, b, k, m = p
+            f.write(f'Turning point at m={m}\n')
+            if m <= 300:
+                f.write(f'Lower asymptote is at k={k}\n')
+                if k <= best_lower_asymptote:
+                    best_lower_asymptote = k
+                    best_lower_asymptote_label = label
+            else:
+                f.write('Cannot determine lower asymptote from data.\n')
+            for i in range(10):
+                y = i / 10
+                x = value_for_sigmoid(y, *p)
+                if x is nan:
+                    f.write(f'y={y}: Sigmoid for {label} never reaches it.\n')
+                else:
+                    f.write(f'y={y}: Sigmoid for {label} reaches regret at x={x}\n')
+                    if x <= best_values[i] and x <= 400:
+                        best_values[i] = x
+                        best_labels[i] = label
+            f.write('\n')
+        f.write(f'Best lower asymptote: {best_lower_asymptote_label} with {best_lower_asymptote}\n')
+        for i in range(10):
+            if best_values[i] != np.Inf:
+                f.write(f'Best setup for y={i / 10}: {best_labels[i]} at episode {best_values[i]}\n')
+        f.close()
+
+
 def analyze(input_data, name, title):
     try:
         os.makedirs(f'{dir_path}/data_analysis/{name}/')
@@ -213,6 +255,7 @@ def analyze(input_data, name, title):
     fitted_regret, regret_parameters = build_fitted_regret(regret_data)
     fitted_regret_path = f'{dir_path}/data_analysis/{name}/plot_regret_fitted.png'
     build_plot(fitted_regret, f'{title} (Fitted regret)', fitted_regret_path, ylabel='Regret')
+    analyze_regret_data(regret_parameters, name)
 
 
 analyze(["old_architecture_r", "new_architecture_r", "new_architecture_mod_r"],
