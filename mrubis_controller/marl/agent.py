@@ -27,9 +27,7 @@ def encode_observations(observations):
 def get_root_cause(observations):
     for idx, component in enumerate(observations.values()):
         if "root_issue" in component:
-            root_cause_index = idx
-            break
-    return root_cause_index
+            return idx, list(observations.keys())[idx]
 
 
 def output_probabilities(probabilities):
@@ -86,6 +84,7 @@ class Agent:
         """
         actions = []
         regrets = {}
+        root_causes = {}
         for shop_name, components in observations.items():
             regret = None
             state = encode_observations(components)[np.newaxis, :]
@@ -97,7 +96,7 @@ class Agent:
                 #     action = np.random.choice(self.action_space, p=probabilities)
                 #     probability = probabilities[action]
                 output_probabilities(probabilities)
-                root_cause_index = get_root_cause(components)
+                root_cause_index, root_cause_name = get_root_cause(components)
                 regret = 1.0 - probabilities[root_cause_index]
                 decoded_action = _decoded_action(action, observations)
                 step = {'shop': shop_name, 'component': decoded_action}
@@ -109,7 +108,8 @@ class Agent:
                     step['predicted_utility'] *= probability
                 actions.append(step)
                 regrets[shop_name] = regret
-        return actions, regrets
+                root_causes[shop_name] = root_cause_name
+        return actions, regrets, root_causes
 
     def choose_from_memory(self, state, shop_name, components):
         if self.obs_in_memory(shop_name, components):

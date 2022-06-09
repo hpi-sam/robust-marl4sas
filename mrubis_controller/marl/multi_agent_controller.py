@@ -31,15 +31,18 @@ class MultiAgentController:
 
         actions = []
         regrets = {}
+        root_causes = {}
         for index, agent in enumerate(self.agents):
             if self.robustness_activated and self.robustness.skip_agent(index):
                 continue
             challenged_shops = self.robustness.get_execution_plan(index) if self.robustness_activated else None
-            action, regret = agent.choose_action(build_observations(self.agents, index, observations, challenged_shops))
+            action, regret, root_cause = agent.choose_action(
+                build_observations(
+                    self.agents, index, observations, challenged_shops))
             regrets[index] = regret
+            root_causes[index] = root_cause
             actions.append(action)
-
-        return self.rank_learner.sort_actions(actions), regrets
+        return self.rank_learner.sort_actions(actions), regrets, root_causes
 
     def learn(self, observations, actions, rewards, observations_, dones):
         """ start learning for Agents and RankLearner """

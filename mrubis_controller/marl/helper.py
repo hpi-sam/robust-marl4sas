@@ -5,6 +5,7 @@ import numpy as np
 
 
 def get_current_time():
+    return "5_variance_clamp_9"
     now = datetime.datetime.now()
     return now.strftime('%Y_%m_%d_%H_%M')
 
@@ -169,6 +170,19 @@ def build_plot_from_file(titles, path, output_path, base_dir='./mrubis_controlle
         for index, title in enumerate(titles, start=1):
             data[title] = [line.split(',')[index] for line in lines]
     build_plot(data, 'Number of tries', f'{base_dir}/{output_path}.png')
+
+
+def print_logs(base_dir, logs):
+    path = f"{base_dir}/actions.txt"
+    with open(path, 'w+') as file:
+        for t in range(len(logs)):
+            t_data = logs[t]
+            for inner_t in range(len(t_data)):
+                data = t_data[inner_t]
+                file.write(f'Episode: {t}; Try: {inner_t};\n')
+                for shop in data:
+                    file.write(f'\t{shop}: {data[shop]["Root causes"]} / {data[shop]["Actions"]}: {data[shop]["Reward"]}\n')
+        file.close()
 
 
 if __name__ == "__main__":

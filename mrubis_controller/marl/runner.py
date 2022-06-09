@@ -1,7 +1,7 @@
 import os
 
 from mrubis_controller.marl.helper import build_reward_plot, build_count_plot, build_loss_plot, get_current_time, \
-    build_regret_plot
+    build_regret_plot, print_logs
 # from mrubis_controller.marl.mrubis_mock_env import MrubisMockEnv
 from mrubis_controller.marl.mrubis_env import MrubisEnv
 from multi_agent_controller import MultiAgentController
@@ -36,15 +36,17 @@ class Runner:
         rewards = []
         metrics = []
         regrets = []
+        logs = []
         self.reset()
         count_till_fixed = {shop: [] for agent in self.shop_distribution for shop in agent}
         while self.t < episodes:
             terminated = False
             observations = self.env.reset()
             regrets.append({})
+            logs.append([])
             while not terminated:
-                self.inner_t += 1
-                actions, regret = self.mac.select_actions(observations)
+                logs[self.t].append({})
+                actions, regret, root_cause = self.mac.select_actions(observations)
                 # if regret is not None:
                 #     regrets.append(regret)
                 reward, observations_, terminated, env_info = self.env.step(actions)
@@ -60,7 +62,21 @@ class Runner:
                         for shop in regret[index]:
                             regrets[self.t][index][shop] = regret[index][shop]
 
+                    logs[self.t][self.inner_t] = {}
+                    for cause in root_cause.values():
+                        for individual_shop, individual_cause in cause.items():
+                            logs[self.t][self.inner_t][individual_shop] = {}
+                            logs[self.t][self.inner_t][individual_shop]['Root causes'] = individual_cause
+
+                    for action in actions.values():
+                        logs[self.t][self.inner_t][action['shop']]['Actions'] = action['component']
+
+                    for shop in reward[0]:
+                        if shop in logs[self.t][self.inner_t]:
+                            logs[self.t][self.inner_t][shop]['Reward'] = reward[0][shop]
+
                 observations = observations_
+                self.inner_t += 1
 
                 if terminated:
                     self.inner_t = 0
@@ -76,6 +92,7 @@ class Runner:
                 build_reward_plot(self.base_dir, rewards, self.t, self.shop_distribution)
                 build_loss_plot(self.base_dir, metrics, self.t)
                 build_regret_plot(self.base_dir, regrets, self.t, self.shop_distribution, self.training_activated, avg_over_agents=True)
+                print_logs(self.base_dir, logs)
             print(f"episode {self.t} done")
 
     def create_prob_distribution(self):
@@ -93,28 +110,15 @@ if __name__ == "__main__":
         episodes=episodes,
         negative_reward=-1,
         propagation_probability=0.5,
-        shops=80,
+        shops=10,
         injection_mean=5,
         injection_variance=2,
         trace="",
         trace_length=0,
-        send_root_issue=True)
-    shop_distribution_example = [{'mRUBiS #1', 'mRUBiS #2', 'mRUBiS #3', 'mRUBiS #4', 'mRUBiS #5'},
-                                 {'mRUBiS #6', 'mRUBiS #7', 'mRUBiS #8', 'mRUBiS #9', 'mRUBiS #10'},
-                                 {'mRUBiS #11', 'mRUBiS #12', 'mRUBiS #13', 'mRUBiS #14', 'mRUBiS #15'},
-                                 {'mRUBiS #16', 'mRUBiS #17', 'mRUBiS #18', 'mRUBiS #19', 'mRUBiS #20'},
-                                 {'mRUBiS #21', 'mRUBiS #22', 'mRUBiS #23', 'mRUBiS #24', 'mRUBiS #25'},
-                                 {'mRUBiS #26', 'mRUBiS #27', 'mRUBiS #28', 'mRUBiS #29', 'mRUBiS #30'},
-                                 {'mRUBiS #31', 'mRUBiS #32', 'mRUBiS #33', 'mRUBiS #34', 'mRUBiS #35'},
-                                 {'mRUBiS #36', 'mRUBiS #37', 'mRUBiS #38', 'mRUBiS #39', 'mRUBiS #40'},
-                                 {'mRUBiS #41', 'mRUBiS #42', 'mRUBiS #43', 'mRUBiS #44', 'mRUBiS #45'},
-                                 {'mRUBiS #46', 'mRUBiS #47', 'mRUBiS #48', 'mRUBiS #49', 'mRUBiS #50'},
-                                 {'mRUBiS #51', 'mRUBiS #52', 'mRUBiS #53', 'mRUBiS #54', 'mRUBiS #55'},
-                                 {'mRUBiS #56', 'mRUBiS #57', 'mRUBiS #58', 'mRUBiS #59', 'mRUBiS #60'},
-                                 {'mRUBiS #61', 'mRUBiS #62', 'mRUBiS #63', 'mRUBiS #64', 'mRUBiS #65'},
-                                 {'mRUBiS #66', 'mRUBiS #67', 'mRUBiS #68', 'mRUBiS #69', 'mRUBiS #70'},
-                                 {'mRUBiS #71', 'mRUBiS #72', 'mRUBiS #73', 'mRUBiS #74', 'mRUBiS #75'},
-                                 {'mRUBiS #76', 'mRUBiS #77', 'mRUBiS #78', 'mRUBiS #79', 'mRUBiS #80'}]
+        send_root_issue=True,
+        reward_variance=5)
+    shop_distribution_example = [{'mRUBiS #1', 'mRUBiS #2', 'mRUBiS #3', 'mRUBiS #4', 'mRUBiS #5',
+                                 'mRUBiS #6', 'mRUBiS #7', 'mRUBiS #8', 'mRUBiS #9', 'mRUBiS #10'}]
     load_model = {0: None, 1: None, 2: None, 3: None, 4: None,
                   5: None, 6: None, 7: None, 8: None, 9: None,
                   10: None, 11: None, 12: None, 13: None, 14: None,

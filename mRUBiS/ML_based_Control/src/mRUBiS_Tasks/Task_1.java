@@ -292,7 +292,6 @@ public class Task_1 {
 			
 			RuleSelector.setGlobalState(architecture);
 			
-			
 			for (Issue issue : allIssues) {
 				
 				if (specificTrace) {

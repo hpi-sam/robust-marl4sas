@@ -8,6 +8,8 @@ from subprocess import PIPE, Popen
 from chunkedsocketcommunicator import ChunkedSocketCommunicator
 from mrubis_controller.marl.mrubis_data_helper import get_current_utility
 
+from numpy.random import normal
+
 logging.basicConfig()
 logger = logging.getLogger('controller')
 logger.setLevel(logging.INFO)
@@ -16,7 +18,7 @@ logger.setLevel(logging.INFO)
 class MrubisEnv(gym.Env):
     def __init__(self, json_path='path.json', external_start=True, episodes=500, negative_reward=-1,
                  propagation_probability=0.5, shops=10, injection_mean=6, injection_variance=2, trace="",
-                 root_causes = "", trace_length = 0, send_root_issue=False):
+                 root_causes = "", trace_length = 0, send_root_issue=False, reward_variance=0):
         super(MrubisEnv, self).__init__()
         self.launch_args = None
         self.action_space = None
@@ -38,6 +40,7 @@ class MrubisEnv(gym.Env):
         self.root_caues = root_causes
         self.trace_length = trace_length
         self.send_root_issue = send_root_issue
+        self.reward_variance = reward_variance
 
         '''Create a new instance of the mRUBiS environment class'''
         self.external_start = external_start
@@ -86,9 +89,14 @@ class MrubisEnv(gym.Env):
         _reward = self._get_reward(self.observation)
 
         for shop in _reward[0]:
+            clamp = True
             if _reward[0][shop] > 0:
                 _reward[0][shop] = 17
                 self.stats[shop] = self.inner_t
+                clamp = False
+            _reward[0][shop] += self.reward_variance * normal()
+            if clamp:
+                _reward[0][shop] = min(0, _reward[0][shop])
 
         info = self._info()
         if actions is None or self._is_fixed():
